@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="在本机识别户型墙体，逐段修改墙体并保存校正反馈。">
+  <title>筑见 · 墙体校核</title><link rel="stylesheet" href="/app.css"><script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="header">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">筑</span><div><strong>筑见</strong><span class="brand-divider">/</span><span>墙体校核</span></div><span class="local-badge">本地工作台</span></div>
+    <div class="drawing-actions"><button id="undo" class="button" disabled>撤销上一步</button><button id="save" class="button primary" disabled>保存项目 <span aria-hidden="true">↗</span></button></div>
+  </header>
+  <div class="workflow"><div class="steps"><span id="step1" class="step active"><b>01</b> 导入户型</span><span class="step-line"></span><span id="step2" class="step"><b>02</b> 识别墙体</span><span class="step-line"></span><span id="step3" class="step"><b>03</b> 修改墙体</span></div><span class="privacy">图片与项目保存在这台电脑</span></div>
+  <main class="workspace">
+    <section class="drawing-panel" aria-label="户型图工作区">
+      <div class="drawing-header"><div><span class="eyebrow">FLOOR PLAN</span><h1 id="filename">示例户型.png</h1><p id="image-meta">正在准备底图…</p></div><div class="drawing-actions"><button id="upload" class="button">导入图片</button><button id="detect" class="button primary" disabled>运行墙体识别</button></div></div>
+      <input id="file" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+      <div class="tools"><div class="tool-group"><button id="select-tool" class="tool active" aria-pressed="true">↖ 选择墙段</button><button id="region-tool" class="tool" disabled aria-pressed="false">▧ 框选漏墙</button></div><label class="visibility"><input id="overlay-toggle" type="checkbox" checked> 显示墙段</label><button id="sample" class="text-button">使用示例图</button></div>
+      <div id="stage" class="stage" tabindex="0" aria-label="户型图，可点击墙段或框选漏识别区域"><div id="paper" class="paper"><svg id="plan" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 745 761" aria-label="户型图与可选墙段"><image id="plan-image" width="745" height="761" href="/api/sample-image"/><g id="wall-layer"></g><g id="region-layer"></g><g id="draft-layer"></g></svg></div><div id="loading" class="loading" hidden><div class="spinner"></div><strong>正在识别墙体</strong><span>从图中提取墙段，请稍候…</span></div></div>
+      <div class="canvas-footer"><p id="canvas-hint">先运行识别，再点击墙段直接修改</p><div class="zoom-controls"><button id="zoom-out" aria-label="缩小">−</button><span id="zoom-label">适应</span><button id="zoom-in" aria-label="放大">＋</button><button id="fit" class="fit-button">适应画布</button></div></div>
+      <div class="legend"><span><i class="dot blue"></i>候选墙段</span><span><i class="dot orange"></i>已标问题</span><span><i class="dot teal"></i>漏识别区域</span><span class="legend-note">尺寸为像素 · 自动结果需要人工校核</span></div>
+    </section>
+    <aside class="review-panel" aria-label="墙体修改">
+      <div class="review-heading"><div><span class="eyebrow">REVIEW</span><h2>墙体修改</h2></div><span id="wall-count" class="count-pill">等待识别</span></div>
+      <div id="empty-selection" class="empty-selection"><span class="empty-icon" aria-hidden="true">⌖</span><h3 id="empty-title">从识别开始</h3><p id="empty-copy">点击「运行墙体识别」，然后选择图中需要修改的墙段。</p><div class="mini-guide"><span>1</span> 点击墙段编号或线条<br><span>2</span> 指定方向、目标和调整量<br><span>3</span> 应用修改，墙体立即更新</div></div>
+      <form id="issue-form" class="issue-form" hidden>
+        <div class="selected-heading"><h3 id="selected-id">W001</h3><span id="selected-kind">水平墙段</span><button id="clear-selection" class="icon-button" type="button" aria-label="取消选择">×</button></div>
+        <div id="wall-measures" class="measures"><div><span>长度</span><strong id="wall-length">—</strong></div><div><span>厚度</span><strong id="wall-thickness">—</strong></div><div><span>单位</span><strong>px</strong></div></div>
+        <label class="field">哪里有问题？<select id="issue-type"><option value="too_short">墙段太短</option><option value="too_long">墙段太长</option><option value="missing_corner">缺少转角</option><option value="position">位置不对</option><option value="thickness">厚度不对</option><option value="false_positive">不应该是墙</option><option value="other">其他问题</option><option value="missing_wall" hidden>这里漏了墙</option></select></label>
+        <div class="field-row"><label class="field">修改方向<select id="direction"><option value="">未指定</option><option value="up">向上</option><option value="down">向下</option><option value="left">向左</option><option value="right">向右</option></select></label><label class="field">连接到（可选）<select id="target"><option value="">不指定墙段</option></select></label></div>
+        <div class="field-row"><label class="field">调整量 / 新厚度（px）<input id="amount" type="number" min="0.1" max="2000" step="0.5" value="50"></label><label class="field">转角从哪端开始<select id="anchor"><option value="end">末端（右 / 下）</option><option value="start">起端（左 / 上）</option></select></label></div>
+        <label class="field">修改说明<textarea id="note" rows="3" maxlength="1000" placeholder="例如：向下延长，一直到 W013。也可用上面的方向、目标和数值准确指定。"></textarea></label>
+        <button id="add-issue" class="button primary full" type="submit">应用修改，立即更新墙体</button>
+      </form>
+      <section class="issues-section"><div class="issues-heading"><h3>修改记录</h3><span id="issue-count">0</span></div><div id="issue-list" class="issue-list"><p class="list-empty">执行后的修改会出现在这里</p></div></section>
+      <div class="review-footer"><span class="status-dot"></span><p id="save-status">修改由页面程序直接执行，可撤销</p></div>
+    </aside>
+  </main>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <dialog id="confirm-dialog"><form method="dialog"><h2 id="confirm-title">替换当前识别结果？</h2><p>当前项目有未保存的修改。请先保存，或确认放弃这些修改。</p><div class="dialog-actions"><button class="button" value="cancel">返回</button><button class="button danger" value="discard">放弃并继续</button></div></form></dialog>
+</body></html>

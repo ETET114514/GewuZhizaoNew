@@ -1,0 +1,52 @@
+{
+  "revision": "review-02",
+  "expected_revision": "review-01",
+  "diagram_title": "第 02 次校正 · W010 / W002 / W005 / W008 / W023",
+  "image_sha256": "5d567ec7911bd29f436886d0df4376616c9a88379fdd07032b88c84262166f6f",
+  "user_feedback": "w010少了转角往上 w002少了转角往下 w005右边短了 w008应该向下一直到w013 w023应该一直到w021",
+  "updates": [
+    {
+      "id": "W005",
+      "expected": {"start_px": [259.0, 193.5], "end_px": [332.0, 193.5], "thickness_px": 15},
+      "geometry": {
+        "start_px": [259.0, 193.5], "end_px": [365.0, 193.5], "thickness_px": 15,
+        "opening_hints": [
+          {"id": "O001", "start_px": [332.0, 193.5], "end_px": [360.0, 193.5], "thickness_px": 8, "possible_opening": "door", "review_status": "unreviewed"}
+        ]
+      },
+      "note": "按反馈向右补至 W004 中心线；x=332..360 可见入户门符号，作为待确认门洞保留，不填实墙。"
+    },
+    {
+      "id": "W023",
+      "expected": {"start_px": [63.0, 651.5], "end_px": [115.0, 651.5], "thickness_px": 17},
+      "geometry": {
+        "start_px": [63.0, 651.5], "end_px": [267.5, 651.5], "thickness_px": 17,
+        "opening_hints": [
+          {"id": "O002", "start_px": [115.0, 651.5], "end_px": [262.0, 651.5], "thickness_px": 8, "possible_opening": "sliding_door_or_window", "review_status": "unreviewed"}
+        ]
+      },
+      "note": "按反馈向右延至 W021 中心线；中间连接阳台的细线部分保留为待确认门窗洞口。"
+    }
+  ],
+  "add_walls": [
+    {
+      "id": "W028", "start_px": [196.0, 240.0], "end_px": [196.0, 291.5], "thickness_px": 8,
+      "related_to": "W010", "correction_note": "补 W010 右端向上转角，到厨房入口下侧门边；保留与上方竖段之间的门口。"
+    },
+    {
+      "id": "W029", "start_px": [196.0, 114.0], "end_px": [196.0, 205.0], "thickness_px": 10,
+      "related_to": "W002", "correction_note": "补 W002 右端向下转角，到厨房入口上侧门边。中部双线及开启符号记录为待确认门窗。",
+      "opening_hints": [
+        {"id": "O003", "start_px": [196.0, 121.0], "end_px": [196.0, 186.0], "thickness_px": 7, "possible_opening": "window_or_door", "review_status": "unreviewed"}
+      ]
+    },
+    {
+      "id": "W030", "start_px": [573.5, 218.5], "end_px": [573.5, 372.0], "thickness_px": 7,
+      "related_to": "W008", "connects_to": "W013", "correction_note": "从 W008 右端所在外缘向下补至 W013，原图连续窗线保留为待确认窗洞。",
+      "opening_hints": [
+        {"id": "O004", "start_px": [573.5, 222.0], "end_px": [573.5, 365.0], "thickness_px": 7, "possible_opening": "window", "review_status": "unreviewed"}
+      ]
+    }
+  ],
+  "add_boundaries": []
+}

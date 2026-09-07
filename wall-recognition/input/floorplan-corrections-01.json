@@ -1,0 +1,42 @@
+{
+  "revision": "review-01",
+  "image_sha256": "5d567ec7911bd29f436886d0df4376616c9a88379fdd07032b88c84262166f6f",
+  "user_feedback": "W021不够长 W014 W022外围缺了",
+  "updates": [
+    {
+      "id": "W021",
+      "expected": {"start_px": [267.5, 515.0], "end_px": [267.5, 659.0], "thickness_px": 11},
+      "geometry": {"start_px": [267.5, 465.0], "end_px": [267.5, 659.0], "thickness_px": 11},
+      "note": "按反馈向上补至图中卧室左上转角；保留原下端。端点按底图估计，待确认。"
+    },
+    {
+      "id": "W013",
+      "expected": {"start_px": [447.0, 372.0], "end_px": [646.0, 372.0], "thickness_px": 14},
+      "geometry": {"start_px": [365.0, 372.0], "end_px": [646.0, 372.0], "thickness_px": 14},
+      "note": "补齐 W014 附近上方横墙遗漏的左段，与 W012 对齐。"
+    }
+  ],
+  "add_walls": [
+    {
+      "id": "W027", "start_px": [640.0, 372.0], "end_px": [640.0, 395.0], "thickness_px": 12,
+      "related_to": "W014", "correction_note": "卫生间右上短实墙，连接上横墙与窗洞上沿；自动检测因长度不足漏掉。"
+    }
+  ],
+  "add_boundaries": [
+    {
+      "id": "B001", "start_px": [641.0, 399.0], "end_px": [641.0, 465.0], "thickness_px": 10,
+      "classification": "unclassified_boundary", "possible_opening": "window",
+      "related_to": "W014", "correction_note": "卫生间右侧外缘可见开启符号，先记录轮廓，不能直接当实墙。"
+    },
+    {
+      "id": "B002", "start_px": [643.5, 621.0], "end_px": [643.5, 685.0], "thickness_px": 7,
+      "classification": "unclassified_boundary", "possible_opening": "window_or_door",
+      "related_to": "W022", "correction_note": "右下阳台右侧漏掉的门窗边界，延至底边转角。"
+    },
+    {
+      "id": "B003", "start_px": [439.0, 681.5], "end_px": [643.5, 681.5], "thickness_px": 7,
+      "classification": "unclassified_boundary", "possible_opening": "window_or_door",
+      "related_to": "W022", "correction_note": "右下阳台底部漏掉的连续外缘；左段有开启符号，具体门窗分段待确认。"
+    }
+  ]
+}

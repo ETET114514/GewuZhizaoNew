@@ -1,0 +1,895 @@
+{
+  "schema_version": "0.1.2",
+  "image": {
+    "filename": "floorplan.png",
+    "width_px": 745,
+    "height_px": 761,
+    "sha256": "5d567ec7911bd29f436886d0df4376616c9a88379fdd07032b88c84262166f6f"
+  },
+  "coordinate_system": "image pixels; origin top-left; x right; y down",
+  "geometry": {
+    "editable_fields": [
+      "start_px",
+      "end_px",
+      "thickness_px"
+    ],
+    "derived_fields": [
+      "bbox_px",
+      "length_px",
+      "orientation"
+    ],
+    "endpoints": "centerline at the outer extent of each candidate",
+    "bbox": "left, top, right-exclusive, bottom-exclusive",
+    "opening_hints": "Wall centerlines may span openings. Exclude opening_hints from solid-wall rendering; these opening positions and types remain unconfirmed."
+  },
+  "scale_mm_per_px": null,
+  "algorithm": "neutral-dark-axis-runs-v1",
+  "parameters": {
+    "threshold": 180,
+    "max_color_spread": 10,
+    "min_length": 35,
+    "min_thickness": 7,
+    "max_thickness": 24,
+    "gap": 1
+  },
+  "limitations": [
+    "Candidates require manual review; no measured accuracy yet.",
+    "Only horizontal/vertical dark neutral walls are supported.",
+    "Furniture can cause false positives; light walls can be missed.",
+    "No automatic window/door identification or real-world scale.",
+    "Boundary candidates are separate from solid walls; opening types are unconfirmed."
+  ],
+  "walls": [
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        191.0,
+        22.5
+      ],
+      "end_px": [
+        332.0,
+        22.5
+      ],
+      "thickness_px": 17,
+      "length_px": 141,
+      "bbox_px": [
+        191,
+        14,
+        332,
+        31
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W001"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        63.0,
+        114.0
+      ],
+      "end_px": [
+        208.0,
+        114.0
+      ],
+      "thickness_px": 14,
+      "length_px": 145,
+      "bbox_px": [
+        63,
+        107,
+        208,
+        121
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W002"
+    },
+    {
+      "orientation": "vertical",
+      "start_px": [
+        71.0,
+        107.0
+      ],
+      "end_px": [
+        71.0,
+        717.0
+      ],
+      "thickness_px": 16,
+      "length_px": 610,
+      "bbox_px": [
+        63,
+        107,
+        79,
+        717
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W003"
+    },
+    {
+      "orientation": "vertical",
+      "start_px": [
+        365.0,
+        182.0
+      ],
+      "end_px": [
+        365.0,
+        309.0
+      ],
+      "thickness_px": 10,
+      "length_px": 127,
+      "bbox_px": [
+        360,
+        182,
+        370,
+        309
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W004"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        259.0,
+        193.5
+      ],
+      "end_px": [
+        365.0,
+        193.5
+      ],
+      "thickness_px": 15,
+      "length_px": 106.0,
+      "bbox_px": [
+        259.0,
+        186.0,
+        365.0,
+        201.0
+      ],
+      "source": "assisted_correction",
+      "review_status": "unreviewed",
+      "id": "W005",
+      "opening_hints": [
+        {
+          "id": "O001",
+          "start_px": [
+            332.0,
+            193.5
+          ],
+          "end_px": [
+            360.0,
+            193.5
+          ],
+          "thickness_px": 8,
+          "possible_opening": "door",
+          "review_status": "unreviewed",
+          "orientation": "horizontal",
+          "length_px": 28.0,
+          "bbox_px": [
+            332.0,
+            189.5,
+            360.0,
+            197.5
+          ]
+        }
+      ],
+      "correction_note": "按反馈向右补至 W004 中心线；x=332..360 可见入户门符号，作为待确认门洞保留，不填实墙。"
+    },
+    {
+      "orientation": "vertical",
+      "start_px": [
+        272.0,
+        186.0
+      ],
+      "end_px": [
+        272.0,
+        378.0
+      ],
+      "thickness_px": 16,
+      "length_px": 192,
+      "bbox_px": [
+        264,
+        186,
+        280,
+        378
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W006"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        362.0,
+        194.5
+      ],
+      "end_px": [
+        574.0,
+        194.5
+      ],
+      "thickness_px": 15,
+      "length_px": 212,
+      "bbox_px": [
+        362,
+        187,
+        574,
+        202
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W007"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        534.0,
+        218.5
+      ],
+      "end_px": [
+        577.0,
+        218.5
+      ],
+      "thickness_px": 7,
+      "length_px": 43,
+      "bbox_px": [
+        534,
+        215,
+        577,
+        222
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W008"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        259.0,
+        250.0
+      ],
+      "end_px": [
+        301.0,
+        250.0
+      ],
+      "thickness_px": 8,
+      "length_px": 42,
+      "bbox_px": [
+        259,
+        246,
+        301,
+        254
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W009"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        63.0,
+        291.5
+      ],
+      "end_px": [
+        200.0,
+        291.5
+      ],
+      "thickness_px": 9,
+      "length_px": 137,
+      "bbox_px": [
+        63,
+        287,
+        200,
+        296
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W010"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        264.0,
+        304.5
+      ],
+      "end_px": [
+        318.0,
+        304.5
+      ],
+      "thickness_px": 9,
+      "length_px": 54,
+      "bbox_px": [
+        264,
+        300,
+        318,
+        309
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W011"
+    },
+    {
+      "orientation": "vertical",
+      "start_px": [
+        365.0,
+        365.0
+      ],
+      "end_px": [
+        365.0,
+        412.0
+      ],
+      "thickness_px": 10,
+      "length_px": 47,
+      "bbox_px": [
+        360,
+        365,
+        370,
+        412
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W012"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        365.0,
+        372.0
+      ],
+      "end_px": [
+        646.0,
+        372.0
+      ],
+      "thickness_px": 14,
+      "length_px": 281.0,
+      "bbox_px": [
+        365.0,
+        365.0,
+        646.0,
+        379.0
+      ],
+      "source": "assisted_correction",
+      "review_status": "unreviewed",
+      "id": "W013",
+      "correction_note": "补齐 W014 附近上方横墙遗漏的左段，与 W012 对齐。"
+    },
+    {
+      "orientation": "vertical",
+      "start_px": [
+        493.5,
+        365.0
+      ],
+      "end_px": [
+        493.5,
+        407.0
+      ],
+      "thickness_px": 9,
+      "length_px": 42,
+      "bbox_px": [
+        489,
+        365,
+        498,
+        407
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W014"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        265.0,
+        373.5
+      ],
+      "end_px": [
+        312.0,
+        373.5
+      ],
+      "thickness_px": 9,
+      "length_px": 47,
+      "bbox_px": [
+        265,
+        369,
+        312,
+        378
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W015"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        584.0,
+        395.0
+      ],
+      "end_px": [
+        651.0,
+        395.0
+      ],
+      "thickness_px": 8,
+      "length_px": 67,
+      "bbox_px": [
+        584,
+        391,
+        651,
+        399
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W016"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        494.0,
+        471.0
+      ],
+      "end_px": [
+        646.0,
+        471.0
+      ],
+      "thickness_px": 14,
+      "length_px": 152,
+      "bbox_px": [
+        494,
+        464,
+        646,
+        478
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W017"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        339.0,
+        470.0
+      ],
+      "end_px": [
+        431.0,
+        470.0
+      ],
+      "thickness_px": 10,
+      "length_px": 92,
+      "bbox_px": [
+        339,
+        465,
+        431,
+        475
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W018"
+    },
+    {
+      "orientation": "vertical",
+      "start_px": [
+        611.5,
+        465.0
+      ],
+      "end_px": [
+        611.5,
+        623.0
+      ],
+      "thickness_px": 13,
+      "length_px": 158,
+      "bbox_px": [
+        605,
+        465,
+        618,
+        623
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W019"
+    },
+    {
+      "orientation": "vertical",
+      "start_px": [
+        431.0,
+        469.0
+      ],
+      "end_px": [
+        431.0,
+        697.0
+      ],
+      "thickness_px": 16,
+      "length_px": 228,
+      "bbox_px": [
+        423,
+        469,
+        439,
+        697
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W020"
+    },
+    {
+      "orientation": "vertical",
+      "start_px": [
+        267.5,
+        465.0
+      ],
+      "end_px": [
+        267.5,
+        659.0
+      ],
+      "thickness_px": 11,
+      "length_px": 194.0,
+      "bbox_px": [
+        262.0,
+        465.0,
+        273.0,
+        659.0
+      ],
+      "source": "assisted_correction",
+      "review_status": "unreviewed",
+      "id": "W021",
+      "correction_note": "按反馈向上补至图中卧室左上转角；保留原下端。端点按底图估计，待确认。"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        606.0,
+        617.5
+      ],
+      "end_px": [
+        647.0,
+        617.5
+      ],
+      "thickness_px": 7,
+      "length_px": 41,
+      "bbox_px": [
+        606,
+        614,
+        647,
+        621
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W022"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        63.0,
+        651.5
+      ],
+      "end_px": [
+        267.5,
+        651.5
+      ],
+      "thickness_px": 17,
+      "length_px": 204.5,
+      "bbox_px": [
+        63.0,
+        643.0,
+        267.5,
+        660.0
+      ],
+      "source": "assisted_correction",
+      "review_status": "unreviewed",
+      "id": "W023",
+      "opening_hints": [
+        {
+          "id": "O002",
+          "start_px": [
+            115.0,
+            651.5
+          ],
+          "end_px": [
+            262.0,
+            651.5
+          ],
+          "thickness_px": 8,
+          "possible_opening": "sliding_door_or_window",
+          "review_status": "unreviewed",
+          "orientation": "horizontal",
+          "length_px": 147.0,
+          "bbox_px": [
+            115.0,
+            647.5,
+            262.0,
+            655.5
+          ]
+        }
+      ],
+      "correction_note": "按反馈向右延至 W021 中心线；中间连接阳台的细线部分保留为待确认门窗洞口。"
+    },
+    {
+      "orientation": "vertical",
+      "start_px": [
+        402.0,
+        648.0
+      ],
+      "end_px": [
+        402.0,
+        697.0
+      ],
+      "thickness_px": 8,
+      "length_px": 49,
+      "bbox_px": [
+        398,
+        648,
+        406,
+        697
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W024"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        409.0,
+        693.0
+      ],
+      "end_px": [
+        450.0,
+        693.0
+      ],
+      "thickness_px": 8,
+      "length_px": 41,
+      "bbox_px": [
+        409,
+        689,
+        450,
+        697
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W025"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        24.0,
+        713.0
+      ],
+      "end_px": [
+        119.0,
+        713.0
+      ],
+      "thickness_px": 8,
+      "length_px": 95,
+      "bbox_px": [
+        24,
+        709,
+        119,
+        717
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W026"
+    },
+    {
+      "id": "W027",
+      "start_px": [
+        640.0,
+        372.0
+      ],
+      "end_px": [
+        640.0,
+        395.0
+      ],
+      "thickness_px": 12,
+      "related_to": "W014",
+      "correction_note": "卫生间右上短实墙，连接上横墙与窗洞上沿；自动检测因长度不足漏掉。",
+      "source": "assisted_correction",
+      "review_status": "unreviewed",
+      "orientation": "vertical",
+      "length_px": 23.0,
+      "bbox_px": [
+        634.0,
+        372.0,
+        646.0,
+        395.0
+      ]
+    },
+    {
+      "id": "W028",
+      "start_px": [
+        196.0,
+        240.0
+      ],
+      "end_px": [
+        196.0,
+        291.5
+      ],
+      "thickness_px": 8,
+      "related_to": "W010",
+      "correction_note": "补 W010 右端向上转角，到厨房入口下侧门边；保留与上方竖段之间的门口。",
+      "source": "assisted_correction",
+      "review_status": "unreviewed",
+      "orientation": "vertical",
+      "length_px": 51.5,
+      "bbox_px": [
+        192.0,
+        240.0,
+        200.0,
+        291.5
+      ]
+    },
+    {
+      "id": "W029",
+      "start_px": [
+        196.0,
+        114.0
+      ],
+      "end_px": [
+        196.0,
+        205.0
+      ],
+      "thickness_px": 10,
+      "related_to": "W002",
+      "correction_note": "补 W002 右端向下转角，到厨房入口上侧门边。中部双线及开启符号记录为待确认门窗。",
+      "opening_hints": [
+        {
+          "id": "O003",
+          "start_px": [
+            196.0,
+            121.0
+          ],
+          "end_px": [
+            196.0,
+            186.0
+          ],
+          "thickness_px": 7,
+          "possible_opening": "window_or_door",
+          "review_status": "unreviewed",
+          "orientation": "vertical",
+          "length_px": 65.0,
+          "bbox_px": [
+            192.5,
+            121.0,
+            199.5,
+            186.0
+          ]
+        }
+      ],
+      "source": "assisted_correction",
+      "review_status": "unreviewed",
+      "orientation": "vertical",
+      "length_px": 91.0,
+      "bbox_px": [
+        191.0,
+        114.0,
+        201.0,
+        205.0
+      ]
+    },
+    {
+      "id": "W030",
+      "start_px": [
+        573.5,
+        218.5
+      ],
+      "end_px": [
+        573.5,
+        372.0
+      ],
+      "thickness_px": 7,
+      "related_to": "W008",
+      "connects_to": "W013",
+      "correction_note": "从 W008 右端所在外缘向下补至 W013，原图连续窗线保留为待确认窗洞。",
+      "opening_hints": [
+        {
+          "id": "O004",
+          "start_px": [
+            573.5,
+            222.0
+          ],
+          "end_px": [
+            573.5,
+            365.0
+          ],
+          "thickness_px": 7,
+          "possible_opening": "window",
+          "review_status": "unreviewed",
+          "orientation": "vertical",
+          "length_px": 143.0,
+          "bbox_px": [
+            570.0,
+            222.0,
+            577.0,
+            365.0
+          ]
+        }
+      ],
+      "source": "assisted_correction",
+      "review_status": "unreviewed",
+      "orientation": "vertical",
+      "length_px": 153.5,
+      "bbox_px": [
+        570.0,
+        218.5,
+        577.0,
+        372.0
+      ]
+    }
+  ],
+  "boundary_candidates": [
+    {
+      "id": "B001",
+      "start_px": [
+        641.0,
+        399.0
+      ],
+      "end_px": [
+        641.0,
+        465.0
+      ],
+      "thickness_px": 10,
+      "classification": "unclassified_boundary",
+      "possible_opening": "window",
+      "related_to": "W014",
+      "correction_note": "卫生间右侧外缘可见开启符号，先记录轮廓，不能直接当实墙。",
+      "source": "assisted_correction",
+      "review_status": "unreviewed",
+      "orientation": "vertical",
+      "length_px": 66.0,
+      "bbox_px": [
+        636.0,
+        399.0,
+        646.0,
+        465.0
+      ]
+    },
+    {
+      "id": "B002",
+      "start_px": [
+        643.5,
+        621.0
+      ],
+      "end_px": [
+        643.5,
+        685.0
+      ],
+      "thickness_px": 7,
+      "classification": "unclassified_boundary",
+      "possible_opening": "window_or_door",
+      "related_to": "W022",
+      "correction_note": "右下阳台右侧漏掉的门窗边界，延至底边转角。",
+      "source": "assisted_correction",
+      "review_status": "unreviewed",
+      "orientation": "vertical",
+      "length_px": 64.0,
+      "bbox_px": [
+        640.0,
+        621.0,
+        647.0,
+        685.0
+      ]
+    },
+    {
+      "id": "B003",
+      "start_px": [
+        439.0,
+        681.5
+      ],
+      "end_px": [
+        643.5,
+        681.5
+      ],
+      "thickness_px": 7,
+      "classification": "unclassified_boundary",
+      "possible_opening": "window_or_door",
+      "related_to": "W022",
+      "correction_note": "右下阳台底部漏掉的连续外缘；左段有开启符号，具体门窗分段待确认。",
+      "source": "assisted_correction",
+      "review_status": "unreviewed",
+      "orientation": "horizontal",
+      "length_px": 204.5,
+      "bbox_px": [
+        439.0,
+        678.0,
+        643.5,
+        685.0
+      ]
+    }
+  ],
+  "review_revision": "review-02",
+  "review_method": "User feedback interpreted against the source image; geometric estimates require confirmation."
+}
