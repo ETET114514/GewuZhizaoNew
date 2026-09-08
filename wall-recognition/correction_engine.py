@@ -8,6 +8,9 @@ from apply_corrections import recompute_geometry
 
 def apply_edit(document, request, next_id):
     result = deepcopy(document)
+    from refine_walls import strip_generated_hints, refresh_refinement
+    if result.get("refinement_algorithm"):
+        strip_generated_hints(result)
     width, height = result["image"]["width_px"], result["image"]["height_px"]
     walls = {w["id"]: w for w in result["walls"]}
     category = request.get("type", "other")
@@ -58,6 +61,8 @@ def apply_edit(document, request, next_id):
         axis = 0 if wall["orientation"] == "horizontal" else 1
         if category == "false_positive":
             result["walls"] = [w for w in result["walls"] if w["id"] != wall["id"]]
+            if wall["id"] in result.get("opening_wall_ids", {}).values():
+                result.setdefault("suppressed_connection_ids", []).append(wall["id"])
             summary = f"已删除 {wall['id']}"
         elif category == "thickness":
             wall["thickness_px"] = amount
@@ -112,4 +117,4 @@ def apply_edit(document, request, next_id):
     result["review_revision"] = "interactive"
     record = {"id": wall["id"], "wall_id": wall["id"], "type": category, "direction": direction, "target_wall_id": target_id,
               "note": note, "summary": summary, "amount_px": amount}
-    return result, record, next_id
+    return refresh_refinement(result), record, next_id

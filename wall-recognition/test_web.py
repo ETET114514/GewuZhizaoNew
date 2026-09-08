@@ -46,7 +46,7 @@ class WebWorkflowTests(unittest.TestCase):
 
     def test_real_recognition_matches_existing_program(self):
         original = json.loads((ROOT / "output/walls.json").read_text(encoding="utf-8"))
-        self.assertEqual(self.detected["document"]["walls"], original["walls"])
+        self.assertEqual(self.detected["document"]["coarse_walls"], original["walls"])
         with urlopen(self.origin + self.detected["image_url"]) as response:
             self.assertEqual(hashlib.sha256(response.read()).hexdigest(), self.detected["document"]["image"]["sha256"])
 
@@ -85,6 +85,9 @@ class WebWorkflowTests(unittest.TestCase):
         self.assertEqual(status, 200)
         path = Path(self.temp.name) / "projects" / saved["saved_name"] / "walls.json"
         self.assertEqual(json.loads(path.read_text(encoding="utf-8")), edited["document"])
+        solids=json.loads((path.parent/"solid-walls.json").read_text(encoding="utf-8"))
+        self.assertEqual(solids["solid_wall_segments"],edited["document"]["solid_wall_segments"])
+        self.assertTrue(next(w for w in edited["document"]["walls"] if w["id"]=="W005")["opening_hints"])
         status, undone = self.post("/api/undo-edit", {"run_id": run_id})
         self.assertEqual(status, 200)
         self.assertEqual(undone["document"], self.detected["document"])
@@ -100,6 +103,24 @@ class WebWorkflowTests(unittest.TestCase):
         with self.assertRaises(HTTPError) as caught:
             urlopen(self.origin + "/../recognize_walls.py")
         self.assertEqual(caught.exception.code, 404)
+
+    def test_opening_review_save_and_undo(self):
+        run_id=self.detected["run_id"]
+        original=self.detected["document"]
+        opening=original["openings"][0]
+        for kind in ("door","unclassified","rejected"):
+            status,result=self.post("/api/review-opening",{"run_id":run_id,"opening_id":opening["id"],"kind":kind})
+            self.assertEqual(status,200)
+            self.assertEqual(result["document"]["coarse_walls"],original["coarse_walls"])
+            self.assertEqual(result["document"]["openings"][0]["kind"],kind)
+            status,saved=self.post("/api/save-project",{"run_id":run_id})
+            folder=Path(self.temp.name)/"projects"/saved["saved_name"]
+            self.assertEqual(json.loads((folder/"walls.json").read_text(encoding="utf-8")),result["document"])
+            status,undone=self.post("/api/undo-edit",{"run_id":run_id})
+            self.assertEqual(undone["document"],original)
+        for bad in ({"opening_id":"O999","kind":"door"},{"opening_id":opening["id"],"kind":"anything"}):
+            self.assertEqual(self.post("/api/review-opening",{"run_id":run_id,**bad})[0],400)
+        self.assertEqual(self.post("/api/undo-edit",{"run_id":run_id})[0],400)
 
 
 if __name__ == "__main__":

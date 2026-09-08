@@ -54,6 +54,9 @@ def apply_corrections(base: dict, corrections: dict) -> dict:
             and base.get("review_revision") != corrections["expected_revision"]):
         raise ValueError("Apply this correction to the specified previous review revision.")
     result = deepcopy(base)
+    if result.get("refinement_algorithm"):
+        from refine_walls import strip_generated_hints
+        strip_generated_hints(result)
     walls = {wall["id"]: wall for wall in result["walls"]}
     width, height = result["image"]["width_px"], result["image"]["height_px"]
     for patch in corrections.get("updates", []):
@@ -66,7 +69,7 @@ def apply_corrections(base: dict, corrections: dict) -> dict:
         wall.update(source="assisted_correction", review_status="unreviewed",
                     correction_note=patch["note"])
         recompute_geometry(wall, width, height)
-    occupied = set(walls) | {item["id"] for item in result.get("boundary_candidates", [])}
+    occupied = set(walls) | {item["id"] for item in result.get("boundary_candidates", [])} | set(result.get("opening_wall_ids", {}).values())
     for key, target in (("add_walls", "walls"), ("add_boundaries", "boundary_candidates")):
         for addition in corrections.get(key, []):
             item = deepcopy(addition)
@@ -84,6 +87,10 @@ def apply_corrections(base: dict, corrections: dict) -> dict:
         result["limitations"].append(limitation)
     if result["schema_version"] == "0.1.2":
         result["geometry"]["opening_hints"] = "Wall centerlines may span openings. Exclude opening_hints from solid-wall rendering; these opening positions and types remain unconfirmed."
+    if result.get("refinement_algorithm"):
+        from refine_walls import refresh_refinement
+        result = refresh_refinement(result)
+        result["schema_version"] = "0.3.0"
     return result
 
 

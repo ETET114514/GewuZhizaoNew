@@ -1,7 +1,7 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const NS = 'http://www.w3.org/2000/svg';
-const TYPES = {too_short:'墙段太短',too_long:'墙段太长',missing_corner:'缺少转角',position:'位置不对',thickness:'厚度不对',false_positive:'不应该是墙',missing_wall:'这里漏了墙',other:'其他问题'};
+const TYPES = {too_short:'墙段太短',too_long:'墙段太长',missing_corner:'缺少转角',position:'位置不对',thickness:'厚度不对',false_positive:'不应该是墙',missing_wall:'这里漏了墙',other:'其他问题',opening_review:'门窗校核'};
 const DIRECTIONS = {up:'向上',down:'向下',left:'向左',right:'向右'};
 const state = {file:null,blobUrl:null,token:null,run:null,selected:null,issues:[],mode:'select',width:745,height:761,zoom:1,fitted:true,busy:false,dirty:false,formDirty:false,regionCount:0,drag:null};
 let toastTimer;
@@ -10,19 +10,22 @@ function toast(message, error=false) {
   toastTimer=setTimeout(()=>{$('toast').hidden=true;},error?6500:4200);
 }
 function svgElement(tag, attrs={}) {const el=document.createElementNS(NS,tag); for(const [k,v] of Object.entries(attrs))el.setAttribute(k,String(v)); return el;}
-function snapshot() {return {run_id:state.run?.run_id||null,wall_count:state.run?.document.walls.length||0,walls:state.run?.document.walls||[],issues:structuredClone(state.issues),selected_id:state.selected?.id||null,unsaved:state.dirty||state.formDirty};}
+function snapshot() {return {run_id:state.run?.run_id||null,wall_count:state.run?.document.walls.length||0,walls:state.run?.document.walls||[],openings:state.run?.document.openings||[],issues:structuredClone(state.issues),selected_id:state.selected?.id||null,unsaved:state.dirty||state.formDirty};}
+function geometryDescription(doc) {const r=doc.refinement_summary;return r?`${r.solid_segment_count} 段实墙 · ${r.active_opening_count} 处洞口`:`${doc.walls.length} 段候选`;}
 function refresh() {
   const ready=Boolean(state.run), count=state.run?.document.walls.length||0;
-  $('detect').disabled=!state.file||state.busy; $('detect').textContent=ready?'重新识别':'运行墙体识别';
+  $('detect').disabled=!state.file||state.busy; $('detect').textContent=ready?'重新识别':'识别墙体与门窗';
   $('upload').disabled=state.busy; $('sample').disabled=state.busy; $('file').disabled=state.busy;
   $('save').disabled=state.busy||!ready; $('undo').disabled=state.busy||!state.historySize;
   $('region-tool').disabled=!ready||state.busy; $('select-tool').disabled=state.busy; $('add-issue').disabled=state.busy;
-  $('wall-count').textContent=ready?`${count} 段候选`:'等待识别'; $('issue-count').textContent=state.issues.length;
+  $('wall-count').textContent=ready?`${state.run.document.solid_wall_segments?.length??count} 段实墙`:'等待识别'; $('issue-count').textContent=state.issues.length;
+  $('pipeline-status').textContent=ready?`粗墙 → 门窗 → 实墙整理：${geometryDescription(state.run.document)}`:'识别流程：粗识别墙体 → 识别门窗 → 保留洞口并整理墙体';
   $('step1').className='step '+(ready?'done':'active'); $('step2').className='step '+(ready?'done':state.file?'active':''); $('step3').className='step '+(ready?'active':'');
   $('empty-title').textContent=ready?'选择需要修改的墙段':'从识别开始';
   $('empty-copy').textContent=ready?(count?'点击墙段，指定修改方向、连接目标或数值，页面会直接修改。':'没有提取到候选墙段。可以使用「框选漏墙」记录遗漏区域。'):'点击「运行墙体识别」，然后选择图中需要修改的墙段。';
   $('canvas-hint').textContent=state.mode==='region'?'在图上拖出矩形，圈出漏掉的墙；Esc 取消':ready?'点击墙段直接修改 · 漏掉的墙可框选后补入':'先运行识别，再点击图中有问题的墙段';
   $('loading').hidden=state.busy!=='detect';
+  renderOpeningList();
 }
 function setMode(mode) {
   if(state.busy||(mode==='region'&&!state.run))return;
@@ -46,7 +49,7 @@ function selectItem(item) {
   const existing=null;
   state.selected=item; state.formDirty=false; $('empty-selection').hidden=true;$('issue-form').hidden=false;
   $('selected-id').textContent=item.id;
-  $('selected-kind').textContent=item.kind==='region'?'漏识别区域':item.orientation==='horizontal'?'水平墙段':'垂直墙段';
+  $('selected-kind').textContent=item.kind==='region'?'漏识别区域':item.solid_parts?.length===0?'洞口连接':item.orientation==='horizontal'?'水平墙段':'垂直墙段';
   $('wall-measures').hidden=item.kind==='region';
   if(item.kind!=='region') {$('wall-length').textContent=item.length_px;$('wall-thickness').textContent=item.thickness_px;}
   $('issue-type').value=existing?.type||(item.kind==='region'?'missing_wall':'too_short');
@@ -69,7 +72,7 @@ function adoptEdits(result) {
   state.run.document=result.document;state.issues=result.changes;state.historySize=result.history_size;state.dirty=true;state.formDirty=false;
   const selectedId=result.changes.at(-1)?.wall_id||state.selected?.id;
   $('target').replaceChildren(new Option('不指定墙段',''));for(const wall of result.document.walls)$('target').append(new Option(wall.id,wall.id));
-  $('image-meta').textContent=`${state.width} × ${state.height} px · 当前 ${result.document.walls.length} 段墙体`;
+  $('image-meta').textContent=`${state.width} × ${state.height} px · ${geometryDescription(result.document)}`;
   clearSelection();const current=result.document.walls.find(w=>w.id===selectedId);if(current)selectItem(current);
   $('save-status').textContent='墙体已更新，保存项目可保留当前结果';renderIssues();renderPlan();refresh();
 }
@@ -85,7 +88,7 @@ function renderIssues() {
     const open=document.createElement('button');open.className='issue-open';open.type='button';
     const id=document.createElement('strong');id.textContent=issue.id;const type=document.createElement('span');type.textContent=TYPES[issue.type];
     const note=document.createElement('p');note.textContent=issue.summary||issue.note;open.append(id,type,note);
-    open.addEventListener('click',()=>{const wall=state.run.document.walls.find(w=>w.id===issue.wall_id);if(wall)selectItem(wall);else toast('这段墙已删除，可以撤销上一步恢复最近的修改。');});
+    open.addEventListener('click',()=>{const opening=state.run.document.openings?.find(o=>o.id===issue.opening_id);if(opening){focusOpening(opening);return;}const wall=state.run.document.walls.find(w=>w.id===issue.wall_id);if(wall)selectItem(wall);else toast('这段墙已删除，可以撤销上一步恢复最近的修改。');});
     const remove=document.createElement('button');remove.className='issue-remove';remove.textContent='×';remove.setAttribute('aria-label',`移除 ${issue.id} 的问题`);
     remove.addEventListener('click',()=>{if(state.busy)return;state.issues=state.issues.filter(i=>i.id!==issue.id);state.dirty=true;if(state.selected?.id===issue.id)clearSelection();$('save-status').textContent='问题清单已修改，需重新保存';renderIssues();renderPlan();refresh();});
     card.append(open);list.append(card);
@@ -101,13 +104,18 @@ function renderPlan() {
     for(const wall of state.run.document.walls) {
       const group=svgElement('g',{'class':`wall-hit${problemIds.has(wall.id)?' problem':''}${state.selected?.id===wall.id?' selected':''}`,tabindex:'0',role:'button','aria-label':`${wall.id}，${wall.orientation==='horizontal'?'水平':'垂直'}墙段，长度 ${wall.length_px} 像素`});
       const [x0,y0,x1,y1]=wall.bbox_px;
-      group.append(svgElement('rect',{x:x0,y:y0,width:x1-x0,height:y1-y0,class:'wall-shape'}));
-      group.append(svgElement('line',{x1:wall.start_px[0],y1:wall.start_px[1],x2:wall.end_px[0],y2:wall.end_px[1],class:'wall-center'}));
+      const solidParts=wall.solid_parts??[wall];
+      for(const part of solidParts) {
+        const [a,b,c,d]=part.bbox_px;
+        group.append(svgElement('rect',{x:a,y:b,width:c-a,height:d-b,class:'wall-shape','data-solid-id':part.id}));
+        group.append(svgElement('line',{x1:part.start_px[0],y1:part.start_px[1],x2:part.end_px[0],y2:part.end_px[1],class:'wall-center'}));
+      }
+      for(const hint of wall.opening_hints||[])group.append(svgElement('line',{x1:hint.start_px[0],y1:hint.start_px[1],x2:hint.end_px[0],y2:hint.end_px[1],class:'opening-gap',stroke:'#087e8b','stroke-width':1,'stroke-dasharray':'4 4'}));
       group.append(svgElement('line',{x1:wall.start_px[0],y1:wall.start_px[1],x2:wall.end_px[0],y2:wall.end_px[1],stroke:'transparent','stroke-width':Math.max(13,wall.thickness_px)}));
       let lx=Math.max(0,Math.min(state.width-lw,(x0+x1)/2-lw/2)),ly=Math.max(0,(y0+y1)/2-lh/2);
       for(let tries=0;tries<14&&labels.some(b=>lx<b[0]+lw&&lx+lw>b[0]&&ly<b[1]+lh&&ly+lh>b[1]);tries++)ly=Math.min(state.height-lh,ly+lh+2/state.zoom);
       const labelGroup=svgElement('g',{class:group.getAttribute('class'),'aria-hidden':'true'});
-      labels.push([lx,ly]);labelGroup.append(svgElement('line',{x1:(x0+x1)/2,y1:(y0+y1)/2,x2:lx+lw/2,y2:ly+lh/2,stroke:problemIds.has(wall.id)?'#c4611b':'#286be5','stroke-width':.8/state.zoom,'pointer-events':'none'}));labelGroup.append(svgElement('rect',{x:lx,y:ly,width:lw,height:lh,rx:3/state.zoom,class:'wall-label'}));const text=svgElement('text',{x:lx+lw/2,y:ly+13.2/state.zoom,'text-anchor':'middle',class:'wall-text',style:`font-size:${fs}px`});text.textContent=wall.id;labelGroup.append(text);floatingLabels.push(labelGroup);
+      labels.push([lx,ly]);labelGroup.append(svgElement('line',{x1:(x0+x1)/2,y1:(y0+y1)/2,x2:lx+lw/2,y2:ly+lh/2,stroke:problemIds.has(wall.id)?'#c4611b':'#286be5','stroke-width':.8/state.zoom,'pointer-events':'none'}));labelGroup.append(svgElement('rect',{x:lx,y:ly,width:lw,height:lh,rx:3/state.zoom,class:'wall-label'}));const text=svgElement('text',{x:lx+lw/2,y:ly+13.2/state.zoom,'text-anchor':'middle',class:'wall-text',style:`font-size:${fs}px`});text.textContent=wall.id;labelGroup.append(text);if((state.zoom>=.6&&solidParts.some(p=>p.length_px>15))||state.selected?.id===wall.id)floatingLabels.push(labelGroup);
       group.addEventListener('click',e=>{if(state.mode==='select'){e.stopPropagation();selectItem(wall);}});
       labelGroup.addEventListener('click',e=>{if(state.mode==='select'){e.stopPropagation();selectItem(wall);}});
       group.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectItem(wall);}});layer.append(group);
@@ -122,6 +130,48 @@ function renderPlan() {
     group.addEventListener('click',e=>{if(state.mode==='select'){e.stopPropagation();selectItem({...item,kind:'region'});}});
     group.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectItem({...item,kind:'region'});}});regions.append(group);
   }
+  renderOpenings(regions);
+}
+
+function focusOpening(opening) {
+  if(state.busy||state.mode!=='select')return;
+  if(state.formDirty){toast('请先应用当前墙体修改，或点击 × 取消。');return;}
+  clearSelection();state.focusedOpening=opening.id;renderPlan();renderOpeningList();
+  document.getElementById(`opening-${opening.id}`)?.scrollIntoView({block:'nearest'});
+}
+function renderOpenings(layer) {
+  if(!$('openings-toggle').checked)return;
+  for(const o of state.run.document.openings||[]) {
+    if(o.review_status==='rejected')continue;
+    const color=o.kind==='window'?'#087e8b':o.kind==='door'?'#b74915':'#737080';
+    const g=svgElement('g',{class:'opening-hit',tabindex:0,role:'button','aria-label':`${o.id} ${o.label} ${o.review_status==='confirmed'?'已确认':'待校核'}`});
+    const [x0,y0,x1,y1]=o.bbox_px,active=state.focusedOpening===o.id;
+    g.append(svgElement('rect',{x:x0,y:y0,width:x1-x0,height:y1-y0,fill:color,'fill-opacity':active?.35:.16,stroke:color,'stroke-width':active?3:1}));
+    g.append(svgElement('line',{x1:o.start_px[0],y1:o.start_px[1],x2:o.end_px[0],y2:o.end_px[1],stroke:color,'stroke-width':2,'stroke-dasharray':o.review_status==='confirmed'?'none':'5 3'}));
+    const x=Math.max(2,Math.min(state.width-38/state.zoom,(x0+x1)/2+7/state.zoom)),y=Math.max(14/state.zoom,Math.min(state.height-3,(y0+y1)/2));
+    const label=svgElement('text',{x,y,fill:color,stroke:'white','stroke-width':3/state.zoom,'paint-order':'stroke',style:`font-size:${12/state.zoom}px;font-weight:700`});label.textContent=o.id;g.append(label);
+    g.addEventListener('click',e=>{e.stopPropagation();focusOpening(o);});
+    g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();focusOpening(o);}});layer.append(g);
+  }
+}
+function renderOpeningList() {
+  const list=$('opening-list');list.replaceChildren();
+  const openings=state.run?.document.openings||[];
+  $('opening-count').textContent=openings.filter(o=>o.review_status!=='rejected').length;
+  if(!openings.length){const p=document.createElement('p');p.className='list-empty';p.textContent=state.run?'未找到门窗候选，可能仍有漏检。':'运行识别后显示门窗候选';list.append(p);return;}
+  for(const o of openings) {
+    const row=document.createElement('div');row.className='opening-row'+(state.focusedOpening===o.id?' focused':'');row.id=`opening-${o.id}`;
+    const button=document.createElement('button');button.className='text-button';button.type='button';button.textContent=`${o.id} · ${o.label}`;button.disabled=Boolean(state.busy);button.addEventListener('click',()=>focusOpening(o));
+    const status=document.createElement('small');status.textContent=o.review_status==='confirmed'?'已确认':o.review_status==='rejected'?'已排除':'待校核';
+    const select=document.createElement('select');select.setAttribute('aria-label',`${o.id} 校核类别`);select.append(new Option('校核…',''),new Option('确认为窗','window'),new Option('确认为门','door'),new Option('类别待定','unclassified'),new Option('标为误报','rejected'));select.disabled=Boolean(state.busy);
+    select.addEventListener('change',()=>{if(select.value)handle(reviewOpening(o.id,select.value));});row.append(button,status,select);list.append(row);
+  }
+}
+async function reviewOpening(id,kind) {
+  if(state.busy)return;if(state.formDirty){renderOpeningList();throw new Error('请先应用当前墙体修改，或点击 × 取消。');}
+  state.busy='edit';refresh();
+  try {const result=await api('/api/review-opening',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({run_id:state.run.run_id,opening_id:id,kind})});state.busy=false;adoptEdits(result);state.focusedOpening=id;renderPlan();toast(result.changes.at(-1).summary);}
+  finally{state.busy=false;refresh();}
 }
 function imagePoint(event) {const p=$('plan').createSVGPoint();p.x=event.clientX;p.y=event.clientY;const t=p.matrixTransform($('plan').getScreenCTM().inverse());return [Math.max(0,Math.min(state.width,t.x)),Math.max(0,Math.min(state.height,t.y))];}
 function dragBox(a,b){return [Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.max(a[0],b[0]),Math.max(a[1],b[1])].map(v=>Math.round(v*10)/10);}
@@ -148,6 +198,7 @@ async function loadFile(file, guard=true) {
   catch(error){URL.revokeObjectURL(url);throw error;}
   if(state.blobUrl)URL.revokeObjectURL(state.blobUrl);state.blobUrl=url;state.file=file;state.width=image.width;state.height=image.height;
   state.run=null;state.issues=[];state.selected=null;state.formDirty=false;state.dirty=false;state.regionCount=0;state.historySize=0;
+  state.focusedOpening=null;
   $('filename').textContent=file.name;$('image-meta').textContent=`${image.width} × ${image.height} px · 等待识别`;
   $('plan').setAttribute('viewBox',`0 0 ${image.width} ${image.height}`);$('plan-image').setAttribute('width',image.width);$('plan-image').setAttribute('height',image.height);$('plan-image').setAttribute('href',url);
   $('save-status').textContent='修改由页面程序直接执行，可撤销';setMode('select');clearSelection();renderIssues();refresh();requestAnimationFrame(fit);return true;
@@ -160,11 +211,12 @@ async function detect() {
   try {
     const result=await api('/api/detect',{method:'POST',headers:{'Content-Type':state.file.type,'X-Image-Name':encodeURIComponent(state.file.name)},body:state.file});
     state.run=result;state.width=result.document.image.width_px;state.height=result.document.image.height_px;state.issues=[];state.selected=null;state.formDirty=false;state.dirty=false;state.regionCount=0;state.historySize=0;
+    state.focusedOpening=null;
     $('plan-image').setAttribute('href',result.image_url);$('plan-image').setAttribute('width',state.width);$('plan-image').setAttribute('height',state.height);$('plan').setAttribute('viewBox',`0 0 ${state.width} ${state.height}`);
-    $('image-meta').textContent=`${state.width} × ${state.height} px · 本次自动识别 ${result.document.walls.length} 段候选`;
+    $('image-meta').textContent=`${state.width} × ${state.height} px · ${geometryDescription(result.document)}`;
     $('target').replaceChildren(new Option('不指定墙段',''));for(const wall of result.document.walls)$('target').append(new Option(wall.id,wall.id));
     $('overlay-toggle').checked=true;$('save-status').textContent='选择墙段并应用修改，完成后保存项目';clearSelection();renderIssues();fit();
-    toast(result.document.walls.length?`识别完成：${result.document.walls.length} 段候选，点击墙段开始校核`:'没有提取到墙段，可用「框选漏墙」标记');
+    toast(`识别完成：${geometryDescription(result.document)}，门窗洞口已从实墙中扣除，仍需校核`);
     return {run_id:result.run_id,wall_count:result.document.walls.length};
   } finally {state.busy=false;setMode('select');refresh();}
 }
@@ -174,7 +226,7 @@ async function saveProject() {
   const signature=JSON.stringify(state.issues), runId=state.run.run_id;state.busy='save';refresh();
   try {const result=await api('/api/save-project',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({run_id:runId})});
     if(state.run?.run_id===runId&&JSON.stringify(state.issues)===signature)state.dirty=false;
-    $('save-status').textContent=`项目已保存 · ${result.saved_name}`;toast(`已保存 ${result.count} 段墙体及修改记录。`);return result;
+    $('save-status').textContent=`项目已保存 · ${result.saved_name}`;toast(`已保存 ${result.solid_count??state.run.document.solid_wall_segments?.length??result.count} 段实墙及门窗、修改记录。`);return result;
   } finally {state.busy=false;refresh();}
 }
 function handle(promise) {Promise.resolve(promise).catch(error=>toast(error.message||'操作失败，请重试。',true));}
@@ -182,6 +234,7 @@ $('upload').addEventListener('click',()=>{$('file').value='';$('file').click();}
 $('file').addEventListener('change',()=>{if($('file').files[0])handle(loadFile($('file').files[0]));});
 $('sample').addEventListener('click',()=>handle(loadSample()));$('detect').addEventListener('click',()=>handle(detect()));$('save').addEventListener('click',()=>handle(saveProject()));$('undo').addEventListener('click',()=>handle(undoEdit()));
 $('select-tool').addEventListener('click',()=>setMode('select'));$('region-tool').addEventListener('click',()=>setMode('region'));$('overlay-toggle').addEventListener('change',renderPlan);
+$('openings-toggle').addEventListener('change',renderPlan);
 $('clear-selection').addEventListener('click',clearSelection);$('zoom-out').addEventListener('click',()=>zoom(1/1.25));$('zoom-in').addEventListener('click',()=>zoom(1.25));$('fit').addEventListener('click',fit);
 $('issue-form').addEventListener('submit',e=>{e.preventDefault();handle(submitCurrent());});
 for(const id of ['issue-type','direction','target','note','amount','anchor'])$(id).addEventListener('input',()=>{state.formDirty=true;refresh();});

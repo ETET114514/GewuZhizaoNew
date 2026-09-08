@@ -1,0 +1,982 @@
+{
+  "schema_version": "0.2.0",
+  "image": {
+    "filename": "floorplan.png",
+    "width_px": 745,
+    "height_px": 761,
+    "sha256": "5d567ec7911bd29f436886d0df4376616c9a88379fdd07032b88c84262166f6f"
+  },
+  "coordinate_system": "image pixels; origin top-left; x right; y down",
+  "geometry": {
+    "editable_fields": [
+      "start_px",
+      "end_px",
+      "thickness_px"
+    ],
+    "derived_fields": [
+      "bbox_px",
+      "length_px",
+      "orientation"
+    ],
+    "endpoints": "centerline at the outer extent of each candidate",
+    "bbox": "left, top, right-exclusive, bottom-exclusive"
+  },
+  "scale_mm_per_px": null,
+  "algorithm": "neutral-dark-axis-runs-v1",
+  "opening_algorithm": "parallel-frames-and-swing-arcs-v1",
+  "opening_basis": "source_image; independent of subsequent wall edits",
+  "parameters": {
+    "threshold": 180,
+    "max_color_spread": 10,
+    "min_length": 35,
+    "min_thickness": 7,
+    "max_thickness": 24,
+    "gap": 1
+  },
+  "limitations": [
+    "Candidates require manual review; no measured accuracy yet.",
+    "Only horizontal/vertical dark neutral walls are supported.",
+    "Furniture can cause false positives; light walls can be missed.",
+    "No real-world scale.",
+    "门窗为待校核候选；规则分数不是准确率或概率。",
+    "支持水平/垂直多线窗框和平开门开启弧；浅色、遮挡和非直角符号可能漏检。",
+    "窗框候选不细分固定窗/推拉窗/平开窗；门的朝向以图像坐标表示，不推断室内外。",
+    "尚不自动分类飘窗、井道、家具、厨卫设备及承重/非承重墙。"
+  ],
+  "walls": [
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        191.0,
+        22.5
+      ],
+      "end_px": [
+        332.0,
+        22.5
+      ],
+      "thickness_px": 17,
+      "length_px": 141,
+      "bbox_px": [
+        191,
+        14,
+        332,
+        31
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W001"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        63.0,
+        114.0
+      ],
+      "end_px": [
+        208.0,
+        114.0
+      ],
+      "thickness_px": 14,
+      "length_px": 145,
+      "bbox_px": [
+        63,
+        107,
+        208,
+        121
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W002"
+    },
+    {
+      "orientation": "vertical",
+      "start_px": [
+        71.0,
+        107.0
+      ],
+      "end_px": [
+        71.0,
+        717.0
+      ],
+      "thickness_px": 16,
+      "length_px": 610,
+      "bbox_px": [
+        63,
+        107,
+        79,
+        717
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W003"
+    },
+    {
+      "orientation": "vertical",
+      "start_px": [
+        365.0,
+        182.0
+      ],
+      "end_px": [
+        365.0,
+        309.0
+      ],
+      "thickness_px": 10,
+      "length_px": 127,
+      "bbox_px": [
+        360,
+        182,
+        370,
+        309
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W004"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        259.0,
+        193.5
+      ],
+      "end_px": [
+        332.0,
+        193.5
+      ],
+      "thickness_px": 15,
+      "length_px": 73,
+      "bbox_px": [
+        259,
+        186,
+        332,
+        201
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W005"
+    },
+    {
+      "orientation": "vertical",
+      "start_px": [
+        272.0,
+        186.0
+      ],
+      "end_px": [
+        272.0,
+        378.0
+      ],
+      "thickness_px": 16,
+      "length_px": 192,
+      "bbox_px": [
+        264,
+        186,
+        280,
+        378
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W006"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        362.0,
+        194.5
+      ],
+      "end_px": [
+        574.0,
+        194.5
+      ],
+      "thickness_px": 15,
+      "length_px": 212,
+      "bbox_px": [
+        362,
+        187,
+        574,
+        202
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W007"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        534.0,
+        218.5
+      ],
+      "end_px": [
+        577.0,
+        218.5
+      ],
+      "thickness_px": 7,
+      "length_px": 43,
+      "bbox_px": [
+        534,
+        215,
+        577,
+        222
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W008"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        259.0,
+        250.0
+      ],
+      "end_px": [
+        301.0,
+        250.0
+      ],
+      "thickness_px": 8,
+      "length_px": 42,
+      "bbox_px": [
+        259,
+        246,
+        301,
+        254
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W009"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        63.0,
+        291.5
+      ],
+      "end_px": [
+        200.0,
+        291.5
+      ],
+      "thickness_px": 9,
+      "length_px": 137,
+      "bbox_px": [
+        63,
+        287,
+        200,
+        296
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W010"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        264.0,
+        304.5
+      ],
+      "end_px": [
+        318.0,
+        304.5
+      ],
+      "thickness_px": 9,
+      "length_px": 54,
+      "bbox_px": [
+        264,
+        300,
+        318,
+        309
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W011"
+    },
+    {
+      "orientation": "vertical",
+      "start_px": [
+        365.0,
+        365.0
+      ],
+      "end_px": [
+        365.0,
+        412.0
+      ],
+      "thickness_px": 10,
+      "length_px": 47,
+      "bbox_px": [
+        360,
+        365,
+        370,
+        412
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W012"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        447.0,
+        372.0
+      ],
+      "end_px": [
+        646.0,
+        372.0
+      ],
+      "thickness_px": 14,
+      "length_px": 199,
+      "bbox_px": [
+        447,
+        365,
+        646,
+        379
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W013"
+    },
+    {
+      "orientation": "vertical",
+      "start_px": [
+        493.5,
+        365.0
+      ],
+      "end_px": [
+        493.5,
+        407.0
+      ],
+      "thickness_px": 9,
+      "length_px": 42,
+      "bbox_px": [
+        489,
+        365,
+        498,
+        407
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W014"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        265.0,
+        373.5
+      ],
+      "end_px": [
+        312.0,
+        373.5
+      ],
+      "thickness_px": 9,
+      "length_px": 47,
+      "bbox_px": [
+        265,
+        369,
+        312,
+        378
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W015"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        584.0,
+        395.0
+      ],
+      "end_px": [
+        651.0,
+        395.0
+      ],
+      "thickness_px": 8,
+      "length_px": 67,
+      "bbox_px": [
+        584,
+        391,
+        651,
+        399
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W016"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        494.0,
+        471.0
+      ],
+      "end_px": [
+        646.0,
+        471.0
+      ],
+      "thickness_px": 14,
+      "length_px": 152,
+      "bbox_px": [
+        494,
+        464,
+        646,
+        478
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W017"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        339.0,
+        470.0
+      ],
+      "end_px": [
+        431.0,
+        470.0
+      ],
+      "thickness_px": 10,
+      "length_px": 92,
+      "bbox_px": [
+        339,
+        465,
+        431,
+        475
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W018"
+    },
+    {
+      "orientation": "vertical",
+      "start_px": [
+        611.5,
+        465.0
+      ],
+      "end_px": [
+        611.5,
+        623.0
+      ],
+      "thickness_px": 13,
+      "length_px": 158,
+      "bbox_px": [
+        605,
+        465,
+        618,
+        623
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W019"
+    },
+    {
+      "orientation": "vertical",
+      "start_px": [
+        431.0,
+        469.0
+      ],
+      "end_px": [
+        431.0,
+        697.0
+      ],
+      "thickness_px": 16,
+      "length_px": 228,
+      "bbox_px": [
+        423,
+        469,
+        439,
+        697
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W020"
+    },
+    {
+      "orientation": "vertical",
+      "start_px": [
+        267.5,
+        515.0
+      ],
+      "end_px": [
+        267.5,
+        659.0
+      ],
+      "thickness_px": 11,
+      "length_px": 144,
+      "bbox_px": [
+        262,
+        515,
+        273,
+        659
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W021"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        606.0,
+        617.5
+      ],
+      "end_px": [
+        647.0,
+        617.5
+      ],
+      "thickness_px": 7,
+      "length_px": 41,
+      "bbox_px": [
+        606,
+        614,
+        647,
+        621
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W022"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        63.0,
+        651.5
+      ],
+      "end_px": [
+        115.0,
+        651.5
+      ],
+      "thickness_px": 17,
+      "length_px": 52,
+      "bbox_px": [
+        63,
+        643,
+        115,
+        660
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W023"
+    },
+    {
+      "orientation": "vertical",
+      "start_px": [
+        402.0,
+        648.0
+      ],
+      "end_px": [
+        402.0,
+        697.0
+      ],
+      "thickness_px": 8,
+      "length_px": 49,
+      "bbox_px": [
+        398,
+        648,
+        406,
+        697
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W024"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        409.0,
+        693.0
+      ],
+      "end_px": [
+        450.0,
+        693.0
+      ],
+      "thickness_px": 8,
+      "length_px": 41,
+      "bbox_px": [
+        409,
+        689,
+        450,
+        697
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W025"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        24.0,
+        713.0
+      ],
+      "end_px": [
+        119.0,
+        713.0
+      ],
+      "thickness_px": 8,
+      "length_px": 95,
+      "bbox_px": [
+        24,
+        709,
+        119,
+        717
+      ],
+      "source": "automatic",
+      "review_status": "unreviewed",
+      "id": "W026"
+    }
+  ],
+  "openings": [
+    {
+      "orientation": "vertical",
+      "start_px": [
+        197.0,
+        27
+      ],
+      "end_px": [
+        197.0,
+        110
+      ],
+      "bbox_px": [
+        189.5,
+        27.0,
+        204.5,
+        110.0
+      ],
+      "length_px": 83,
+      "thickness_px": 15.0,
+      "kind": "window",
+      "label": "窗框候选",
+      "score": 0.74,
+      "evidence": {
+        "parallel_line_count": 2,
+        "end_wall_distances_px": [
+          0.0,
+          0.0
+        ]
+      },
+      "id": "O001",
+      "source": "automatic_symbol_rules",
+      "review_status": "unreviewed",
+      "geometry_role": "opening_candidate"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        329,
+        198.5
+      ],
+      "end_px": [
+        358,
+        198.5
+      ],
+      "bbox_px": [
+        329.0,
+        191.5,
+        358.0,
+        205.5
+      ],
+      "length_px": 29,
+      "thickness_px": 14.0,
+      "kind": "window",
+      "label": "窗框候选",
+      "score": 0.843,
+      "evidence": {
+        "parallel_line_count": 4,
+        "end_wall_distances_px": [
+          0.0,
+          2.0
+        ]
+      },
+      "id": "O002",
+      "source": "automatic_symbol_rules",
+      "review_status": "unreviewed",
+      "geometry_role": "opening_candidate"
+    },
+    {
+      "orientation": "vertical",
+      "start_px": [
+        572.5,
+        227
+      ],
+      "end_px": [
+        572.5,
+        367
+      ],
+      "bbox_px": [
+        568.5,
+        227.0,
+        576.5,
+        367.0
+      ],
+      "length_px": 140,
+      "thickness_px": 8.0,
+      "kind": "window",
+      "label": "窗框候选",
+      "score": 0.723,
+      "evidence": {
+        "parallel_line_count": 2,
+        "end_wall_distances_px": [
+          5.0,
+          0.0
+        ]
+      },
+      "id": "O003",
+      "source": "automatic_symbol_rules",
+      "review_status": "unreviewed",
+      "geometry_role": "opening_candidate"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        322.0,
+        303
+      ],
+      "end_px": [
+        361.0,
+        303
+      ],
+      "bbox_px": [
+        322.0,
+        299.0,
+        361.0,
+        307.0
+      ],
+      "length_px": 39.0,
+      "thickness_px": 8.0,
+      "kind": "door",
+      "label": "平开门候选",
+      "score": 0.637,
+      "hinge_px": [
+        361.0,
+        303
+      ],
+      "leaf_end_px": [
+        361.0,
+        264.0
+      ],
+      "evidence": {
+        "arc_support": 0.917,
+        "arc_contrast": 0.219,
+        "leaf_length_px": 34,
+        "swing_side": "up"
+      },
+      "id": "O004",
+      "source": "automatic_symbol_rules",
+      "review_status": "unreviewed",
+      "geometry_role": "opening_candidate"
+    },
+    {
+      "orientation": "vertical",
+      "start_px": [
+        369,
+        315.0
+      ],
+      "end_px": [
+        369,
+        357.0
+      ],
+      "bbox_px": [
+        365.0,
+        315.0,
+        373.0,
+        357.0
+      ],
+      "length_px": 42.0,
+      "thickness_px": 8.0,
+      "kind": "door",
+      "label": "平开门候选",
+      "score": 0.621,
+      "hinge_px": [
+        369,
+        357.0
+      ],
+      "leaf_end_px": [
+        411.0,
+        357.0
+      ],
+      "evidence": {
+        "arc_support": 0.896,
+        "arc_contrast": 0.208,
+        "leaf_length_px": 45,
+        "swing_side": "right"
+      },
+      "id": "O005",
+      "source": "automatic_symbol_rules",
+      "review_status": "unreviewed",
+      "geometry_role": "opening_candidate"
+    },
+    {
+      "orientation": "vertical",
+      "start_px": [
+        641.5,
+        398
+      ],
+      "end_px": [
+        641.5,
+        461
+      ],
+      "bbox_px": [
+        637.5,
+        398.0,
+        645.5,
+        461.0
+      ],
+      "length_px": 63,
+      "thickness_px": 8.0,
+      "kind": "window",
+      "label": "窗框候选",
+      "score": 0.73,
+      "evidence": {
+        "parallel_line_count": 2,
+        "end_wall_distances_px": [
+          0.0,
+          3.0
+        ]
+      },
+      "id": "O006",
+      "source": "automatic_symbol_rules",
+      "review_status": "unreviewed",
+      "geometry_role": "opening_candidate"
+    },
+    {
+      "orientation": "vertical",
+      "start_px": [
+        368,
+        414.0
+      ],
+      "end_px": [
+        368,
+        458.0
+      ],
+      "bbox_px": [
+        364.0,
+        414.0,
+        372.0,
+        458.0
+      ],
+      "length_px": 44.0,
+      "thickness_px": 8.0,
+      "kind": "door",
+      "label": "平开门候选",
+      "score": 0.654,
+      "hinge_px": [
+        368,
+        458.0
+      ],
+      "leaf_end_px": [
+        412.0,
+        458.0
+      ],
+      "evidence": {
+        "arc_support": 1.0,
+        "arc_contrast": 0.135,
+        "leaf_length_px": 45,
+        "swing_side": "right"
+      },
+      "id": "O007",
+      "source": "automatic_symbol_rules",
+      "review_status": "unreviewed",
+      "geometry_role": "opening_candidate"
+    },
+    {
+      "orientation": "vertical",
+      "start_px": [
+        492,
+        420.0
+      ],
+      "end_px": [
+        492,
+        473.0
+      ],
+      "bbox_px": [
+        488.0,
+        420.0,
+        496.0,
+        473.0
+      ],
+      "length_px": 53.0,
+      "thickness_px": 8.0,
+      "kind": "door",
+      "label": "平开门候选",
+      "score": 0.771,
+      "hinge_px": [
+        492,
+        473.0
+      ],
+      "leaf_end_px": [
+        545.0,
+        473.0
+      ],
+      "evidence": {
+        "arc_support": 1.0,
+        "arc_contrast": 0.427,
+        "leaf_length_px": 54,
+        "swing_side": "right"
+      },
+      "id": "O008",
+      "source": "automatic_symbol_rules",
+      "review_status": "unreviewed",
+      "geometry_role": "opening_candidate"
+    },
+    {
+      "orientation": "vertical",
+      "start_px": [
+        643.25,
+        621
+      ],
+      "end_px": [
+        643.25,
+        685
+      ],
+      "bbox_px": [
+        640.5,
+        621.0,
+        646.0,
+        685.0
+      ],
+      "length_px": 64,
+      "thickness_px": 5.5,
+      "kind": "window",
+      "label": "窗框候选",
+      "score": 0.728,
+      "evidence": {
+        "parallel_line_count": 3,
+        "end_wall_distances_px": [
+          0.0,
+          64.0
+        ],
+        "frame_corner_support": true
+      },
+      "id": "O009",
+      "source": "automatic_symbol_rules",
+      "review_status": "unreviewed",
+      "geometry_role": "opening_candidate"
+    },
+    {
+      "orientation": "horizontal",
+      "start_px": [
+        449,
+        681.5
+      ],
+      "end_px": [
+        643,
+        681.5
+      ],
+      "bbox_px": [
+        449.0,
+        678.0,
+        643.0,
+        685.0
+      ],
+      "length_px": 194,
+      "thickness_px": 7.0,
+      "kind": "window",
+      "label": "窗框候选",
+      "score": 0.728,
+      "evidence": {
+        "parallel_line_count": 3,
+        "end_wall_distances_px": [
+          7.5,
+          60.5
+        ],
+        "frame_corner_support": true
+      },
+      "id": "O010",
+      "source": "automatic_symbol_rules",
+      "review_status": "unreviewed",
+      "geometry_role": "opening_candidate"
+    }
+  ]
+}

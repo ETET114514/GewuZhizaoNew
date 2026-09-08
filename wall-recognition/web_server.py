@@ -17,7 +17,10 @@ import webbrowser
 
 from PIL import Image, ImageOps
 from recognize_walls import detect_walls
+from recognize_openings import detect_openings, ALGORITHM, LIMITATIONS
 from correction_engine import apply_edit
+from copy import deepcopy
+from refine_walls import initialize_refinement, refresh_refinement
 
 ROOT = Path(__file__).resolve().parent
 ISSUE_TYPES = {"too_short", "too_long", "missing_corner", "position", "thickness", "false_positive", "missing_wall", "other"}
@@ -39,7 +42,7 @@ def recognize_upload(payload: bytes, filename: str) -> dict:
     normalized.save(image_file, format="PNG")
     png = image_file.getvalue()
     document = {
-        "schema_version": "0.1.0",
+        "schema_version": "0.2.0",
         "image": {"filename": "floorplan.png", "original_filename": filename[:200],
                   "width_px": normalized.width, "height_px": normalized.height,
                   "sha256": hashlib.sha256(png).hexdigest(),
@@ -50,10 +53,16 @@ def recognize_upload(payload: bytes, filename: str) -> dict:
                      "derived_fields": ["bbox_px", "length_px", "orientation"],
                      "bbox": "left, top, right-exclusive, bottom-exclusive"},
         "algorithm": "neutral-dark-axis-runs-v1", "parameters": SETTINGS,
-        "limitations": ["自动结果需校核；尺寸单位为像素。", "当前支持水平、垂直深灰墙线，门窗类型尚未识别。"],
+        "opening_algorithm": ALGORITHM,
+        "opening_basis": "source_image; independent of subsequent wall edits",
+        "limitations": ["自动结果需校核；尺寸单位为像素。", *LIMITATIONS],
         "walls": detect_walls(normalized, **SETTINGS),
     }
-    return {"document": document, "png": png, "history": [], "changes": [], "next_id": len(document["walls"])+1}
+    document["openings"] = detect_openings(normalized, document["walls"])
+    document = initialize_refinement(document, normalized)
+    reserved = [*document["opening_wall_ids"].values(), *(w["id"] for w in document["walls"])]
+    return {"document": document, "png": png, "history": [], "changes": [],
+            "next_id": max((int(identifier[1:]) for identifier in reserved), default=0)+1}
 
 
 def validate_feedback(document: dict, issues: list) -> list[dict]:
@@ -170,7 +179,7 @@ class ReviewHandler(BaseHTTPRequestHandler):
                     self.send_json(200, {"run_id": run_id, "document": run["document"], "image_url": f"/api/runs/{run_id}/image"})
                 finally:
                     self.server.detect_lock.release()
-            elif route in ("/api/apply-edit", "/api/undo-edit", "/api/save-project"):
+            elif route in ("/api/apply-edit", "/api/undo-edit", "/api/save-project", "/api/review-opening"):
                 request = json.loads(payload)
                 if not isinstance(request, dict) or not isinstance(request.get("run_id"), str):
                     raise ValueError("操作格式不正确。")
@@ -178,7 +187,25 @@ class ReviewHandler(BaseHTTPRequestHandler):
                     run = self.server.sessions.get(request["run_id"])
                     if run is None:
                         raise ValueError("识别结果已过期，请重新识别。")
-                    if route == "/api/apply-edit":
+                    if route == "/api/review-opening":
+                        kind=request.get("kind")
+                        if kind not in ("window","door","unclassified","rejected"):
+                            raise ValueError("请选择门、窗、待定或误报。")
+                        document=deepcopy(run["document"])
+                        opening=next((o for o in document.get("openings",[]) if o["id"]==request.get("opening_id")),None)
+                        if opening is None:
+                            raise ValueError("门窗编号不存在，请重新选择。")
+                        opening.setdefault("predicted_kind",opening["kind"])
+                        opening.update(kind=kind, review_status="rejected" if kind=="rejected" else "unreviewed" if kind=="unclassified" else "confirmed")
+                        labels={"window":"窗","door":"门","unclassified":"待定门窗","rejected":"误报"}
+                        opening["label"]=labels[kind]
+                        document=refresh_refinement(document)
+                        run["history"].append((run["document"],list(run["changes"]),run["next_id"]))
+                        run["history"]=run["history"][-50:]
+                        run["document"]=document
+                        run["changes"].append({"id":opening["id"],"opening_id":opening["id"],"type":"opening_review",
+                                               "summary":f"{opening['id']} 已标为{labels[kind]}"})
+                    elif route == "/api/apply-edit":
                         document, record, next_id = apply_edit(run["document"], request, run["next_id"])
                         run["history"].append((run["document"], list(run["changes"]), run["next_id"]))
                         run["history"] = run["history"][-50:]
@@ -195,7 +222,14 @@ class ReviewHandler(BaseHTTPRequestHandler):
                         (destination / "floorplan.png").write_bytes(run["png"])
                         for filename, data in (("walls.json", run["document"]), ("changes.json", run["changes"])):
                             (destination / filename).write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-                        self.send_json(200, {"saved_name": name, "count": len(run["document"]["walls"])})
+                        (destination / "solid-walls.json").write_text(json.dumps({
+                            "image": run["document"]["image"], "scale_mm_per_px": None,
+                            "coordinate_system": run["document"]["coordinate_system"],
+                            "solid_wall_segments": run["document"].get("solid_wall_segments", [])
+                        }, ensure_ascii=False, indent=2), encoding="utf-8")
+                        self.send_json(200, {"saved_name": name, "count": len(run["document"]["walls"]),
+                                             "solid_count": len(run["document"].get("solid_wall_segments", [])),
+                                             "opening_count": run["document"].get("refinement_summary", {}).get("active_opening_count", 0)})
                         return
                     response = {"document": run["document"], "changes": run["changes"], "history_size": len(run["history"])}
                 self.send_json(200, response)

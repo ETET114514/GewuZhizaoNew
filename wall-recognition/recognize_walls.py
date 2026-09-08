@@ -224,8 +224,10 @@ def main() -> None:
         "threshold", "max_color_spread", "min_length", "min_thickness",
         "max_thickness", "gap")}
     walls = detect_walls(image, **settings)
+    from recognize_openings import detect_openings, draw_openings, ALGORITHM, LIMITATIONS
+    openings = detect_openings(image, walls)
     document = {
-        "schema_version": "0.1.0",
+        "schema_version": "0.2.0",
         "image": {"filename": args.image.name, "width_px": image.width,
                   "height_px": image.height,
                   "sha256": hashlib.sha256(args.image.read_bytes()).hexdigest()},
@@ -238,19 +240,34 @@ def main() -> None:
         },
         "scale_mm_per_px": None,
         "algorithm": "neutral-dark-axis-runs-v1",
+        "opening_algorithm": ALGORITHM,
+        "opening_basis": "source_image; independent of subsequent wall edits",
         "parameters": settings,
         "limitations": ["Candidates require manual review; no measured accuracy yet.",
                         "Only horizontal/vertical dark neutral walls are supported.",
                         "Furniture can cause false positives; light walls can be missed.",
-                        "No automatic window/door identification or real-world scale."],
+                        "No real-world scale.", *LIMITATIONS],
         "walls": walls,
+        "openings": openings,
     }
+    from refine_walls import initialize_refinement, draw_pipeline_preview
+    document = initialize_refinement(document, image)
+    walls, openings = document["walls"], document["openings"]
     args.output.mkdir(parents=True, exist_ok=True)
     json_path = args.output / "walls.json"
     overlay_path = args.output / "walls-overlay.png"
     json_path.write_text(json.dumps(document, ensure_ascii=False, indent=2), encoding="utf-8")
     draw_overlay(image, walls).save(overlay_path)
+    draw_openings(image, openings).save(args.output / "openings-overlay.png")
+    draw_openings(draw_overlay(image, walls), openings).save(args.output / "recognition-overlay.png")
+    draw_pipeline_preview(image, document).save(args.output / "pipeline-comparison.png")
+    (args.output / "solid-walls.json").write_text(json.dumps({
+        "image": document["image"], "coordinate_system": document["coordinate_system"],
+        "scale_mm_per_px": None, "solid_wall_segments": document["solid_wall_segments"]
+    }, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"Wall candidates: {len(walls)} (all require review)")
+    print(f"Opening candidates: {len(openings)} (all require review)")
+    print(f"Refinement: {document['refinement_summary']}")
     print(f"Geometry: {json_path.resolve()}")
     print(f"Overlay: {overlay_path.resolve()}")
 
