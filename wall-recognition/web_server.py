@@ -16,7 +16,7 @@ import uuid
 import webbrowser
 
 from PIL import Image, ImageOps
-from recognize_walls import detect_walls
+from recognize_walls import detect_walls, ALGORITHM as WALL_ALGORITHM
 from recognize_openings import detect_openings, ALGORITHM, LIMITATIONS
 from correction_engine import apply_edit
 from copy import deepcopy
@@ -24,7 +24,7 @@ from refine_walls import initialize_refinement, refresh_refinement
 
 ROOT = Path(__file__).resolve().parent
 ISSUE_TYPES = {"too_short", "too_long", "missing_corner", "position", "thickness", "false_positive", "missing_wall", "other"}
-SETTINGS = dict(threshold=180, max_color_spread=10, min_length=35, min_thickness=7, max_thickness=24, gap=1)
+SETTINGS = dict(threshold=180, max_color_spread=10, min_length=35, min_thickness=7, max_thickness=24, gap=1, junction_max_thickness=64)
 MAX_IMAGE_BYTES = 12 * 1024 * 1024
 
 
@@ -52,7 +52,7 @@ def recognize_upload(payload: bytes, filename: str) -> dict:
         "geometry": {"editable_fields": ["start_px", "end_px", "thickness_px"],
                      "derived_fields": ["bbox_px", "length_px", "orientation"],
                      "bbox": "left, top, right-exclusive, bottom-exclusive"},
-        "algorithm": "neutral-dark-axis-runs-v1", "parameters": SETTINGS,
+        "algorithm": WALL_ALGORITHM, "parameters": SETTINGS,
         "opening_algorithm": ALGORITHM,
         "opening_basis": "source_image; independent of subsequent wall edits",
         "limitations": ["自动结果需校核；尺寸单位为像素。", *LIMITATIONS],
@@ -197,6 +197,8 @@ class ReviewHandler(BaseHTTPRequestHandler):
                             raise ValueError("门窗编号不存在，请重新选择。")
                         opening.setdefault("predicted_kind",opening["kind"])
                         opening.update(kind=kind, review_status="rejected" if kind=="rejected" else "unreviewed" if kind=="unclassified" else "confirmed")
+                        if kind == "unclassified":
+                            opening["requires_confirmation"] = True
                         labels={"window":"窗","door":"门","unclassified":"待定门窗","rejected":"误报"}
                         opening["label"]=labels[kind]
                         document=refresh_refinement(document)

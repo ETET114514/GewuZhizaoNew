@@ -13,6 +13,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
+ALGORITHM = "filled-and-outlined-walls-v2"
 
 def runs(line: np.ndarray) -> list[tuple[int, int]]:
     """Return half-open ranges containing True values."""
@@ -64,7 +65,8 @@ def components(mask: np.ndarray) -> list[list[tuple[int, int]]]:
 def detect_walls(image: Image.Image, *, threshold: int = 180,
                  max_color_spread: int = 10, min_length: int = 35,
                  min_thickness: int = 7, max_thickness: int = 24,
-                 gap: int = 1) -> list[dict]:
+                 gap: int = 1, include_outlined: bool = True,
+                 junction_max_thickness: int = 64) -> list[dict]:
     rgb = np.asarray(image.convert("RGB"), dtype=np.int16)
     gray = rgb @ np.array([0.299, 0.587, 0.114])
     spread = rgb.max(axis=2) - rgb.min(axis=2)
@@ -99,6 +101,56 @@ def detect_walls(image: Image.Image, *, threshold: int = 180,
                 "source": "automatic",
                 "review_status": "unreviewed",
             })
+    if include_outlined:
+        # At T/L junctions, connected-component boxes combine several wall
+        # widths and can exceed the old thickness limit. Recover locally stable
+        # filled bands rather than discarding the entire connected component.
+        for orientation in ("horizontal", "vertical"):
+            source = dark if orientation == "horizontal" else dark.T
+            active, tracks = [], []
+            for x,column in enumerate(source.T):
+                previous, current = list(active), []
+                for lo,hi in runs(column):
+                    if not min_thickness <= hi-lo <= junction_max_thickness:
+                        continue
+                    track = next((t for t in previous if abs(t[2]-lo) <= 1 and abs(t[3]-hi) <= 1),None)
+                    if track is None:
+                        track = [x,x+1,lo,hi]
+                        tracks.append(track)
+                    else:
+                        previous.remove(track)
+                        track[1] = x+1
+                    current.append(track)
+                active = current
+            for a,b,lo,hi in tracks:
+                thickness = hi-lo
+                if b-a < max(min_length,3*thickness):
+                    continue
+                center = (lo+hi)/2
+                axis = 0 if orientation == "horizontal" else 1
+                if any(w["orientation"] == orientation
+                       and abs(w["start_px"][1-axis]-center) <= (w["thickness_px"]+thickness)/2
+                       and min(b,w["end_px"][axis])-max(a,w["start_px"][axis]) > .5*(b-a)
+                       for w in candidates):
+                    continue
+                p1,p2 = ([a,center],[b,center]) if axis==0 else ([center,a],[center,b])
+                box = [a,lo,b,hi] if axis==0 else [lo,a,hi,b]
+                candidates.append(dict(orientation=orientation,start_px=list(map(float,p1)),end_px=list(map(float,p2)),
+                                       bbox_px=box,thickness_px=thickness,length_px=b-a,
+                                       source="automatic_filled_band",review_status="unreviewed"))
+        from recognize_outlined_walls import detect_outlined_walls
+        outlined = detect_outlined_walls(image, candidates)
+        if len(outlined) >= 3:
+            def near_network(wall):
+                a = wall["bbox_px"]
+                return any(max(a[0]-b[2],b[0]-a[2],0)**2 + max(a[1]-b[3],b[1]-a[3],0)**2
+                           <= (2*max(wall["thickness_px"],other["thickness_px"]))**2
+                           for other in [*candidates,*outlined] if other is not wall
+                           for b in [other["bbox_px"]])
+            # Short, detached filled strokes in a mainly outlined plan are
+            # often title glyphs, not members of the architectural network.
+            candidates = [w for w in candidates if w["length_px"] >= 80*min(image.size)/745 or near_network(w)]
+        candidates += outlined
     candidates.sort(key=lambda wall: (wall["bbox_px"][1], wall["bbox_px"][0]))
     for number, wall in enumerate(candidates, 1):
         wall["id"] = f"W{number:03d}"
@@ -205,10 +257,12 @@ def main() -> None:
     parser.add_argument("--min-length", type=int, default=35)
     parser.add_argument("--min-thickness", type=int, default=7)
     parser.add_argument("--max-thickness", type=int, default=24)
+    parser.add_argument("--junction-max-thickness", type=int, default=64)
     parser.add_argument("--gap", type=int, default=1)
     args = parser.parse_args()
     if not (0 <= args.threshold <= 255 and 0 <= args.max_color_spread <= 255
             and 1 <= args.min_thickness <= args.max_thickness
+            and args.junction_max_thickness >= args.min_thickness
             and args.min_length >= 1 and 0 <= args.gap <= 3):
         parser.error("Invalid parameters: brightness/color 0..255, positive lengths, gap 0..3.")
     try:
@@ -222,9 +276,9 @@ def main() -> None:
         parser.error(f"Cannot read image: {error}")
     settings = {key: getattr(args, key) for key in (
         "threshold", "max_color_spread", "min_length", "min_thickness",
-        "max_thickness", "gap")}
+        "max_thickness", "gap", "junction_max_thickness")}
     walls = detect_walls(image, **settings)
-    from recognize_openings import detect_openings, draw_openings, ALGORITHM, LIMITATIONS
+    from recognize_openings import detect_openings, draw_openings, ALGORITHM as OPENING_ALGORITHM, LIMITATIONS
     openings = detect_openings(image, walls)
     document = {
         "schema_version": "0.2.0",
@@ -239,13 +293,13 @@ def main() -> None:
             "bbox": "left, top, right-exclusive, bottom-exclusive",
         },
         "scale_mm_per_px": None,
-        "algorithm": "neutral-dark-axis-runs-v1",
-        "opening_algorithm": ALGORITHM,
+        "algorithm": ALGORITHM,
+        "opening_algorithm": OPENING_ALGORITHM,
         "opening_basis": "source_image; independent of subsequent wall edits",
         "parameters": settings,
         "limitations": ["Candidates require manual review; no measured accuracy yet.",
-                        "Only horizontal/vertical dark neutral walls are supported.",
-                        "Furniture can cause false positives; light walls can be missed.",
+                        "Only horizontal/vertical filled or paired-outline walls are supported.",
+                        "Furniture and two-line windows can remain ambiguous; review candidates.",
                         "No real-world scale.", *LIMITATIONS],
         "walls": walls,
         "openings": openings,

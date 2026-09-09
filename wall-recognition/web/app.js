@@ -11,7 +11,7 @@ function toast(message, error=false) {
 }
 function svgElement(tag, attrs={}) {const el=document.createElementNS(NS,tag); for(const [k,v] of Object.entries(attrs))el.setAttribute(k,String(v)); return el;}
 function snapshot() {return {run_id:state.run?.run_id||null,wall_count:state.run?.document.walls.length||0,walls:state.run?.document.walls||[],openings:state.run?.document.openings||[],issues:structuredClone(state.issues),selected_id:state.selected?.id||null,unsaved:state.dirty||state.formDirty};}
-function geometryDescription(doc) {const r=doc.refinement_summary;return r?`${r.solid_segment_count} 段实墙 · ${r.active_opening_count} 处洞口`:`${doc.walls.length} 段候选`;}
+function geometryDescription(doc) {const r=doc.refinement_summary;return r?`${r.solid_segment_count} 段实墙 · ${r.active_opening_count} 处洞口${r.uncertain_boundary_count?` · ${r.uncertain_boundary_count} 处边界待确认`:''}`:`${doc.walls.length} 段候选`;}
 function refresh() {
   const ready=Boolean(state.run), count=state.run?.document.walls.length||0;
   $('detect').disabled=!state.file||state.busy; $('detect').textContent=ready?'重新识别':'识别墙体与门窗';
@@ -162,7 +162,7 @@ function renderOpeningList() {
   for(const o of openings) {
     const row=document.createElement('div');row.className='opening-row'+(state.focusedOpening===o.id?' focused':'');row.id=`opening-${o.id}`;
     const button=document.createElement('button');button.className='text-button';button.type='button';button.textContent=`${o.id} · ${o.label}`;button.disabled=Boolean(state.busy);button.addEventListener('click',()=>focusOpening(o));
-    const status=document.createElement('small');status.textContent=o.review_status==='confirmed'?'已确认':o.review_status==='rejected'?'已排除':'待校核';
+    const status=document.createElement('small');status.textContent=o.review_status==='confirmed'?'已确认':o.review_status==='rejected'?'已排除':o.requires_confirmation?'待确认，暂不扣墙':'待校核';
     const select=document.createElement('select');select.setAttribute('aria-label',`${o.id} 校核类别`);select.append(new Option('校核…',''),new Option('确认为窗','window'),new Option('确认为门','door'),new Option('类别待定','unclassified'),new Option('标为误报','rejected'));select.disabled=Boolean(state.busy);
     select.addEventListener('change',()=>{if(select.value)handle(reviewOpening(o.id,select.value));});row.append(button,status,select);list.append(row);
   }

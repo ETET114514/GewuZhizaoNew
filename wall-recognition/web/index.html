@@ -33,7 +33,7 @@
         <label class="field">修改说明<textarea id="note" rows="3" maxlength="1000" placeholder="例如：向下延长，一直到 W013。也可用上面的方向、目标和数值准确指定。"></textarea></label>
         <button id="add-issue" class="button primary full" type="submit">应用修改，立即更新墙体</button>
       </form>
-      <section class="openings-section"><div class="issues-heading"><h3>门窗候选</h3><span id="opening-count">0</span></div><p class="opening-help">青色为窗框，棕色为平开门。已从实墙中扣除洞口，延长和补墙也会保留。标为误报会取消该洞口约束，可撤销。</p><div id="opening-list"></div></section>
+      <section class="openings-section"><div class="issues-heading"><h3>门窗与边界候选</h3><span id="opening-count">0</span></div><p class="opening-help">青色为窗框，棕色为平开门，紫灰色为待确认边界。待确认边界暂不扣墙；确认为门或窗后才生成洞口。标为误报可取消洞口约束，支持撤销。</p><div id="opening-list"></div></section>
       <section class="issues-section"><div class="issues-heading"><h3>修改记录</h3><span id="issue-count">0</span></div><div id="issue-list" class="issue-list"><p class="list-empty">执行后的修改会出现在这里</p></div></section>
       <div class="review-footer"><span class="status-dot"></span><p id="save-status">修改由页面程序直接执行，可撤销</p></div>
     </aside>

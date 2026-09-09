@@ -16,6 +16,9 @@ ALGORITHM = "wall-opening-wall-v1"
 GENERATED = "automatic_opening_connection"
 CONSTRAINT = "opening_constraint"
 
+def is_active_opening(opening):
+    return (opening.get("review_status") != "rejected" and opening.get("kind") != "rejected"
+            and (not opening.get("requires_confirmation") or opening.get("review_status") == "confirmed"))
 
 def axis_of(item):
     return 0 if item["orientation"] == "horizontal" else 1
@@ -93,6 +96,8 @@ def initialize_refinement(document, image):
                     candidates.append((abs(edge-end), edge, wall["id"]))
             # Glazed corners can meet a perpendicular opening, without a jamb.
             for other in result.get("openings", []):
+                if not is_active_opening(other):
+                    continue
                 other_geometry = other.get("detected_geometry", other)
                 if other["id"] == opening["id"] or axis_of(other_geometry) == axis:
                     continue
@@ -143,7 +148,7 @@ def refresh_refinement(document):
         return result
     strip_generated_hints(result)
     walls = [w for w in result["walls"] if w.get("source") != GENERATED]
-    active = [o for o in result.get("openings", []) if o.get("review_status") != "rejected" and o.get("kind") != "rejected"]
+    active = [o for o in result.get("openings", []) if is_active_opening(o)]
     occupied = {w["id"] for w in walls} | set(result.get("suppressed_connection_ids", []))
     for opening in active:
         connection = opening.get("connection_span", opening)
@@ -204,6 +209,7 @@ def refresh_refinement(document):
     result["refinement_summary"] = dict(
         coarse_wall_count=len(result.get("coarse_walls", [])),
         active_opening_count=len(active),
+        uncertain_boundary_count=sum(o.get("requires_confirmation",False) and o.get("review_status") == "unreviewed" for o in result.get("openings", [])),
         connection_count=sum(w.get("source") == GENERATED for w in walls),
         constrained_wall_count=sum(bool(w.get("opening_hints")) for w in walls),
         solid_segment_count=len(solid),
@@ -239,9 +245,10 @@ def draw_pipeline_preview(image, document):
                 if opening.get("review_status") == "rejected":
                     continue
                 a, b = opening["start_px"], opening["end_px"]
-                ink.line((tuple(a),tuple(b)),fill=(0,135,112,255),width=3)
+                color = (0,135,112,255) if is_active_opening(opening) else (117,91,141,255)
+                ink.line((tuple(a),tuple(b)),fill=color,width=3)
                 for x,y in (a,b):
-                    ink.ellipse((x-2,y-2,x+2,y+2),fill=(0,135,112,255))
+                    ink.ellipse((x-2,y-2,x+2,y+2),fill=color)
         left = 12+index*(width+12)
         canvas.paste(Image.alpha_composite(panel,layer).convert("RGB"),(left,80))
         draw.text((left+8,12),titles[index],font=font,fill="#22334b")

@@ -12,7 +12,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
 from recognize_walls import bridge_gaps, runs
 
 
-ALGORITHM = "parallel-frames-and-swing-arcs-v1"
+ALGORITHM = "wall-aware-frames-and-swing-arcs-v2"
 LIMITATIONS = [
     "门窗为待校核候选；规则分数不是准确率或概率。",
     "支持水平/垂直多线窗框和平开门开启弧；浅色、遮挡和非直角符号可能漏检。",
@@ -134,6 +134,34 @@ def window_candidates(image, gray, walls, lines, scale):
                 proposals.append({**geo, "kind":"window", "label":"窗框候选",
                                   "score":round(min(.94, .63+.055*min(count,5)-min(max(distances),20*scale)/(300*scale)),3),
                                   "evidence":{"parallel_line_count":count, "end_wall_distances_px":distances}})
+    # A long pair of frame strokes can continue along a white wall. Split at
+    # recovered wall bands before it is ever used to subtract solid geometry.
+    trimmed = []
+    for proposal in proposals:
+        axis = 0 if proposal["orientation"] == "horizontal" else 1
+        center = proposal["start_px"][1-axis]
+        spans = [(proposal["start_px"][axis],proposal["end_px"][axis])]
+        for wall in walls:
+            if (wall.get("source") != "automatic_paired_outline"
+                    or wall["orientation"] != proposal["orientation"]
+                    or abs(wall["start_px"][1-axis]-center) >
+                    min(wall["thickness_px"],proposal["thickness_px"])/2+1):
+                continue
+            lo,hi = wall["start_px"][axis],wall["end_px"][axis]
+            next_spans = []
+            for a,b in spans:
+                if hi <= a or lo >= b:
+                    next_spans.append((a,b))
+                else:
+                    if a < lo: next_spans.append((a,lo))
+                    if hi < b: next_spans.append((hi,b))
+            spans = next_spans
+        for a,b in spans:
+            if b-a < 22*scale:
+                continue
+            evidence = dict(proposal["evidence"],end_wall_distances_px=end_support(axis,a,b,center,walls,scale))
+            trimmed.append({**proposal,**geometry(axis,a,b,center,proposal["thickness_px"],image.size),"evidence":evidence})
+    proposals = trimmed
     accepted=[]
     for p in proposals:
         distances=p["evidence"]["end_wall_distances_px"]
@@ -259,6 +287,14 @@ def detect_openings(image: Image.Image, walls: list[dict]) -> list[dict]:
     candidates = window_candidates(image, gray, walls, lines, scale)
     candidates += door_candidates(image,gray,walls,lines,scale)
     candidates = suppress(candidates, scale)
+    for candidate in candidates:
+        axis = 0 if candidate["orientation"] == "horizontal" else 1
+        if (candidate["kind"] == "window"
+                and candidate["evidence"].get("parallel_line_count",0) >= 4
+                and enclosed_rectangle(axis,candidate["start_px"][axis],candidate["end_px"][axis],
+                                       candidate["start_px"][1-axis],lines,scale)):
+            candidate.update(kind="unclassified",label="窗/栏杆/设备边界待定",requires_confirmation=True)
+            candidate["evidence"]["ambiguity"] = "parallel strokes on a closed rectangle"
     # Door thresholds can contain several straight strokes too. Prefer an
     # observed swing over a generic frame interpretation of the same opening.
     doors=[c for c in candidates if c["kind"]=="door"]
@@ -270,7 +306,7 @@ def detect_openings(image: Image.Image, walls: list[dict]) -> list[dict]:
     candidates.sort(key=lambda c:(c["bbox_px"][1],c["bbox_px"][0],c["kind"]))
     for number, candidate in enumerate(candidates,1):
         candidate.update(id=f"O{number:03d}",source="automatic_symbol_rules",
-                         review_status="unreviewed", geometry_role="opening_candidate")
+                         review_status="unreviewed", geometry_role="boundary_candidate" if candidate.get("requires_confirmation") else "opening_candidate")
     return candidates
 
 
@@ -282,13 +318,13 @@ def draw_openings(image, openings):
     except OSError:
         font = ImageFont.load_default()
     for opening in openings:
-        color = "#087e8b" if opening["kind"] == "window" else "#b74915"
+        color = "#087e8b" if opening["kind"] == "window" else "#b74915" if opening["kind"] == "door" else "#737080"
         a,b = opening["start_px"],opening["end_px"]
         draw.line((tuple(a),tuple(b)),fill=color,width=3)
         for x,y in (a,b):
             draw.ellipse((x-3,y-3,x+3,y+3),fill=color)
         x,y = (a[0]+b[0])/2,(a[1]+b[1])/2
-        label = opening["id"] + (" WIN" if opening["kind"] == "window" else " DOOR")
+        label = opening["id"] + (" WIN" if opening["kind"] == "window" else " DOOR" if opening["kind"] == "door" else " ?")
         x = max(0,min(result.width-80,x+7)); y=max(0,min(result.height-18,y-10))
         draw.rectangle((x-2,y-2,x+77,y+15),fill="white",outline=color)
         draw.text((x,y),label,fill=color,font=font)

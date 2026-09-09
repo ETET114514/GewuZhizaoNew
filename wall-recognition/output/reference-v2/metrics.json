@@ -1,0 +1,227 @@
+[
+  {
+    "file": "01-outline.png",
+    "group": "outline",
+    "checks": {
+      "wall_landmarks": {
+        "total": 10,
+        "before": 0,
+        "after": 10,
+        "failed_after": []
+      },
+      "nonwall_landmarks": {
+        "total": 8,
+        "before": 8,
+        "after": 8,
+        "failed_after": []
+      }
+    },
+    "before": {
+      "coarse_wall_count": 1,
+      "active_opening_count": 0,
+      "uncertain_boundary_count": 0,
+      "connection_count": 0,
+      "constrained_wall_count": 0,
+      "solid_segment_count": 1,
+      "excluded_length_px": 0
+    },
+    "after": {
+      "coarse_wall_count": 29,
+      "active_opening_count": 7,
+      "uncertain_boundary_count": 0,
+      "connection_count": 7,
+      "constrained_wall_count": 7,
+      "solid_segment_count": 31,
+      "excluded_length_px": 1163.0
+    }
+  },
+  {
+    "file": "02-annotated.png",
+    "group": "same-home",
+    "checks": {
+      "wall_landmarks": {
+        "total": 10,
+        "before": 0,
+        "after": 10,
+        "failed_after": []
+      },
+      "nonwall_landmarks": {
+        "total": 5,
+        "before": 5,
+        "after": 5,
+        "failed_after": []
+      }
+    },
+    "before": {
+      "coarse_wall_count": 17,
+      "active_opening_count": 7,
+      "uncertain_boundary_count": 2,
+      "connection_count": 7,
+      "constrained_wall_count": 9,
+      "solid_segment_count": 17,
+      "excluded_length_px": 1312.0
+    },
+    "after": {
+      "coarse_wall_count": 55,
+      "active_opening_count": 9,
+      "uncertain_boundary_count": 4,
+      "connection_count": 9,
+      "constrained_wall_count": 9,
+      "solid_segment_count": 59,
+      "excluded_length_px": 712.25
+    }
+  },
+  {
+    "file": "03-raw.png",
+    "group": "same-home",
+    "checks": {
+      "wall_landmarks": {
+        "total": 10,
+        "before": 0,
+        "after": 10,
+        "failed_after": []
+      },
+      "nonwall_landmarks": {
+        "total": 6,
+        "before": 6,
+        "after": 6,
+        "failed_after": []
+      }
+    },
+    "before": {
+      "coarse_wall_count": 17,
+      "active_opening_count": 7,
+      "uncertain_boundary_count": 2,
+      "connection_count": 7,
+      "constrained_wall_count": 9,
+      "solid_segment_count": 17,
+      "excluded_length_px": 1649.5
+    },
+    "after": {
+      "coarse_wall_count": 45,
+      "active_opening_count": 8,
+      "uncertain_boundary_count": 5,
+      "connection_count": 8,
+      "constrained_wall_count": 8,
+      "solid_segment_count": 49,
+      "excluded_length_px": 791.0
+    }
+  },
+  {
+    "file": "04-furnished.png",
+    "group": "furnished-home",
+    "checks": {
+      "wall_landmarks": {
+        "total": 7,
+        "before": 4,
+        "after": 7,
+        "failed_after": []
+      },
+      "nonwall_landmarks": {
+        "total": 5,
+        "before": 5,
+        "after": 5,
+        "failed_after": []
+      }
+    },
+    "before": {
+      "coarse_wall_count": 26,
+      "active_opening_count": 11,
+      "uncertain_boundary_count": 0,
+      "connection_count": 11,
+      "constrained_wall_count": 16,
+      "solid_segment_count": 28,
+      "excluded_length_px": 2203.0
+    },
+    "after": {
+      "coarse_wall_count": 32,
+      "active_opening_count": 11,
+      "uncertain_boundary_count": 0,
+      "connection_count": 11,
+      "constrained_wall_count": 16,
+      "solid_segment_count": 34,
+      "excluded_length_px": 2203.0
+    }
+  },
+  {
+    "file": "05-dimensioned.png",
+    "group": "same-home",
+    "checks": {
+      "wall_landmarks": {
+        "total": 6,
+        "before": 1,
+        "after": 4,
+        "failed_after": [
+          [
+            602,
+            585
+          ],
+          [
+            693,
+            660
+          ]
+        ]
+      },
+      "nonwall_landmarks": {
+        "total": 8,
+        "before": 8,
+        "after": 8,
+        "failed_after": []
+      }
+    },
+    "before": {
+      "coarse_wall_count": 17,
+      "active_opening_count": 6,
+      "uncertain_boundary_count": 0,
+      "connection_count": 6,
+      "constrained_wall_count": 8,
+      "solid_segment_count": 17,
+      "excluded_length_px": 1317.5
+    },
+    "after": {
+      "coarse_wall_count": 25,
+      "active_opening_count": 6,
+      "uncertain_boundary_count": 1,
+      "connection_count": 5,
+      "constrained_wall_count": 7,
+      "solid_segment_count": 25,
+      "excluded_length_px": 1039.0
+    }
+  },
+  {
+    "file": "06-complex.png",
+    "group": "complex-home",
+    "checks": {
+      "wall_landmarks": {
+        "total": 5,
+        "before": 2,
+        "after": 5,
+        "failed_after": []
+      },
+      "nonwall_landmarks": {
+        "total": 6,
+        "before": 6,
+        "after": 6,
+        "failed_after": []
+      }
+    },
+    "before": {
+      "coarse_wall_count": 8,
+      "active_opening_count": 0,
+      "uncertain_boundary_count": 0,
+      "connection_count": 0,
+      "constrained_wall_count": 0,
+      "solid_segment_count": 8,
+      "excluded_length_px": 0
+    },
+    "after": {
+      "coarse_wall_count": 19,
+      "active_opening_count": 4,
+      "uncertain_boundary_count": 0,
+      "connection_count": 4,
+      "constrained_wall_count": 4,
+      "solid_segment_count": 19,
+      "excluded_length_px": 306.0
+    }
+  }
+]
