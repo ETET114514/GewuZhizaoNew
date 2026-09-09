@@ -65,6 +65,36 @@ class OpeningTests(unittest.TestCase):
         self.assertFalse(any(285<o["start_px"][0]<310 and 195<o["start_px"][1]<250 for o in result))
         self.assertEqual(result,detect_openings(image,detect_walls(image)))
 
+    def test_furnished_plan_recovers_all_eight_doors_without_equipment_false_positives(self):
+        image=Image.open(Path(__file__).parent/"input/reference-plans/04-furnished.png")
+        result=detect_openings(image,detect_walls(image))
+        doors=[o for o in result if o["kind"]=="door"]
+        # Entry, upper balcony, bath, study, two bedrooms and two lower balcony
+        # doors. Locations were read from the plan, not generated detections.
+        for x,y in [(460,152),(1110,325),(855,494),(1050,503),
+                    (675,629),(1010,632),(345,1033),(815,1033)]:
+            self.assertTrue(any(o["orientation"]=="horizontal" and
+                o["bbox_px"][0]-5 <= x <= o["bbox_px"][2]+5 and
+                o["bbox_px"][1]-8 <= y <= o["bbox_px"][3]+8 for o in doors),(x,y))
+        self.assertEqual(len(doors),8)
+        # The nearby equipment has circles, diagonal crosses and a closed box.
+        self.assertFalse(any(o["bbox_px"][0]<310 and o["bbox_px"][1]>1045 for o in doors))
+
+    def test_fitted_hinge_requires_arc_even_without_coarse_wall_candidates(self):
+        image=Image.new("RGB",(800,800),"white")
+        draw=ImageDraw.Draw(image)
+        draw.rectangle((150,300,319,317),fill="#777777")
+        draw.rectangle((385,300,560,317),fill="#777777")
+        # The extracted leaf endpoint extends 12 pixels beyond the true hinge.
+        draw.line((320,244,320,321),fill="#555555",width=2)
+        self.assertFalse(any(o["kind"]=="door" for o in detect_openings(image,[])))
+        draw.arc((255,244,385,374),270,360,fill="#555555",width=2)
+        for plan in (image,image.transpose(Image.Transpose.FLIP_LEFT_RIGHT),image.rotate(90)):
+            doors=[o for o in detect_openings(plan,[]) if o["kind"]=="door"]
+            self.assertEqual(len(doors),1)
+            self.assertAlmostEqual(doors[0]["length_px"],65,delta=8)
+            self.assertEqual(doors[0]["evidence"].get("jamb_support"),"source_image")
+
 
 if __name__=="__main__":
     unittest.main()

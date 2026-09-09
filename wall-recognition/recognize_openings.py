@@ -12,7 +12,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
 from recognize_walls import bridge_gaps, runs
 
 
-ALGORITHM = "wall-aware-frames-and-swing-arcs-v2"
+ALGORITHM = "wall-aware-frames-and-fitted-swing-arcs-v3"
 LIMITATIONS = [
     "门窗为待校核候选；规则分数不是准确率或概率。",
     "支持水平/垂直多线窗框和平开门开启弧；浅色、遮挡和非直角符号可能漏检。",
@@ -279,13 +279,123 @@ def door_candidates(image,gray,walls,lines,scale):
     return proposals
 
 
+def fitted_door_candidates(image, gray, walls, lines, scale, existing=()):
+    """Fit the hinge near a leaf endpoint; require an arc and physical jambs.
+
+    A leaf can merge with a wall stroke, shifting the extracted endpoint by a
+    wall thickness. Raw filled jambs and parallel frames can support a door even
+    when short wall pieces were missed by coarse wall detection.
+    """
+    local_light = np.asarray(image.convert("L").filter(ImageFilter.MaxFilter(7)),dtype=np.float32)
+    ink = ((local_light-gray)>16)&(gray<235)
+    ink = np.asarray(Image.fromarray(ink).filter(ImageFilter.MaxFilter(3)),dtype=bool)
+    solid = gray < 190
+    height,width = gray.shape
+    theta = np.linspace(.18,1.39,48)
+    cos,sin = np.cos(theta),np.sin(theta)
+    step = max(1,round(scale))
+    shifts = np.arange(-round(12*scale),round(12*scale)+1,step)
+    proposals = []
+
+    def jamb(axis, coordinate, center, outward):
+        src = solid if axis == 0 else solid.T
+        a,b = sorted((round(coordinate),round(coordinate+outward*22*scale)))
+        lo,hi = max(0,round(center-6*scale)),min(src.shape[0],round(center+6*scale))
+        patch = src[lo:hi,max(0,a):min(src.shape[1],b)]
+        # A filled patch must have thickness, not just a single frame stroke.
+        physical = bool(patch.size and np.count_nonzero(patch.mean(axis=0)>.65) >= 5*scale)
+        if not physical:
+            return None
+        wide_lo = max(0,round(center-14*scale))
+        wide_patch = src[wide_lo:min(src.shape[0],round(center+14*scale)),max(0,a):min(src.shape[1],b)]
+        bands = [(wide_lo+(a+b)/2,b-a) for a,b in runs(wide_patch.mean(axis=1)>.35) if b-a>=3*scale]
+        return min(bands,key=lambda band:abs(band[0]-center))[0] if bands else None
+
+    def frame_support(axis, coordinate, center):
+        return sum(s["axis"] == axis and abs(s["c"]-center) <= 8*scale
+                   and min(abs(s["a"]-coordinate),abs(s["b"]-coordinate)) <= 10*scale
+                   for s in lines) >= 2
+
+    def sweep(axis, hinge, direction, leaf_sign, radii):
+        u = hinge[axis]+direction*radii[:,None]*cos
+        v = hinge[1-axis]+leaf_sign*radii[:,None]*sin
+        x,y = (u,v) if axis==0 else (v,u)
+        xi,yi = np.rint(x).astype(int),np.rint(y).astype(int)
+        valid = (xi>=0)&(xi<width)&(yi>=0)&(yi<height)
+        return ink[np.clip(yi,0,height-1),np.clip(xi,0,width-1)]&valid
+
+    for leaf in lines:
+        length = leaf["b"]-leaf["a"]
+        if not 28*scale <= length <= 95*scale:
+            continue
+        axis = 1-leaf["axis"]
+        if any(o["orientation"] == ("horizontal" if axis==0 else "vertical")
+               and abs(o["hinge_px"][axis]-leaf["c"]) < 12*scale
+               and min(abs(o["hinge_px"][1-axis]-leaf[end]) for end in ("a","b")) < 16*scale
+               for o in existing):
+            continue
+        for at_start in (True,False):
+            endpoint = leaf["a"] if at_start else leaf["b"]
+            tip = leaf["b"] if at_start else leaf["a"]
+            leaf_sign = 1 if at_start else -1
+            best = None
+            for shift in shifts:
+                root = endpoint+shift
+                radius = abs(tip-root)
+                if not 28*scale <= radius <= 95*scale:
+                    continue
+                hinge = [leaf["c"],root] if axis==0 else [root,leaf["c"]]
+                for direction in (-1,1):
+                    host_center = jamb(axis,hinge[axis],root,-direction)
+                    if host_center is None or abs(host_center-root)>3*scale:
+                        continue
+                    radii = np.arange(max(28*scale,radius-5*scale),radius+5*scale+1,step)
+                    hits = sweep(axis,hinge,direction,leaf_sign,radii)
+                    supports = hits.mean(axis=1)
+                    coverage = np.minimum.reduce([chunk.mean(axis=1) for chunk in np.array_split(hits,3,axis=1)])
+                    promising = np.flatnonzero((supports>=.90)&(coverage>=.75))
+                    for index in promising:
+                        r = radii[index]
+                        latch = hinge[axis]+direction*r
+                        a,b = sorted((hinge[axis],latch))
+                        if a<0 or b>image.size[axis] or alongside_wall(axis,a,b,root,walls,scale):
+                            continue
+                        if not (jamb(axis,latch,root,direction) is not None or frame_support(axis,latch,root)):
+                            continue
+                        off = (sweep(axis,hinge,direction,leaf_sign,np.array([r-5*scale,r+5*scale]))).mean()
+                        contrast = supports[index]-off
+                        # Circles and diagonal crosses inside equipment can
+                        # mimic a quadrant. A fitted recovery needs a much
+                        # clearer isolated arc than the original anchored path.
+                        if contrast < .50:
+                            continue
+                        score = min(.98,.6*supports[index]+.4*contrast)-.0005*abs(shift)
+                        if best is not None and score <= best["score"]:
+                            continue
+                        best = {**geometry(axis,float(a),float(b),float(root),8*scale,image.size),
+                                "kind":"door","label":"平开门候选","score":round(float(score),4),
+                                "hinge_px":list(map(float,hinge)),
+                                "leaf_end_px":([float(hinge[0]),float(root+leaf_sign*r)] if axis==0 else
+                                               [float(root+leaf_sign*r),float(hinge[1])]),
+                                "evidence":{"arc_support":round(float(supports[index]),3),
+                                            "arc_contrast":round(float(contrast),3),
+                                            "leaf_length_px":length,"hinge_fit_offset_px":float(shift),
+                                            "jamb_support":"source_image",
+                                            "swing_side":"down" if axis==0 and leaf_sign>0 else "up" if axis==0 else "right" if leaf_sign>0 else "left"}}
+            if best:
+                proposals.append(best)
+    return proposals
+
+
 def detect_openings(image: Image.Image, walls: list[dict]) -> list[dict]:
     gray = np.asarray(image.convert("L"), dtype=np.float32)
     scale = max(.5, min(image.size)/745,
                 float(np.median([w["thickness_px"] for w in walls]))/12 if walls else .5)
     lines = line_segments(gray, scale)
     candidates = window_candidates(image, gray, walls, lines, scale)
-    candidates += door_candidates(image,gray,walls,lines,scale)
+    anchored_doors = door_candidates(image,gray,walls,lines,scale)
+    candidates += anchored_doors
+    candidates += fitted_door_candidates(image,gray,walls,lines,scale,anchored_doors)
     candidates = suppress(candidates, scale)
     for candidate in candidates:
         axis = 0 if candidate["orientation"] == "horizontal" else 1
