@@ -1,0 +1,215 @@
+{
+  "case": "example-08",
+  "role": "same_layout_redrawn_not_independent",
+  "target_count": 3,
+  "matched_count": 3,
+  "unmatched_candidates": [
+    {
+      "kind": "vanity",
+      "bbox_px": [
+        297.85,
+        127.93,
+        318.1,
+        157.96
+      ],
+      "rotation_deg": null,
+      "match_score": 0.8855,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-vanity-right",
+        "mirrored": true,
+        "detail_score": 0.6057,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F001",
+      "center_px": [
+        307.98,
+        142.94
+      ],
+      "size_px": [
+        20.25,
+        30.03
+      ],
+      "label": "浴室柜"
+    },
+    {
+      "kind": "vanity",
+      "bbox_px": [
+        651.86,
+        609.51,
+        681.89,
+        629.76
+      ],
+      "rotation_deg": null,
+      "match_score": 0.887,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-vanity-right",
+        "mirrored": false,
+        "detail_score": 0.5801,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F004",
+      "center_px": [
+        666.88,
+        619.63
+      ],
+      "size_px": [
+        30.03,
+        20.25
+      ],
+      "label": "浴室柜"
+    }
+  ],
+  "missed_targets": [],
+  "seconds": 123.58,
+  "furniture": [
+    {
+      "kind": "vanity",
+      "bbox_px": [
+        297.85,
+        127.93,
+        318.1,
+        157.96
+      ],
+      "rotation_deg": null,
+      "match_score": 0.8855,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-vanity-right",
+        "mirrored": true,
+        "detail_score": 0.6057,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F001",
+      "center_px": [
+        307.98,
+        142.94
+      ],
+      "size_px": [
+        20.25,
+        30.03
+      ],
+      "label": "浴室柜"
+    },
+    {
+      "kind": "bed",
+      "bbox_px": [
+        600.0,
+        222.09,
+        732.52,
+        338.65
+      ],
+      "rotation_deg": 90,
+      "match_score": 0.9138,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "plan-bed-a",
+        "mirrored": false,
+        "detail_score": 0.7918,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F002",
+      "center_px": [
+        666.26,
+        280.37
+      ],
+      "size_px": [
+        132.52,
+        116.56
+      ],
+      "label": "床"
+    },
+    {
+      "kind": "sofa",
+      "bbox_px": [
+        285.89,
+        246.63,
+        346.01,
+        414.73
+      ],
+      "rotation_deg": 270,
+      "match_score": 0.8035,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "plan-sofa-4",
+        "mirrored": false,
+        "detail_score": 0.5523,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F003",
+      "center_px": [
+        315.95,
+        330.68
+      ],
+      "size_px": [
+        60.12,
+        168.1
+      ],
+      "label": "沙发"
+    },
+    {
+      "kind": "vanity",
+      "bbox_px": [
+        651.86,
+        609.51,
+        681.89,
+        629.76
+      ],
+      "rotation_deg": null,
+      "match_score": 0.887,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-vanity-right",
+        "mirrored": false,
+        "detail_score": 0.5801,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F004",
+      "center_px": [
+        666.88,
+        619.63
+      ],
+      "size_px": [
+        30.03,
+        20.25
+      ],
+      "label": "浴室柜"
+    },
+    {
+      "kind": "bed",
+      "bbox_px": [
+        550.92,
+        892.03,
+        683.44,
+        990.19
+      ],
+      "rotation_deg": 90,
+      "match_score": 0.8669,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "plan-bed-b",
+        "mirrored": false,
+        "detail_score": 0.703,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F005",
+      "center_px": [
+        617.18,
+        941.11
+      ],
+      "size_px": [
+        132.52,
+        98.16
+      ],
+      "label": "床"
+    }
+  ]
+}

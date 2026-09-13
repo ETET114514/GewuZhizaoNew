@@ -1,0 +1,66 @@
+[
+  {
+    "case": "default-plan",
+    "role": "rendered_template_source_calibration",
+    "target_count": 9,
+    "matched_count": 9,
+    "unmatched_candidates": [],
+    "missed_targets": [],
+    "seconds": 49.27
+  },
+  {
+    "case": "example-06",
+    "role": "template_source_calibration",
+    "target_count": 3,
+    "matched_count": 3,
+    "unmatched_candidates": [],
+    "missed_targets": [],
+    "seconds": 68.25
+  },
+  {
+    "case": "example-08",
+    "role": "same_layout_redrawn_not_independent",
+    "target_count": 3,
+    "matched_count": 3,
+    "unmatched_candidates": [],
+    "missed_targets": [],
+    "seconds": 65.34
+  },
+  {
+    "case": "reference-04",
+    "role": "different_drawing_style_not_in_templates",
+    "target_count": 3,
+    "matched_count": 0,
+    "unmatched_candidates": [],
+    "missed_targets": [
+      {
+        "kind": "bed",
+        "bbox_px": [
+          702,
+          769,
+          932,
+          942
+        ]
+      },
+      {
+        "kind": "bed",
+        "bbox_px": [
+          1074,
+          727,
+          1304,
+          938
+        ]
+      },
+      {
+        "kind": "sofa",
+        "bbox_px": [
+          517,
+          690,
+          612,
+          932
+        ]
+      }
+    ],
+    "seconds": 66.49
+  }
+]

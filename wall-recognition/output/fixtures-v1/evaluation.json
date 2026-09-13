@@ -1,0 +1,125 @@
+[
+  {
+    "case": "default-plan",
+    "role": "rendered_template_source_calibration",
+    "target_count": 24,
+    "matched_count": 24,
+    "unmatched_candidates": [],
+    "missed_targets": [],
+    "seconds": 91.84
+  },
+  {
+    "case": "example-06",
+    "role": "template_source_calibration",
+    "target_count": 3,
+    "matched_count": 3,
+    "unmatched_candidates": [],
+    "missed_targets": [],
+    "seconds": 127.88
+  },
+  {
+    "case": "example-08",
+    "role": "same_layout_redrawn_not_independent",
+    "target_count": 3,
+    "matched_count": 3,
+    "unmatched_candidates": [
+      {
+        "kind": "vanity",
+        "bbox_px": [
+          297.85,
+          127.93,
+          318.1,
+          157.96
+        ],
+        "rotation_deg": null,
+        "match_score": 0.8855,
+        "source": "symbol_template",
+        "review_status": "unreviewed",
+        "evidence": {
+          "template_id": "rendered-vanity-right",
+          "mirrored": true,
+          "detail_score": 0.6057,
+          "score_type": "normalized_correlation_not_probability"
+        },
+        "id": "F001",
+        "center_px": [
+          307.98,
+          142.94
+        ],
+        "size_px": [
+          20.25,
+          30.03
+        ],
+        "label": "浴室柜"
+      },
+      {
+        "kind": "vanity",
+        "bbox_px": [
+          651.86,
+          609.51,
+          681.89,
+          629.76
+        ],
+        "rotation_deg": null,
+        "match_score": 0.887,
+        "source": "symbol_template",
+        "review_status": "unreviewed",
+        "evidence": {
+          "template_id": "rendered-vanity-right",
+          "mirrored": false,
+          "detail_score": 0.5801,
+          "score_type": "normalized_correlation_not_probability"
+        },
+        "id": "F004",
+        "center_px": [
+          666.88,
+          619.63
+        ],
+        "size_px": [
+          30.03,
+          20.25
+        ],
+        "label": "浴室柜"
+      }
+    ],
+    "missed_targets": [],
+    "seconds": 123.58
+  },
+  {
+    "case": "reference-04",
+    "role": "different_drawing_style_not_in_templates",
+    "target_count": 3,
+    "matched_count": 0,
+    "unmatched_candidates": [],
+    "missed_targets": [
+      {
+        "kind": "bed",
+        "bbox_px": [
+          702,
+          769,
+          932,
+          942
+        ]
+      },
+      {
+        "kind": "bed",
+        "bbox_px": [
+          1074,
+          727,
+          1304,
+          938
+        ]
+      },
+      {
+        "kind": "sofa",
+        "bbox_px": [
+          517,
+          690,
+          612,
+          932
+        ]
+      }
+    ],
+    "seconds": 122.03
+  }
+]

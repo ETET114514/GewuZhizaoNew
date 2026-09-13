@@ -5,3 +5,4 @@
 .opening-row .text-button{display:block}
 @media(max-width:1100px){.legend .legend-note{display:none}} @media(max-width:800px){.header{height:84px}}
 .pipeline-status{padding:9px 20px;background:#f0f7fa;color:#416579;font-size:12px;line-height:1.6;border-top:1px solid #e5eaf1}
+.furniture-section{padding:20px 22px;border-top:1px solid var(--line)}.furniture-row{display:flex;align-items:center;gap:8px;padding:9px 3px;border-bottom:1px solid #eef0f3}.furniture-row.focused{background:#f5ecf8}.furniture-row small{font-size:11px;color:#697586;white-space:nowrap}.furniture-row .text-button{display:block}.furniture-row button:first-child{flex:1;text-align:left}.furniture-hit{cursor:pointer}.furniture-hit:focus{outline:none;filter:drop-shadow(0 0 2px #a12bba)}#furniture-form{margin-top:18px}.tools{flex-wrap:wrap}.visibility{margin-left:0}#furniture-tool.active{background:#f5ecf8;color:#9126a5}

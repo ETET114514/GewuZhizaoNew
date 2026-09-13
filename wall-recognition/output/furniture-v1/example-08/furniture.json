@@ -1,0 +1,95 @@
+{
+  "case": "example-08",
+  "role": "same_layout_redrawn_not_independent",
+  "target_count": 3,
+  "matched_count": 3,
+  "unmatched_candidates": [],
+  "missed_targets": [],
+  "seconds": 37.61,
+  "furniture": [
+    {
+      "kind": "bed",
+      "bbox_px": [
+        600.0,
+        222.09,
+        732.52,
+        338.65
+      ],
+      "rotation_deg": 90,
+      "match_score": 0.9152,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "plan-bed-a",
+        "mirrored": false,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F001",
+      "center_px": [
+        666.26,
+        280.37
+      ],
+      "size_px": [
+        132.52,
+        116.56
+      ],
+      "label": "床"
+    },
+    {
+      "kind": "sofa",
+      "bbox_px": [
+        285.89,
+        246.63,
+        346.01,
+        414.73
+      ],
+      "rotation_deg": 270,
+      "match_score": 0.7911,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "plan-sofa-4",
+        "mirrored": false,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F002",
+      "center_px": [
+        315.95,
+        330.68
+      ],
+      "size_px": [
+        60.12,
+        168.1
+      ],
+      "label": "沙发"
+    },
+    {
+      "kind": "bed",
+      "bbox_px": [
+        550.92,
+        892.03,
+        683.44,
+        990.19
+      ],
+      "rotation_deg": 90,
+      "match_score": 0.8616,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "plan-bed-b",
+        "mirrored": false,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F003",
+      "center_px": [
+        617.18,
+        941.11
+      ],
+      "size_px": [
+        132.52,
+        98.16
+      ],
+      "label": "床"
+    }
+  ]
+}

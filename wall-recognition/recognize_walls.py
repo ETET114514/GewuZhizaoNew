@@ -306,14 +306,18 @@ def main() -> None:
     }
     from refine_walls import initialize_refinement, draw_pipeline_preview
     document = initialize_refinement(document, image)
+    from recognize_furniture import add_furniture, furniture_export, draw_furniture
+    add_furniture(document, image)
     walls, openings = document["walls"], document["openings"]
     args.output.mkdir(parents=True, exist_ok=True)
     json_path = args.output / "walls.json"
     overlay_path = args.output / "walls-overlay.png"
     json_path.write_text(json.dumps(document, ensure_ascii=False, indent=2), encoding="utf-8")
+    (args.output / "furniture.json").write_text(json.dumps(furniture_export(document), ensure_ascii=False, indent=2), encoding="utf-8")
+    draw_furniture(image, document["furniture"]).save(args.output / "furniture-overlay.png")
     draw_overlay(image, walls).save(overlay_path)
     draw_openings(image, openings).save(args.output / "openings-overlay.png")
-    draw_openings(draw_overlay(image, walls), openings).save(args.output / "recognition-overlay.png")
+    draw_furniture(draw_openings(draw_overlay(image, walls), openings), document["furniture"]).save(args.output / "recognition-overlay.png")
     draw_pipeline_preview(image, document).save(args.output / "pipeline-comparison.png")
     (args.output / "solid-walls.json").write_text(json.dumps({
         "image": document["image"], "coordinate_system": document["coordinate_system"],

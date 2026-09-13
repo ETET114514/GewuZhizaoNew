@@ -296,6 +296,8 @@ def fitted_door_candidates(image, gray, walls, lines, scale, existing=()):
     step = max(1,round(scale))
     shifts = np.arange(-round(12*scale),round(12*scale)+1,step)
     proposals = []
+    frame_lines = {axis: np.asarray([(s['c'],s['a'],s['b']) for s in lines if s['axis']==axis],
+                                    dtype=np.float64).reshape(-1,3) for axis in (0,1)}
 
     def jamb(axis, coordinate, center, outward):
         src = solid if axis == 0 else solid.T
@@ -312,9 +314,10 @@ def fitted_door_candidates(image, gray, walls, lines, scale, existing=()):
         return min(bands,key=lambda band:abs(band[0]-center))[0] if bands else None
 
     def frame_support(axis, coordinate, center):
-        return sum(s["axis"] == axis and abs(s["c"]-center) <= 8*scale
-                   and min(abs(s["a"]-coordinate),abs(s["b"]-coordinate)) <= 10*scale
-                   for s in lines) >= 2
+        candidates = frame_lines[axis]
+        return np.count_nonzero((np.abs(candidates[:,0]-center) <= 8*scale) &
+                                (np.minimum(np.abs(candidates[:,1]-coordinate),
+                                            np.abs(candidates[:,2]-coordinate)) <= 10*scale)) >= 2
 
     def sweep(axis, hinge, direction, leaf_sign, radii):
         u = hinge[axis]+direction*radii[:,None]*cos

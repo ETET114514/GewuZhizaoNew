@@ -50,6 +50,22 @@ class WebWorkflowTests(unittest.TestCase):
         with urlopen(self.origin + self.detected["image_url"]) as response:
             self.assertEqual(hashlib.sha256(response.read()).hexdigest(), self.detected["document"]["image"]["sha256"])
 
+    def test_repeated_recognition_reuses_pristine_data_not_user_edits(self):
+        def detect(name):
+            request=Request(self.origin+'/api/detect',data=(ROOT/'input/floorplan.png').read_bytes(),
+                            headers={'X-Wall-Token':self.token,'Origin':self.origin,'X-Image-Name':name})
+            with urlopen(request) as response:return json.load(response)
+        first=detect('first.png')
+        self.assertTrue(first['cache_hit'])
+        status,edited=self.post('/api/edit-furniture',{'run_id':first['run_id'],'action':'add','kind':'bed','bbox_px':[2,3,22,33]})
+        self.assertEqual(status,200)
+        second=detect('second.png')
+        self.assertTrue(second['cache_hit'])
+        self.assertNotEqual(first['run_id'],second['run_id'])
+        self.assertEqual(first['document']['furniture'],second['document']['furniture'])
+        self.assertEqual(second['document']['image']['original_filename'],'second.png')
+        self.assertEqual(self.server.sessions[second['run_id']]['history'],[])
+
     def test_save_wall_problem_and_missing_region_with_paired_source(self):
         issues = [
             {"id": "W010", "wall_id": "W010", "type": "missing_corner", "direction": "up", "note": "右端缺转角"},
@@ -121,6 +137,48 @@ class WebWorkflowTests(unittest.TestCase):
         for bad in ({"opening_id":"O999","kind":"door"},{"opening_id":opening["id"],"kind":"anything"}):
             self.assertEqual(self.post("/api/review-opening",{"run_id":run_id,**bad})[0],400)
         self.assertEqual(self.post("/api/undo-edit",{"run_id":run_id})[0],400)
+
+    def test_furniture_edit_save_and_shared_undo(self):
+        run_id=self.detected["run_id"]
+        original=self.detected["document"]
+        status,added=self.post('/api/edit-furniture',{'run_id':run_id,'action':'add','kind':'bed','bbox_px':[50,60,160,200],'rotation_deg':90})
+        self.assertEqual(status,200)
+        furniture=added['document']['furniture'][-1]
+        self.assertEqual(furniture['source'],'manual')
+        self.assertEqual(added['document']['solid_wall_segments'],original['solid_wall_segments'])
+        status,invalid=self.post('/api/edit-furniture',{'run_id':run_id,'action':'update','furniture_id':furniture['id'],'bbox_px':[0,0,9999,9999]})
+        self.assertEqual(status,400)
+        status,saved=self.post('/api/save-project',{'run_id':run_id})
+        folder=Path(self.temp.name)/'projects'/saved['saved_name']
+        exported=json.loads((folder/'furniture.json').read_text(encoding='utf-8'))
+        self.assertEqual(exported['furniture'],added['document']['furniture'])
+        status,rejected=self.post('/api/edit-furniture',{'run_id':run_id,'action':'reject','furniture_id':furniture['id']})
+        self.assertEqual(status,200)
+        self.assertEqual(rejected['document']['furniture'][-1]['review_status'],'rejected')
+        status,undo=self.post('/api/undo-edit',{'run_id':run_id})
+        self.assertEqual(undo['document'],added['document'])
+        status,undo=self.post('/api/undo-edit',{'run_id':run_id})
+        self.assertEqual(undo['document'],original)
+
+    def test_fixture_categories_and_bathing_confirmation_save_undo(self):
+        run_id=self.detected['run_id']
+        original=self.detected['document']
+        baths=[f for f in original['furniture'] if f['kind']=='wet_area']
+        self.assertEqual(len(baths),2)
+        self.assertTrue(all(f['review_status']=='unreviewed' for f in baths))
+        for kind in ('bathtub','shower'):
+            status,edited=self.post('/api/edit-furniture',{'run_id':run_id,'action':'update','furniture_id':baths[0]['id'],'kind':kind})
+            self.assertEqual(status,200)
+            item=next(f for f in edited['document']['furniture'] if f['id']==baths[0]['id'])
+            self.assertEqual(item['review_status'],'confirmed')
+            self.assertEqual(item['prediction']['kind'],'wet_area')
+            self.assertEqual(edited['document']['solid_wall_segments'],original['solid_wall_segments'])
+            status,saved=self.post('/api/save-project',{'run_id':run_id})
+            self.assertEqual(status,200)
+            path=Path(self.temp.name)/'projects'/saved['saved_name']/'furniture.json'
+            self.assertEqual(json.loads(path.read_text(encoding='utf-8'))['furniture'],edited['document']['furniture'])
+            status,undone=self.post('/api/undo-edit',{'run_id':run_id})
+            self.assertEqual(undone['document'],original)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,142 @@
+{
+  "source": "../floorplan.png",
+  "role": "template_source_calibration_not_independent",
+  "bathroom_instruction": "User requested both bathing areas remain unclassified as bathtub versus shower.",
+  "targets": [
+    {
+      "kind": "coffee_table",
+      "bbox_px": [
+        135,
+        529,
+        187,
+        584
+      ]
+    },
+    {
+      "kind": "dining_table",
+      "bbox_px": [
+        77,
+        351,
+        146,
+        392
+      ]
+    },
+    {
+      "kind": "shoe_cabinet",
+      "bbox_px": [
+        272,
+        82,
+        294,
+        160
+      ]
+    },
+    {
+      "kind": "tv_console",
+      "bbox_px": [
+        247,
+        518,
+        264,
+        602
+      ]
+    },
+    {
+      "kind": "kitchen_sink",
+      "bbox_px": [
+        112,
+        122,
+        159,
+        152
+      ]
+    },
+    {
+      "kind": "cooktop",
+      "bbox_px": [
+        79,
+        192,
+        105,
+        237
+      ]
+    },
+    {
+      "kind": "kitchen_cabinet",
+      "bbox_px": [
+        79,
+        124,
+        194,
+        153
+      ]
+    },
+    {
+      "kind": "kitchen_cabinet",
+      "bbox_px": [
+        79,
+        152,
+        109,
+        256
+      ]
+    },
+    {
+      "kind": "kitchen_cabinet",
+      "bbox_px": [
+        79,
+        256,
+        185,
+        289
+      ]
+    },
+    {
+      "kind": "vanity",
+      "bbox_px": [
+        278,
+        311,
+        307,
+        370
+      ]
+    },
+    {
+      "kind": "vanity",
+      "bbox_px": [
+        497,
+        379,
+        542,
+        409
+      ]
+    },
+    {
+      "kind": "toilet",
+      "bbox_px": [
+        279,
+        263,
+        318,
+        287
+      ]
+    },
+    {
+      "kind": "toilet",
+      "bbox_px": [
+        554,
+        380,
+        577,
+        415
+      ]
+    },
+    {
+      "kind": "wet_area",
+      "bbox_px": [
+        299,
+        202,
+        360,
+        250
+      ]
+    },
+    {
+      "kind": "wet_area",
+      "bbox_px": [
+        589,
+        400,
+        633,
+        464
+      ]
+    }
+  ]
+}

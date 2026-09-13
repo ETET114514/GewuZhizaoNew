@@ -1,0 +1,38 @@
+{
+  "case": "reference-04",
+  "role": "different_drawing_style_not_in_templates",
+  "target_count": 3,
+  "matched_count": 0,
+  "unmatched_candidates": [],
+  "missed_targets": [
+    {
+      "kind": "bed",
+      "bbox_px": [
+        702,
+        769,
+        932,
+        942
+      ]
+    },
+    {
+      "kind": "bed",
+      "bbox_px": [
+        1074,
+        727,
+        1304,
+        938
+      ]
+    },
+    {
+      "kind": "sofa",
+      "bbox_px": [
+        517,
+        690,
+        612,
+        932
+      ]
+    }
+  ],
+  "seconds": 122.03,
+  "furniture": []
+}

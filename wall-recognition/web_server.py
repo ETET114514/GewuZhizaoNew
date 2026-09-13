@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import OrderedDict
 from datetime import datetime
 import hashlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -14,6 +15,7 @@ import threading
 from urllib.parse import unquote, urlsplit
 import uuid
 import webbrowser
+from time import perf_counter
 
 from PIL import Image, ImageOps
 from recognize_walls import detect_walls, ALGORITHM as WALL_ALGORITHM
@@ -21,6 +23,7 @@ from recognize_openings import detect_openings, ALGORITHM, LIMITATIONS
 from correction_engine import apply_edit
 from copy import deepcopy
 from refine_walls import initialize_refinement, refresh_refinement
+from recognize_furniture import add_furniture, apply_furniture_edit, furniture_export
 
 ROOT = Path(__file__).resolve().parent
 ISSUE_TYPES = {"too_short", "too_long", "missing_corner", "position", "thickness", "false_positive", "missing_wall", "other"}
@@ -60,6 +63,7 @@ def recognize_upload(payload: bytes, filename: str) -> dict:
     }
     document["openings"] = detect_openings(normalized, document["walls"])
     document = initialize_refinement(document, normalized)
+    add_furniture(document, normalized)
     reserved = [*document["opening_wall_ids"].values(), *(w["id"] for w in document["walls"])]
     return {"document": document, "png": png, "history": [], "changes": [],
             "next_id": max((int(identifier[1:]) for identifier in reserved), default=0)+1}
@@ -109,6 +113,7 @@ class ReviewServer(ThreadingHTTPServer):
         self.sessions = {}
         self.state_lock = threading.Lock()
         self.detect_lock = threading.Lock()
+        self.recognition_cache = OrderedDict()
         self.feedback_root = feedback_root
 
 
@@ -141,6 +146,8 @@ class ReviewHandler(BaseHTTPRequestHandler):
             self.send_json(200, {"token": self.server.token})
         elif route == "/api/sample-image":
             self.send_bytes(200, (ROOT / "input/floorplan.png").read_bytes(), "image/png")
+        elif route == "/api/furniture-sample-image":
+            self.send_bytes(200, (ROOT / "input/furniture-references/06.jpg").read_bytes(), "image/jpeg")
         elif route.startswith("/api/runs/") and route.endswith("/image"):
             with self.server.state_lock:
                 run = self.server.sessions.get(route.split("/")[3])
@@ -170,16 +177,31 @@ class ReviewHandler(BaseHTTPRequestHandler):
                     self.send_json(409, {"error": "正在处理另一张图片，请稍后重试。"})
                     return
                 try:
-                    run = recognize_upload(payload, unquote(self.headers.get("X-Image-Name", "floorplan.png")))
+                    started = perf_counter()
+                    filename = unquote(self.headers.get("X-Image-Name", "floorplan.png"))[:200]
+                    cache_key = hashlib.sha256(payload).digest()
+                    cached = self.server.recognition_cache.get(cache_key)
+                    cache_hit = cached is not None
+                    if cached is None:
+                        run = recognize_upload(payload, filename)
+                        # Cache pristine recognition, never a mutable editing session.
+                        self.server.recognition_cache[cache_key] = deepcopy(run)
+                        while len(self.server.recognition_cache) > 3:
+                            self.server.recognition_cache.popitem(last=False)
+                    else:
+                        self.server.recognition_cache.move_to_end(cache_key)
+                        run = deepcopy(cached)
+                        run['document']['image']['original_filename'] = filename
                     run_id = uuid.uuid4().hex
                     with self.server.state_lock:
                         if len(self.server.sessions) >= 8:
                             self.server.sessions.pop(next(iter(self.server.sessions)))
                         self.server.sessions[run_id] = run
-                    self.send_json(200, {"run_id": run_id, "document": run["document"], "image_url": f"/api/runs/{run_id}/image"})
+                    self.send_json(200, {"run_id": run_id, "document": run["document"], "image_url": f"/api/runs/{run_id}/image",
+                                         "elapsed_ms": round((perf_counter()-started)*1000), "cache_hit": cache_hit})
                 finally:
                     self.server.detect_lock.release()
-            elif route in ("/api/apply-edit", "/api/undo-edit", "/api/save-project", "/api/review-opening"):
+            elif route in ("/api/apply-edit", "/api/undo-edit", "/api/save-project", "/api/review-opening", "/api/edit-furniture"):
                 request = json.loads(payload)
                 if not isinstance(request, dict) or not isinstance(request.get("run_id"), str):
                     raise ValueError("操作格式不正确。")
@@ -187,7 +209,13 @@ class ReviewHandler(BaseHTTPRequestHandler):
                     run = self.server.sessions.get(request["run_id"])
                     if run is None:
                         raise ValueError("识别结果已过期，请重新识别。")
-                    if route == "/api/review-opening":
+                    if route == "/api/edit-furniture":
+                        document, record = apply_furniture_edit(run["document"], request)
+                        run["history"].append((run["document"], list(run["changes"]), run["next_id"]))
+                        run["history"] = run["history"][-50:]
+                        run["document"] = document
+                        run["changes"].append(record)
+                    elif route == "/api/review-opening":
                         kind=request.get("kind")
                         if kind not in ("window","door","unclassified","rejected"):
                             raise ValueError("请选择门、窗、待定或误报。")
@@ -222,6 +250,7 @@ class ReviewHandler(BaseHTTPRequestHandler):
                         destination = self.server.feedback_root.parent / "projects" / name
                         destination.mkdir(parents=True, exist_ok=False)
                         (destination / "floorplan.png").write_bytes(run["png"])
+                        (destination / "furniture.json").write_text(json.dumps(furniture_export(run["document"]), ensure_ascii=False, indent=2), encoding="utf-8")
                         for filename, data in (("walls.json", run["document"]), ("changes.json", run["changes"])):
                             (destination / filename).write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
                         (destination / "solid-walls.json").write_text(json.dumps({
@@ -230,6 +259,7 @@ class ReviewHandler(BaseHTTPRequestHandler):
                             "solid_wall_segments": run["document"].get("solid_wall_segments", [])
                         }, ensure_ascii=False, indent=2), encoding="utf-8")
                         self.send_json(200, {"saved_name": name, "count": len(run["document"]["walls"]),
+                                             "furniture_count": sum(f["review_status"] != "rejected" for f in run["document"].get("furniture", [])),
                                              "solid_count": len(run["document"].get("solid_wall_segments", [])),
                                              "opening_count": run["document"].get("refinement_summary", {}).get("active_opening_count", 0)})
                         return

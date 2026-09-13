@@ -1,0 +1,98 @@
+{
+  "case": "example-08",
+  "role": "same_layout_redrawn_not_independent",
+  "target_count": 3,
+  "matched_count": 3,
+  "unmatched_candidates": [],
+  "missed_targets": [],
+  "seconds": 65.34,
+  "furniture": [
+    {
+      "kind": "bed",
+      "bbox_px": [
+        600.0,
+        222.09,
+        732.52,
+        338.65
+      ],
+      "rotation_deg": 90,
+      "match_score": 0.9138,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "plan-bed-a",
+        "mirrored": false,
+        "detail_score": 0.7918,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F001",
+      "center_px": [
+        666.26,
+        280.37
+      ],
+      "size_px": [
+        132.52,
+        116.56
+      ],
+      "label": "床"
+    },
+    {
+      "kind": "sofa",
+      "bbox_px": [
+        285.89,
+        246.63,
+        346.01,
+        414.73
+      ],
+      "rotation_deg": 270,
+      "match_score": 0.8035,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "plan-sofa-4",
+        "mirrored": false,
+        "detail_score": 0.5523,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F002",
+      "center_px": [
+        315.95,
+        330.68
+      ],
+      "size_px": [
+        60.12,
+        168.1
+      ],
+      "label": "沙发"
+    },
+    {
+      "kind": "bed",
+      "bbox_px": [
+        550.92,
+        892.03,
+        683.44,
+        990.19
+      ],
+      "rotation_deg": 90,
+      "match_score": 0.8669,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "plan-bed-b",
+        "mirrored": false,
+        "detail_score": 0.703,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F003",
+      "center_px": [
+        617.18,
+        941.11
+      ],
+      "size_px": [
+        132.52,
+        98.16
+      ],
+      "label": "床"
+    }
+  ]
+}

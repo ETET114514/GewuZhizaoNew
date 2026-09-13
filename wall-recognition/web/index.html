@@ -13,17 +13,17 @@
   <div class="workflow"><div class="steps"><span id="step1" class="step active"><b>01</b> 导入户型</span><span class="step-line"></span><span id="step2" class="step"><b>02</b> 识别构件</span><span class="step-line"></span><span id="step3" class="step"><b>03</b> 修改校核</span></div><span class="privacy">图片与项目保存在这台电脑</span></div>
   <main class="workspace">
     <section class="drawing-panel" aria-label="户型图工作区">
-      <div class="drawing-header"><div><span class="eyebrow">FLOOR PLAN</span><h1 id="filename">示例户型.png</h1><p id="image-meta">正在准备底图…</p></div><div class="drawing-actions"><button id="upload" class="button">导入图片</button><button id="detect" class="button primary" disabled>识别墙体与门窗</button></div></div>
+      <div class="drawing-header"><div><span class="eyebrow">FLOOR PLAN</span><h1 id="filename">示例户型.png</h1><p id="image-meta">正在准备底图…</p></div><div class="drawing-actions"><button id="upload" class="button">导入图片</button><button id="detect" class="button primary" disabled>识别墙体、门窗与家具</button></div></div>
       <input id="file" type="file" accept="image/png,image/jpeg,image/webp" hidden>
       <p id="pipeline-status" class="pipeline-status">识别流程：粗识别墙体 → 识别门窗 → 保留洞口并整理墙体</p>
-      <div class="tools"><div class="tool-group"><button id="select-tool" class="tool active" aria-pressed="true">↖ 选择墙段</button><button id="region-tool" class="tool" disabled aria-pressed="false">▧ 框选漏墙</button></div><label class="visibility"><input id="overlay-toggle" type="checkbox" checked> 墙段</label><label class="visibility"><input id="openings-toggle" type="checkbox" checked> 门窗</label><button id="sample" class="text-button">使用示例图</button></div>
-      <div id="stage" class="stage" tabindex="0" aria-label="户型图，可点击墙段或框选漏识别区域"><div id="paper" class="paper"><svg id="plan" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 745 761" aria-label="户型图与可选墙段"><image id="plan-image" width="745" height="761" href="/api/sample-image"/><g id="wall-layer"></g><g id="region-layer"></g><g id="draft-layer"></g></svg></div><div id="loading" class="loading" hidden><div class="spinner"></div><strong>正在识别墙体与门窗</strong><span>从图中提取墙段和门窗候选，请稍候…</span></div></div>
+      <div class="tools"><div class="tool-group"><button id="select-tool" class="tool active" aria-pressed="true">↖ 选择墙段</button><button id="region-tool" class="tool" disabled aria-pressed="false">▧ 框选漏墙</button></div><label class="visibility"><input id="overlay-toggle" type="checkbox" checked> 墙段</label><label class="visibility"><input id="openings-toggle" type="checkbox" checked> 门窗</label><label class="visibility"><input id="furniture-toggle" type="checkbox" checked> 家具</label><button id="sample" class="text-button">使用示例图</button></div>
+      <div id="stage" class="stage" tabindex="0" aria-label="户型图，可点击墙段或框选漏识别区域"><div id="paper" class="paper"><svg id="plan" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 745 761" aria-label="户型图与可选墙段"><image id="plan-image" width="745" height="761" href="/api/sample-image"/><g id="furniture-layer"></g><g id="wall-layer"></g><g id="region-layer"></g><g id="draft-layer"></g></svg></div><div id="loading" class="loading" hidden><div class="spinner"></div><strong>正在识别墙体、门窗与家具</strong><span>从图中提取墙段、门窗及家具候选，请稍候…</span></div></div>
       <div class="canvas-footer"><p id="canvas-hint">先运行识别，再点击墙段直接修改</p><div class="zoom-controls"><button id="zoom-out" aria-label="缩小">−</button><span id="zoom-label">适应</span><button id="zoom-in" aria-label="放大">＋</button><button id="fit" class="fit-button">适应画布</button></div></div>
       <div class="legend"><span><i class="dot blue"></i>候选墙段</span><span><i class="dot orange"></i>已标问题</span><span><i class="dot teal"></i>漏识别区域</span><span class="legend-note">尺寸为像素 · 自动结果需要人工校核</span></div>
     </section>
     <aside class="review-panel" aria-label="墙体修改">
       <div class="review-heading"><div><span class="eyebrow">REVIEW</span><h2>墙体修改</h2></div><span id="wall-count" class="count-pill">等待识别</span></div>
-      <div id="empty-selection" class="empty-selection"><span class="empty-icon" aria-hidden="true">⌖</span><h3 id="empty-title">从识别开始</h3><p id="empty-copy">点击「识别墙体与门窗」，然后选择图中需要修改的墙段。</p><div class="mini-guide"><span>1</span> 点击墙段编号或线条<br><span>2</span> 指定方向、目标和调整量<br><span>3</span> 应用修改，墙体立即更新</div></div>
+      <div id="empty-selection" class="empty-selection"><span class="empty-icon" aria-hidden="true">⌖</span><h3 id="empty-title">从识别开始</h3><p id="empty-copy">点击「识别墙体、门窗与家具」，然后选择图中需要修改的墙段。</p><div class="mini-guide"><span>1</span> 点击墙段编号或线条<br><span>2</span> 指定方向、目标和调整量<br><span>3</span> 应用修改，墙体立即更新</div></div>
       <form id="issue-form" class="issue-form" hidden>
         <div class="selected-heading"><h3 id="selected-id">W001</h3><span id="selected-kind">水平墙段</span><button id="clear-selection" class="icon-button" type="button" aria-label="取消选择">×</button></div>
         <div id="wall-measures" class="measures"><div><span>长度</span><strong id="wall-length">—</strong></div><div><span>厚度</span><strong id="wall-thickness">—</strong></div><div><span>单位</span><strong>px</strong></div></div>
@@ -33,6 +33,22 @@
         <label class="field">修改说明<textarea id="note" rows="3" maxlength="1000" placeholder="例如：向下延长，一直到 W013。也可用上面的方向、目标和数值准确指定。"></textarea></label>
         <button id="add-issue" class="button primary full" type="submit">应用修改，立即更新墙体</button>
       </form>
+      <section class="furniture-section">
+        <div class="issues-heading"><h3>家具与设施候选</h3><span id="furniture-count">0</span></div>
+        <p class="opening-help">紫色床、绿色沙发、橙色柜台、蓝色桌子、青色厨卫。洗浴区需确认类型；点选修改或框选补漏。</p>
+        <button id="furniture-tool" class="button full" disabled aria-pressed="false">▧ 框选补家具 / 设施</button>
+        <button id="furniture-sample" class="button full">载入家具示例图</button>
+        <form id="furniture-form" hidden>
+          <div class="selected-heading"><h3 id="furniture-selected-id">F001</h3><button id="furniture-cancel" class="icon-button" type="button" aria-label="取消家具修改">×</button></div>
+          <label class="field">家具类别<select id="furniture-kind"><optgroup label="待确认"><option value="unclassified">待定家具</option><option value="wet_area">洗浴区待确认</option></optgroup><optgroup label="家具"><option value="bed">床</option><option value="sofa">沙发</option><option value="cabinet">柜子</option><option value="table">桌子</option><option value="chair">椅子</option><option value="coffee_table">茶几</option><option value="dining_table">餐桌</option><option value="shoe_cabinet">鞋柜</option><option value="tv_console">电视柜</option></optgroup><optgroup label="厨房"><option value="kitchen_cabinet">厨房柜台</option><option value="kitchen_sink">水槽</option><option value="cooktop">灶台</option></optgroup><optgroup label="卫浴"><option value="vanity">浴室柜</option><option value="toilet">马桶</option><option value="bathtub">浴缸</option><option value="shower">淋浴间</option></optgroup></select></label>
+          <div class="field-row"><label class="field">左 X（px）<input id="furniture-x0" type="number" step="any" required min="0"></label><label class="field">上 Y（px）<input id="furniture-y0" type="number" step="any" required min="0"></label></div>
+          <div class="field-row"><label class="field">右 X（px）<input id="furniture-x1" type="number" step="any" required min="0"></label><label class="field">下 Y（px）<input id="furniture-y1" type="number" step="any" required min="0"></label></div>
+          <label class="field" id="furniture-direction-field">床头 / 靠背朝向<select id="furniture-rotation"><option value="">未知</option><option value="0">图上方 ↑</option><option value="90">图右方 →</option><option value="180">图下方 ↓</option><option value="270">图左方 ←</option></select></label>
+          <p class="opening-help" id="furniture-direction-help">朝向相对底图；改朝向不会交换框的宽高。</p>
+          <button id="furniture-apply" class="button primary full" type="submit">应用家具修改</button>
+        </form>
+        <div id="furniture-list"></div>
+      </section>
       <section class="openings-section"><div class="issues-heading"><h3>门窗与边界候选</h3><span id="opening-count">0</span></div><p class="opening-help">青色为窗框，棕色为平开门，紫灰色为待确认边界。待确认边界暂不扣墙；确认为门或窗后才生成洞口。标为误报可取消洞口约束，支持撤销。</p><div id="opening-list"></div></section>
       <section class="issues-section"><div class="issues-heading"><h3>修改记录</h3><span id="issue-count">0</span></div><div id="issue-list" class="issue-list"><p class="list-empty">执行后的修改会出现在这里</p></div></section>
       <div class="review-footer"><span class="status-dot"></span><p id="save-status">修改由页面程序直接执行，可撤销</p></div>

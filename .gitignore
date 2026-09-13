@@ -10,3 +10,7 @@ venv/
 Thumbs.db
 /wall-recognition/feedback/
 /wall-recognition/projects/
+/wall-recognition/models/*.pt
+/wall-recognition/models/*.onnx
+/wall-recognition/models/*.download
+/wall-recognition/.model-runtime/

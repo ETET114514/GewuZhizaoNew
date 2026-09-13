@@ -1,0 +1,707 @@
+{
+  "case": "default-plan",
+  "role": "rendered_template_source_calibration",
+  "target_count": 24,
+  "matched_count": 24,
+  "unmatched_candidates": [],
+  "missed_targets": [],
+  "seconds": 91.84,
+  "furniture": [
+    {
+      "kind": "shoe_cabinet",
+      "bbox_px": [
+        271.81,
+        82.85,
+        293.19,
+        159.17
+      ],
+      "rotation_deg": null,
+      "match_score": 0.9576,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-shoe-cabinet",
+        "mirrored": false,
+        "detail_score": 0.7586,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F001",
+      "center_px": [
+        282.5,
+        121.01
+      ],
+      "size_px": [
+        21.38,
+        76.32
+      ],
+      "label": "鞋柜"
+    },
+    {
+      "kind": "kitchen_sink",
+      "bbox_px": [
+        112.09,
+        122.0,
+        159.93,
+        152.0
+      ],
+      "rotation_deg": null,
+      "match_score": 0.9497,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-kitchen-sink",
+        "mirrored": false,
+        "detail_score": 0.8506,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F002",
+      "center_px": [
+        136.01,
+        137.0
+      ],
+      "size_px": [
+        47.84,
+        30.0
+      ],
+      "label": "水槽"
+    },
+    {
+      "kind": "kitchen_cabinet",
+      "bbox_px": [
+        79.0,
+        124.0,
+        194.0,
+        153.0
+      ],
+      "rotation_deg": null,
+      "match_score": 0.9808,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-counter-top",
+        "mirrored": false,
+        "detail_score": 1.0,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F003",
+      "center_px": [
+        136.5,
+        138.5
+      ],
+      "size_px": [
+        115.0,
+        29.0
+      ],
+      "label": "厨房柜台"
+    },
+    {
+      "kind": "kitchen_cabinet",
+      "bbox_px": [
+        79.87,
+        152.95,
+        109.1,
+        255.05
+      ],
+      "rotation_deg": null,
+      "match_score": 0.9251,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-counter-side",
+        "mirrored": false,
+        "detail_score": 0.6091,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F004",
+      "center_px": [
+        94.48,
+        204.0
+      ],
+      "size_px": [
+        29.23,
+        102.1
+      ],
+      "label": "厨房柜台"
+    },
+    {
+      "kind": "cooktop",
+      "bbox_px": [
+        79.0,
+        192.0,
+        105.0,
+        237.0
+      ],
+      "rotation_deg": null,
+      "match_score": 0.9645,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-cooktop",
+        "mirrored": false,
+        "detail_score": 1.0,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F005",
+      "center_px": [
+        92.0,
+        214.5
+      ],
+      "size_px": [
+        26.0,
+        45.0
+      ],
+      "label": "灶台"
+    },
+    {
+      "kind": "bed",
+      "bbox_px": [
+        431.0,
+        200.0,
+        513.0,
+        315.0
+      ],
+      "rotation_deg": 0,
+      "match_score": 0.9869,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-bed-fold",
+        "mirrored": false,
+        "detail_score": 1.0,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F006",
+      "center_px": [
+        472.0,
+        257.5
+      ],
+      "size_px": [
+        82.0,
+        115.0
+      ],
+      "label": "床"
+    },
+    {
+      "kind": "cabinet",
+      "bbox_px": [
+        369.0,
+        201.0,
+        399.0,
+        297.0
+      ],
+      "rotation_deg": null,
+      "match_score": 0.9468,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-wardrobe-narrow",
+        "mirrored": false,
+        "detail_score": 0.8077,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F007",
+      "center_px": [
+        384.0,
+        249.0
+      ],
+      "size_px": [
+        30.0,
+        96.0
+      ],
+      "label": "柜子"
+    },
+    {
+      "kind": "wet_area",
+      "bbox_px": [
+        299.9,
+        201.88,
+        360.07,
+        249.12
+      ],
+      "rotation_deg": null,
+      "match_score": 0.9781,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-wet-area-upper",
+        "mirrored": false,
+        "detail_score": 0.8629,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F008",
+      "center_px": [
+        329.99,
+        225.5
+      ],
+      "size_px": [
+        60.17,
+        47.24
+      ],
+      "label": "洗浴区待确认"
+    },
+    {
+      "kind": "kitchen_cabinet",
+      "bbox_px": [
+        80.87,
+        256.87,
+        184.18,
+        289.13
+      ],
+      "rotation_deg": null,
+      "match_score": 0.9548,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-counter-bottom",
+        "mirrored": false,
+        "detail_score": 0.7288,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F009",
+      "center_px": [
+        132.53,
+        273.0
+      ],
+      "size_px": [
+        103.31,
+        32.26
+      ],
+      "label": "厨房柜台"
+    },
+    {
+      "kind": "toilet",
+      "bbox_px": [
+        279.0,
+        263.0,
+        318.0,
+        287.0
+      ],
+      "rotation_deg": null,
+      "match_score": 0.9946,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-toilet",
+        "mirrored": false,
+        "detail_score": 1.0,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F010",
+      "center_px": [
+        298.5,
+        275.0
+      ],
+      "size_px": [
+        39.0,
+        24.0
+      ],
+      "label": "马桶"
+    },
+    {
+      "kind": "vanity",
+      "bbox_px": [
+        277.85,
+        310.9,
+        306.15,
+        369.1
+      ],
+      "rotation_deg": null,
+      "match_score": 0.9765,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-vanity-upper",
+        "mirrored": false,
+        "detail_score": 0.8718,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F011",
+      "center_px": [
+        292.0,
+        340.0
+      ],
+      "size_px": [
+        28.3,
+        58.2
+      ],
+      "label": "浴室柜"
+    },
+    {
+      "kind": "dining_table",
+      "bbox_px": [
+        77.96,
+        350.77,
+        146.04,
+        391.27
+      ],
+      "rotation_deg": null,
+      "match_score": 0.9745,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-dining-table",
+        "mirrored": false,
+        "detail_score": 0.8296,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F012",
+      "center_px": [
+        112.0,
+        371.02
+      ],
+      "size_px": [
+        68.08,
+        40.5
+      ],
+      "label": "餐桌"
+    },
+    {
+      "kind": "cabinet",
+      "bbox_px": [
+        368.0,
+        374.0,
+        490.0,
+        407.0
+      ],
+      "rotation_deg": null,
+      "match_score": 0.9238,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-wardrobe",
+        "mirrored": false,
+        "detail_score": 0.7037,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F013",
+      "center_px": [
+        429.0,
+        390.5
+      ],
+      "size_px": [
+        122.0,
+        33.0
+      ],
+      "label": "柜子"
+    },
+    {
+      "kind": "vanity",
+      "bbox_px": [
+        497.0,
+        379.0,
+        542.0,
+        409.0
+      ],
+      "rotation_deg": null,
+      "match_score": 0.9929,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-vanity-right",
+        "mirrored": false,
+        "detail_score": 1.0,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F014",
+      "center_px": [
+        519.5,
+        394.0
+      ],
+      "size_px": [
+        45.0,
+        30.0
+      ],
+      "label": "浴室柜"
+    },
+    {
+      "kind": "toilet",
+      "bbox_px": [
+        554.0,
+        379.15,
+        577.0,
+        414.89
+      ],
+      "rotation_deg": null,
+      "match_score": 0.965,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-toilet-right",
+        "mirrored": false,
+        "detail_score": 0.8394,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F015",
+      "center_px": [
+        565.5,
+        397.02
+      ],
+      "size_px": [
+        23.0,
+        35.74
+      ],
+      "label": "马桶"
+    },
+    {
+      "kind": "wet_area",
+      "bbox_px": [
+        589.0,
+        400.0,
+        633.0,
+        464.0
+      ],
+      "rotation_deg": null,
+      "match_score": 0.9935,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-wet-area-right",
+        "mirrored": false,
+        "detail_score": 1.0,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F016",
+      "center_px": [
+        611.0,
+        432.0
+      ],
+      "size_px": [
+        44.0,
+        64.0
+      ],
+      "label": "洗浴区待确认"
+    },
+    {
+      "kind": "sofa",
+      "bbox_px": [
+        139.0,
+        470.0,
+        180.0,
+        512.0
+      ],
+      "rotation_deg": 0,
+      "match_score": 0.9952,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-armchair",
+        "mirrored": false,
+        "detail_score": 1.0,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F017",
+      "center_px": [
+        159.5,
+        491.0
+      ],
+      "size_px": [
+        41.0,
+        42.0
+      ],
+      "label": "沙发"
+    },
+    {
+      "kind": "cabinet",
+      "bbox_px": [
+        334.0,
+        474.0,
+        425.0,
+        505.0
+      ],
+      "rotation_deg": null,
+      "match_score": 0.8993,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-wardrobe-short",
+        "mirrored": false,
+        "detail_score": 0.643,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F018",
+      "center_px": [
+        379.5,
+        489.5
+      ],
+      "size_px": [
+        91.0,
+        31.0
+      ],
+      "label": "柜子"
+    },
+    {
+      "kind": "sofa",
+      "bbox_px": [
+        77.0,
+        498.0,
+        122.0,
+        620.0
+      ],
+      "rotation_deg": 270,
+      "match_score": 0.9396,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-sofa-long",
+        "mirrored": false,
+        "detail_score": 0.772,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F019",
+      "center_px": [
+        99.5,
+        559.0
+      ],
+      "size_px": [
+        45.0,
+        122.0
+      ],
+      "label": "沙发"
+    },
+    {
+      "kind": "bed",
+      "bbox_px": [
+        484.0,
+        511.0,
+        606.0,
+        602.0
+      ],
+      "rotation_deg": 90,
+      "match_score": 0.935,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-bed-runner",
+        "mirrored": false,
+        "detail_score": 0.7353,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F020",
+      "center_px": [
+        545.0,
+        556.5
+      ],
+      "size_px": [
+        122.0,
+        91.0
+      ],
+      "label": "床"
+    },
+    {
+      "kind": "tv_console",
+      "bbox_px": [
+        247.77,
+        518.76,
+        264.23,
+        600.21
+      ],
+      "rotation_deg": null,
+      "match_score": 0.954,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-tv-console",
+        "mirrored": false,
+        "detail_score": 0.8167,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F021",
+      "center_px": [
+        256.0,
+        559.49
+      ],
+      "size_px": [
+        16.46,
+        81.45
+      ],
+      "label": "电视柜"
+    },
+    {
+      "kind": "coffee_table",
+      "bbox_px": [
+        134.92,
+        529.94,
+        186.08,
+        584.09
+      ],
+      "rotation_deg": null,
+      "match_score": 0.9729,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-coffee-table",
+        "mirrored": false,
+        "detail_score": 0.8056,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F022",
+      "center_px": [
+        160.5,
+        557.02
+      ],
+      "size_px": [
+        51.16,
+        54.15
+      ],
+      "label": "茶几"
+    },
+    {
+      "kind": "bed",
+      "bbox_px": [
+        310.0,
+        531.0,
+        425.0,
+        613.0
+      ],
+      "rotation_deg": 90,
+      "match_score": 0.8638,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-bed-fold",
+        "mirrored": true,
+        "detail_score": 0.58,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F023",
+      "center_px": [
+        367.5,
+        572.0
+      ],
+      "size_px": [
+        115.0,
+        82.0
+      ],
+      "label": "床"
+    },
+    {
+      "kind": "sofa",
+      "bbox_px": [
+        143.0,
+        596.0,
+        184.0,
+        638.0
+      ],
+      "rotation_deg": 180,
+      "match_score": 0.9245,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-armchair",
+        "mirrored": true,
+        "detail_score": 0.6998,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F024",
+      "center_px": [
+        163.5,
+        617.0
+      ],
+      "size_px": [
+        41.0,
+        42.0
+      ],
+      "label": "沙发"
+    }
+  ]
+}

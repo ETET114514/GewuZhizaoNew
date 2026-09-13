@@ -1,0 +1,10 @@
+{
+  "repo": "mudasir13cs/floorcad-yolov8n-detect",
+  "revision": "02995225d7aed598bc7e0214f5b7f3fe7fe95657",
+  "license": "agpl-3.0",
+  "sha256": "be1a5a404c5ad1c454ba7531e2c16548a6330945319cbf989751ff73578b494c",
+  "onnx_sha256": "5e4ee3becb39ffb760ea13277b39732ebd9bd67ca020489d3d2f36f30dee48b7",
+  "input_size": 1280,
+  "opset": 17,
+  "preprocessing": "bright_strokes_215_on_black"
+}

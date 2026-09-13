@@ -1,0 +1,516 @@
+[
+  {
+    "id": "sheet-sofa-1",
+    "kind": "sofa",
+    "image": "03.jpg",
+    "bbox_px": [
+      34,
+      396,
+      119,
+      472
+    ]
+  },
+  {
+    "id": "sheet-sofa-2",
+    "kind": "sofa",
+    "image": "03.jpg",
+    "bbox_px": [
+      132,
+      395,
+      287,
+      473
+    ]
+  },
+  {
+    "id": "sheet-sofa-3",
+    "kind": "sofa",
+    "image": "03.jpg",
+    "bbox_px": [
+      301,
+      396,
+      506,
+      473
+    ]
+  },
+  {
+    "id": "sheet-bed-large",
+    "kind": "bed",
+    "image": "03.jpg",
+    "bbox_px": [
+      31,
+      796,
+      195,
+      959
+    ]
+  },
+  {
+    "id": "sheet-bed-double",
+    "kind": "bed",
+    "image": "03.jpg",
+    "bbox_px": [
+      225,
+      796,
+      382,
+      959
+    ]
+  },
+  {
+    "id": "sheet-bed-single",
+    "kind": "bed",
+    "image": "03.jpg",
+    "bbox_px": [
+      415,
+      796,
+      514,
+      959
+    ]
+  },
+  {
+    "id": "alternate-bed-double",
+    "kind": "bed",
+    "image": "10.jpg",
+    "bbox_px": [
+      182,
+      626,
+      288,
+      776
+    ]
+  },
+  {
+    "id": "alternate-bed-single",
+    "kind": "bed",
+    "image": "10.jpg",
+    "bbox_px": [
+      350,
+      627,
+      416,
+      777
+    ]
+  },
+  {
+    "id": "plan-sofa-4",
+    "kind": "sofa",
+    "image": "06.jpg",
+    "bbox_px": [
+      295,
+      264,
+      367,
+      465
+    ],
+    "head_rotation_deg": 270
+  },
+  {
+    "id": "plan-bed-a",
+    "kind": "bed",
+    "image": "06.jpg",
+    "bbox_px": [
+      659,
+      237,
+      815,
+      374
+    ],
+    "head_rotation_deg": 90
+  },
+  {
+    "id": "plan-bed-b",
+    "kind": "bed",
+    "image": "06.jpg",
+    "bbox_px": [
+      601,
+      1014,
+      758,
+      1130
+    ],
+    "head_rotation_deg": 90
+  },
+  {
+    "id": "rendered-bed-fold",
+    "kind": "bed",
+    "image": "../floorplan.png",
+    "bbox_px": [
+      431,
+      200,
+      513,
+      315
+    ],
+    "head_rotation_deg": 0
+  },
+  {
+    "id": "rendered-bed-runner",
+    "kind": "bed",
+    "image": "../floorplan.png",
+    "bbox_px": [
+      482,
+      509,
+      607,
+      603
+    ],
+    "head_rotation_deg": 90
+  },
+  {
+    "id": "rendered-sofa-long",
+    "kind": "sofa",
+    "image": "../floorplan.png",
+    "bbox_px": [
+      77,
+      499,
+      121,
+      618
+    ],
+    "head_rotation_deg": 270
+  },
+  {
+    "id": "rendered-armchair",
+    "kind": "sofa",
+    "image": "../floorplan.png",
+    "bbox_px": [
+      139,
+      470,
+      180,
+      512
+    ],
+    "head_rotation_deg": 0,
+    "minimum_score": 0.83
+  },
+  {
+    "id": "rendered-wardrobe",
+    "kind": "cabinet",
+    "image": "../floorplan.png",
+    "bbox_px": [
+      366,
+      373,
+      491,
+      407
+    ],
+    "head_rotation_deg": 0,
+    "minimum_score": 0.82
+  },
+  {
+    "id": "rendered-wardrobe-narrow",
+    "kind": "cabinet",
+    "image": "../floorplan.png",
+    "bbox_px": [
+      369,
+      200,
+      400,
+      298
+    ],
+    "head_rotation_deg": 90,
+    "minimum_score": 0.82
+  },
+  {
+    "id": "rendered-wardrobe-short",
+    "kind": "cabinet",
+    "image": "../floorplan.png",
+    "bbox_px": [
+      333,
+      473,
+      427,
+      505
+    ],
+    "head_rotation_deg": 0,
+    "minimum_score": 0.82
+  },
+  {
+    "id": "rendered-coffee-table",
+    "kind": "coffee_table",
+    "image": "../floorplan.png",
+    "bbox_px": [
+      130,
+      525,
+      192,
+      590
+    ],
+    "object_bbox_px": [
+      135,
+      529,
+      187,
+      584
+    ],
+    "minimum_score": 0.94,
+    "minimum_detail_score": 0.48,
+    "minimum_short_side": 40
+  },
+  {
+    "id": "rendered-dining-table",
+    "kind": "dining_table",
+    "image": "../floorplan.png",
+    "bbox_px": [
+      74,
+      332,
+      149,
+      414
+    ],
+    "object_bbox_px": [
+      77,
+      351,
+      146,
+      392
+    ],
+    "minimum_score": 0.88,
+    "minimum_detail_score": 0.48,
+    "minimum_short_side": 22
+  },
+  {
+    "id": "rendered-shoe-cabinet",
+    "kind": "shoe_cabinet",
+    "image": "../floorplan.png",
+    "bbox_px": [
+      265,
+      75,
+      301,
+      168
+    ],
+    "object_bbox_px": [
+      272,
+      82,
+      294,
+      160
+    ],
+    "minimum_score": 0.88,
+    "minimum_detail_score": 0.48,
+    "minimum_short_side": 22
+  },
+  {
+    "id": "rendered-tv-console",
+    "kind": "tv_console",
+    "image": "../floorplan.png",
+    "bbox_px": [
+      240,
+      510,
+      271,
+      609
+    ],
+    "object_bbox_px": [
+      247,
+      518,
+      264,
+      602
+    ],
+    "minimum_score": 0.88,
+    "minimum_detail_score": 0.48,
+    "minimum_short_side": 22
+  },
+  {
+    "id": "rendered-kitchen-sink",
+    "kind": "kitchen_sink",
+    "image": "../floorplan.png",
+    "bbox_px": [
+      107,
+      118,
+      163,
+      156
+    ],
+    "object_bbox_px": [
+      112,
+      122,
+      159,
+      152
+    ],
+    "minimum_score": 0.88,
+    "minimum_detail_score": 0.48,
+    "minimum_short_side": 22
+  },
+  {
+    "id": "rendered-cooktop",
+    "kind": "cooktop",
+    "image": "../floorplan.png",
+    "bbox_px": [
+      74,
+      186,
+      110,
+      243
+    ],
+    "object_bbox_px": [
+      79,
+      192,
+      105,
+      237
+    ],
+    "minimum_score": 0.88,
+    "minimum_detail_score": 0.5,
+    "minimum_short_side": 22,
+    "supported_minimum_score": 0.74,
+    "support_kind": "kitchen_cabinet"
+  },
+  {
+    "id": "rendered-counter-top",
+    "kind": "kitchen_cabinet",
+    "image": "../floorplan.png",
+    "bbox_px": [
+      74,
+      119,
+      196,
+      158
+    ],
+    "object_bbox_px": [
+      79,
+      124,
+      194,
+      153
+    ],
+    "minimum_score": 0.88,
+    "minimum_detail_score": 0.48,
+    "minimum_short_side": 22
+  },
+  {
+    "id": "rendered-counter-side",
+    "kind": "kitchen_cabinet",
+    "image": "../floorplan.png",
+    "bbox_px": [
+      74,
+      149,
+      113,
+      259
+    ],
+    "object_bbox_px": [
+      79,
+      152,
+      109,
+      256
+    ],
+    "minimum_score": 0.84,
+    "minimum_detail_score": 0.48,
+    "minimum_short_side": 22
+  },
+  {
+    "id": "rendered-counter-bottom",
+    "kind": "kitchen_cabinet",
+    "image": "../floorplan.png",
+    "bbox_px": [
+      74,
+      250,
+      192,
+      295
+    ],
+    "object_bbox_px": [
+      79,
+      256,
+      185,
+      289
+    ],
+    "minimum_score": 0.88,
+    "minimum_detail_score": 0.48,
+    "minimum_short_side": 22
+  },
+  {
+    "id": "rendered-vanity-upper",
+    "kind": "vanity",
+    "image": "../floorplan.png",
+    "bbox_px": [
+      272,
+      304,
+      313,
+      377
+    ],
+    "object_bbox_px": [
+      278,
+      311,
+      307,
+      370
+    ],
+    "minimum_score": 0.88,
+    "minimum_detail_score": 0.48,
+    "minimum_short_side": 22
+  },
+  {
+    "id": "rendered-vanity-right",
+    "kind": "vanity",
+    "image": "../floorplan.png",
+    "bbox_px": [
+      491,
+      374,
+      548,
+      414
+    ],
+    "object_bbox_px": [
+      497,
+      379,
+      542,
+      409
+    ],
+    "minimum_score": 0.88,
+    "minimum_detail_score": 0.48,
+    "minimum_short_side": 22
+  },
+  {
+    "id": "rendered-toilet",
+    "kind": "toilet",
+    "image": "../floorplan.png",
+    "bbox_px": [
+      273,
+      257,
+      323,
+      293
+    ],
+    "object_bbox_px": [
+      279,
+      263,
+      318,
+      287
+    ],
+    "minimum_score": 0.88,
+    "minimum_detail_score": 0.48,
+    "minimum_short_side": 22
+  },
+  {
+    "id": "rendered-wet-area-upper",
+    "kind": "wet_area",
+    "image": "../floorplan.png",
+    "bbox_px": [
+      292,
+      194,
+      365,
+      258
+    ],
+    "object_bbox_px": [
+      299,
+      202,
+      360,
+      250
+    ],
+    "minimum_score": 0.88,
+    "minimum_detail_score": 0.48,
+    "minimum_short_side": 48
+  },
+  {
+    "id": "rendered-wet-area-right",
+    "kind": "wet_area",
+    "image": "../floorplan.png",
+    "bbox_px": [
+      581,
+      393,
+      641,
+      469
+    ],
+    "object_bbox_px": [
+      589,
+      400,
+      633,
+      464
+    ],
+    "minimum_score": 0.88,
+    "minimum_detail_score": 0.48,
+    "minimum_short_side": 48
+  },
+  {
+    "id": "rendered-toilet-right",
+    "kind": "toilet",
+    "image": "../floorplan.png",
+    "bbox_px": [
+      548,
+      373,
+      583,
+      420
+    ],
+    "object_bbox_px": [
+      554,
+      380,
+      577,
+      415
+    ],
+    "minimum_score": 0.88,
+    "minimum_detail_score": 0.48,
+    "minimum_short_side": 22
+  }
+]

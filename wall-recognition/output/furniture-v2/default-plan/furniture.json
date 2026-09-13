@@ -1,0 +1,272 @@
+{
+  "case": "default-plan",
+  "role": "rendered_template_source_calibration",
+  "target_count": 9,
+  "matched_count": 9,
+  "unmatched_candidates": [],
+  "missed_targets": [],
+  "seconds": 49.27,
+  "furniture": [
+    {
+      "kind": "bed",
+      "bbox_px": [
+        431.0,
+        200.0,
+        513.0,
+        315.0
+      ],
+      "rotation_deg": 0,
+      "match_score": 0.9869,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-bed-fold",
+        "mirrored": false,
+        "detail_score": 1.0,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F001",
+      "center_px": [
+        472.0,
+        257.5
+      ],
+      "size_px": [
+        82.0,
+        115.0
+      ],
+      "label": "床"
+    },
+    {
+      "kind": "cabinet",
+      "bbox_px": [
+        369.0,
+        201.0,
+        399.0,
+        297.0
+      ],
+      "rotation_deg": null,
+      "match_score": 0.9468,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-wardrobe-narrow",
+        "mirrored": false,
+        "detail_score": 0.8077,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F002",
+      "center_px": [
+        384.0,
+        249.0
+      ],
+      "size_px": [
+        30.0,
+        96.0
+      ],
+      "label": "柜子"
+    },
+    {
+      "kind": "cabinet",
+      "bbox_px": [
+        368.0,
+        374.0,
+        490.0,
+        407.0
+      ],
+      "rotation_deg": null,
+      "match_score": 0.9238,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-wardrobe",
+        "mirrored": false,
+        "detail_score": 0.7037,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F003",
+      "center_px": [
+        429.0,
+        390.5
+      ],
+      "size_px": [
+        122.0,
+        33.0
+      ],
+      "label": "柜子"
+    },
+    {
+      "kind": "sofa",
+      "bbox_px": [
+        139.0,
+        470.0,
+        180.0,
+        512.0
+      ],
+      "rotation_deg": 0,
+      "match_score": 0.9952,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-armchair",
+        "mirrored": false,
+        "detail_score": 1.0,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F004",
+      "center_px": [
+        159.5,
+        491.0
+      ],
+      "size_px": [
+        41.0,
+        42.0
+      ],
+      "label": "沙发"
+    },
+    {
+      "kind": "cabinet",
+      "bbox_px": [
+        334.0,
+        474.0,
+        425.0,
+        505.0
+      ],
+      "rotation_deg": null,
+      "match_score": 0.8993,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-wardrobe-short",
+        "mirrored": false,
+        "detail_score": 0.643,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F005",
+      "center_px": [
+        379.5,
+        489.5
+      ],
+      "size_px": [
+        91.0,
+        31.0
+      ],
+      "label": "柜子"
+    },
+    {
+      "kind": "sofa",
+      "bbox_px": [
+        77.0,
+        498.0,
+        122.0,
+        620.0
+      ],
+      "rotation_deg": 270,
+      "match_score": 0.9396,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-sofa-long",
+        "mirrored": false,
+        "detail_score": 0.772,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F006",
+      "center_px": [
+        99.5,
+        559.0
+      ],
+      "size_px": [
+        45.0,
+        122.0
+      ],
+      "label": "沙发"
+    },
+    {
+      "kind": "bed",
+      "bbox_px": [
+        484.0,
+        511.0,
+        606.0,
+        602.0
+      ],
+      "rotation_deg": 90,
+      "match_score": 0.935,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-bed-runner",
+        "mirrored": false,
+        "detail_score": 0.7353,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F007",
+      "center_px": [
+        545.0,
+        556.5
+      ],
+      "size_px": [
+        122.0,
+        91.0
+      ],
+      "label": "床"
+    },
+    {
+      "kind": "bed",
+      "bbox_px": [
+        310.0,
+        531.0,
+        425.0,
+        613.0
+      ],
+      "rotation_deg": 90,
+      "match_score": 0.8638,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-bed-fold",
+        "mirrored": true,
+        "detail_score": 0.58,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F008",
+      "center_px": [
+        367.5,
+        572.0
+      ],
+      "size_px": [
+        115.0,
+        82.0
+      ],
+      "label": "床"
+    },
+    {
+      "kind": "sofa",
+      "bbox_px": [
+        143.0,
+        596.0,
+        184.0,
+        638.0
+      ],
+      "rotation_deg": 180,
+      "match_score": 0.9245,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "rendered-armchair",
+        "mirrored": true,
+        "detail_score": 0.6998,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F009",
+      "center_px": [
+        163.5,
+        617.0
+      ],
+      "size_px": [
+        41.0,
+        42.0
+      ],
+      "label": "沙发"
+    }
+  ]
+}
