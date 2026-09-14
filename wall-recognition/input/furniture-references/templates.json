@@ -512,5 +512,165 @@
     "minimum_score": 0.88,
     "minimum_detail_score": 0.48,
     "minimum_short_side": 22
+  },
+  {
+    "id": "gray-dining-six-seats",
+    "kind": "dining_table",
+    "image": "06.jpg",
+    "bbox_px": [
+      373,
+      590,
+      503,
+      730
+    ],
+    "object_bbox_px": [
+      406,
+      595,
+      471,
+      725
+    ],
+    "minimum_score": 0.88,
+    "minimum_detail_score": 0.48,
+    "minimum_short_side": 48
+  },
+  {
+    "id": "gray-wardrobe-left",
+    "kind": "cabinet",
+    "image": "06.jpg",
+    "bbox_px": [
+      205,
+      1021,
+      255,
+      1104
+    ],
+    "object_bbox_px": [
+      211,
+      1027,
+      248,
+      1097
+    ],
+    "minimum_score": 0.88,
+    "minimum_detail_score": 0.55,
+    "minimum_short_side": 22
+  },
+  {
+    "id": "gray-counter-top",
+    "kind": "kitchen_cabinet",
+    "image": "06.jpg",
+    "bbox_px": [
+      641,
+      602,
+      764,
+      655
+    ],
+    "object_bbox_px": [
+      647,
+      608,
+      757,
+      650
+    ],
+    "minimum_score": 0.9,
+    "minimum_detail_score": 0.55,
+    "minimum_short_side": 22
+  },
+  {
+    "id": "gray-counter-side",
+    "kind": "kitchen_cabinet",
+    "image": "06.jpg",
+    "bbox_px": [
+      708,
+      646,
+      761,
+      719
+    ],
+    "object_bbox_px": [
+      714,
+      651,
+      757,
+      715
+    ],
+    "minimum_score": 0.9,
+    "minimum_detail_score": 0.55,
+    "minimum_short_side": 22
+  },
+  {
+    "id": "gray-counter-bottom",
+    "kind": "kitchen_cabinet",
+    "image": "06.jpg",
+    "bbox_px": [
+      567,
+      712,
+      764,
+      764
+    ],
+    "object_bbox_px": [
+      572,
+      717,
+      758,
+      760
+    ],
+    "minimum_score": 0.89,
+    "minimum_detail_score": 0.5,
+    "minimum_short_side": 22
+  },
+  {
+    "id": "gray-double-sink",
+    "kind": "kitchen_sink",
+    "image": "06.jpg",
+    "bbox_px": [
+      712,
+      652,
+      758,
+      716
+    ],
+    "object_bbox_px": [
+      718,
+      657,
+      754,
+      712
+    ],
+    "minimum_score": 0.9,
+    "minimum_detail_score": 0.55,
+    "minimum_short_side": 22
+  },
+  {
+    "id": "gray-gas-hob",
+    "kind": "cooktop",
+    "image": "06.jpg",
+    "bbox_px": [
+      625,
+      716,
+      702,
+      764
+    ],
+    "object_bbox_px": [
+      632,
+      722,
+      695,
+      758
+    ],
+    "minimum_score": 0.89,
+    "minimum_detail_score": 0.5,
+    "minimum_short_side": 22
+  },
+  {
+    "id": "gray-refrigerator",
+    "kind": "refrigerator",
+    "image": "06.jpg",
+    "bbox_px": [
+      573,
+      603,
+      650,
+      655
+    ],
+    "object_bbox_px": [
+      579,
+      608,
+      645,
+      651
+    ],
+    "minimum_score": 0.91,
+    "minimum_detail_score": 0.55,
+    "minimum_short_side": 22
   }
 ]

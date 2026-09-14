@@ -1,0 +1,681 @@
+{
+  "furniture": [
+    {
+      "kind": "sofa",
+      "bbox_px": [
+        442.22,
+        214.43,
+        509.86,
+        282.07
+      ],
+      "rotation_deg": null,
+      "source": "floorcad_onnx",
+      "match_score": 0.9018,
+      "review_status": "unreviewed",
+      "evidence": {
+        "model": "floorcad-nano",
+        "raw_label": "sofa",
+        "score_type": "model_score_not_calibrated_probability",
+        "preprocessing": "background_aware_bright_strokes_on_black"
+      },
+      "id": "F001",
+      "center_px": [
+        476.04,
+        248.25
+      ],
+      "size_px": [
+        67.64,
+        67.64
+      ],
+      "label": "沙发"
+    },
+    {
+      "kind": "cabinet",
+      "bbox_px": [
+        298.11,
+        225.38,
+        338.62,
+        265.47
+      ],
+      "rotation_deg": null,
+      "source": "floorcad_onnx",
+      "match_score": 0.6584,
+      "review_status": "unreviewed",
+      "evidence": {
+        "model": "floorcad-nano",
+        "raw_label": "half_height_cabinet",
+        "score_type": "model_score_not_calibrated_probability",
+        "preprocessing": "background_aware_bright_strokes_on_black"
+      },
+      "id": "F002",
+      "center_px": [
+        318.37,
+        245.43
+      ],
+      "size_px": [
+        40.51,
+        40.09
+      ],
+      "label": "柜子"
+    },
+    {
+      "kind": "bed",
+      "bbox_px": [
+        658.41,
+        236.32,
+        815.5,
+        374.28
+      ],
+      "rotation_deg": 90,
+      "match_score": 0.9638,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "plan-bed-a",
+        "mirrored": false,
+        "detail_score": 0.898,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F003",
+      "center_px": [
+        736.95,
+        305.3
+      ],
+      "size_px": [
+        157.09,
+        137.96
+      ],
+      "label": "床"
+    },
+    {
+      "kind": "sofa",
+      "bbox_px": [
+        295.06,
+        265.0,
+        366.09,
+        463.07
+      ],
+      "rotation_deg": 270,
+      "match_score": 0.9032,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "plan-sofa-4",
+        "mirrored": false,
+        "detail_score": 0.779,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F004",
+      "center_px": [
+        330.57,
+        364.03
+      ],
+      "size_px": [
+        71.03,
+        198.07
+      ],
+      "label": "沙发"
+    },
+    {
+      "kind": "cabinet",
+      "bbox_px": [
+        784.43,
+        373.9,
+        815.87,
+        404.09
+      ],
+      "rotation_deg": null,
+      "source": "floorcad_onnx",
+      "match_score": 0.898,
+      "review_status": "unreviewed",
+      "evidence": {
+        "model": "floorcad-nano",
+        "raw_label": "half_height_cabinet",
+        "score_type": "model_score_not_calibrated_probability",
+        "preprocessing": "background_aware_bright_strokes_on_black"
+      },
+      "id": "F005",
+      "center_px": [
+        800.15,
+        389.0
+      ],
+      "size_px": [
+        31.44,
+        30.19
+      ],
+      "label": "柜子"
+    },
+    {
+      "kind": "cabinet",
+      "bbox_px": [
+        649.24,
+        405.8,
+        814.7,
+        445.62
+      ],
+      "rotation_deg": null,
+      "source": "floorcad_onnx",
+      "match_score": 0.8132,
+      "review_status": "unreviewed",
+      "evidence": {
+        "model": "floorcad-nano",
+        "raw_label": "tv_cabinet",
+        "score_type": "model_score_not_calibrated_probability",
+        "preprocessing": "background_aware_bright_strokes_on_black"
+      },
+      "id": "F006",
+      "center_px": [
+        731.97,
+        425.71
+      ],
+      "size_px": [
+        165.46,
+        39.82
+      ],
+      "label": "柜子"
+    },
+    {
+      "kind": "cabinet",
+      "bbox_px": [
+        295.63,
+        586.97,
+        320.08,
+        648.06
+      ],
+      "rotation_deg": null,
+      "source": "floorcad_onnx",
+      "match_score": 0.744,
+      "review_status": "unreviewed",
+      "evidence": {
+        "model": "floorcad-nano",
+        "raw_label": "half_height_cabinet",
+        "score_type": "model_score_not_calibrated_probability",
+        "preprocessing": "background_aware_bright_strokes_on_black"
+      },
+      "id": "F007",
+      "center_px": [
+        307.86,
+        617.51
+      ],
+      "size_px": [
+        24.45,
+        61.09
+      ],
+      "label": "柜子"
+    },
+    {
+      "kind": "dining_table",
+      "bbox_px": [
+        405.86,
+        595.09,
+        470.74,
+        724.47
+      ],
+      "rotation_deg": null,
+      "match_score": 0.9679,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "gray-dining-six-seats",
+        "mirrored": false,
+        "detail_score": 0.8791,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F008",
+      "center_px": [
+        438.3,
+        659.78
+      ],
+      "size_px": [
+        64.88,
+        129.38
+      ],
+      "label": "餐桌"
+    },
+    {
+      "kind": "chair",
+      "bbox_px": [
+        461.39,
+        600.81,
+        500.3,
+        636.06
+      ],
+      "rotation_deg": null,
+      "source": "floorcad_onnx",
+      "match_score": 0.582,
+      "review_status": "unreviewed",
+      "evidence": {
+        "model": "floorcad-nano",
+        "raw_label": "chair",
+        "score_type": "model_score_not_calibrated_probability",
+        "preprocessing": "background_aware_bright_strokes_on_black"
+      },
+      "id": "F009",
+      "center_px": [
+        480.85,
+        618.43
+      ],
+      "size_px": [
+        38.91,
+        35.25
+      ],
+      "label": "椅子"
+    },
+    {
+      "kind": "kitchen_cabinet",
+      "bbox_px": [
+        646.72,
+        607.07,
+        757.89,
+        649.29
+      ],
+      "rotation_deg": null,
+      "match_score": 0.9569,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "gray-counter-top",
+        "mirrored": false,
+        "detail_score": 0.8251,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F010",
+      "center_px": [
+        702.31,
+        628.18
+      ],
+      "size_px": [
+        111.17,
+        42.22
+      ],
+      "label": "厨房柜台"
+    },
+    {
+      "kind": "refrigerator",
+      "bbox_px": [
+        578.42,
+        607.4,
+        645.16,
+        650.32
+      ],
+      "rotation_deg": null,
+      "match_score": 0.9687,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "gray-refrigerator",
+        "mirrored": false,
+        "detail_score": 0.8988,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F011",
+      "center_px": [
+        611.79,
+        628.86
+      ],
+      "size_px": [
+        66.74,
+        42.92
+      ],
+      "label": "冰箱"
+    },
+    {
+      "kind": "cabinet",
+      "bbox_px": [
+        296.39,
+        650.63,
+        320.19,
+        685.74
+      ],
+      "rotation_deg": null,
+      "source": "floorcad_onnx",
+      "match_score": 0.5691,
+      "review_status": "unreviewed",
+      "evidence": {
+        "model": "floorcad-nano",
+        "raw_label": "half_height_cabinet",
+        "score_type": "model_score_not_calibrated_probability",
+        "preprocessing": "background_aware_bright_strokes_on_black"
+      },
+      "id": "F012",
+      "center_px": [
+        308.29,
+        668.18
+      ],
+      "size_px": [
+        23.8,
+        35.11
+      ],
+      "label": "柜子"
+    },
+    {
+      "kind": "kitchen_cabinet",
+      "bbox_px": [
+        713.62,
+        651.08,
+        756.84,
+        714.55
+      ],
+      "rotation_deg": null,
+      "match_score": 0.9722,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "gray-counter-side",
+        "mirrored": false,
+        "detail_score": 0.9154,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F013",
+      "center_px": [
+        735.23,
+        682.82
+      ],
+      "size_px": [
+        43.22,
+        63.47
+      ],
+      "label": "厨房柜台"
+    },
+    {
+      "kind": "kitchen_sink",
+      "bbox_px": [
+        718.75,
+        657.75,
+        752.96,
+        710.58
+      ],
+      "rotation_deg": null,
+      "match_score": 0.9474,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "gray-double-sink",
+        "mirrored": false,
+        "detail_score": 0.5889,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F014",
+      "center_px": [
+        735.86,
+        684.16
+      ],
+      "size_px": [
+        34.21,
+        52.83
+      ],
+      "label": "水槽"
+    },
+    {
+      "kind": "chair",
+      "bbox_px": [
+        460.83,
+        683.4,
+        500.0,
+        717.87
+      ],
+      "rotation_deg": null,
+      "source": "floorcad_onnx",
+      "match_score": 0.6495,
+      "review_status": "unreviewed",
+      "evidence": {
+        "model": "floorcad-nano",
+        "raw_label": "chair",
+        "score_type": "model_score_not_calibrated_probability",
+        "preprocessing": "background_aware_bright_strokes_on_black"
+      },
+      "id": "F015",
+      "center_px": [
+        480.41,
+        700.63
+      ],
+      "size_px": [
+        39.17,
+        34.47
+      ],
+      "label": "椅子"
+    },
+    {
+      "kind": "chair",
+      "bbox_px": [
+        377.76,
+        684.19,
+        415.36,
+        717.61
+      ],
+      "rotation_deg": null,
+      "source": "floorcad_onnx",
+      "match_score": 0.7182,
+      "review_status": "unreviewed",
+      "evidence": {
+        "model": "floorcad-nano",
+        "raw_label": "chair",
+        "score_type": "model_score_not_calibrated_probability",
+        "preprocessing": "background_aware_bright_strokes_on_black"
+      },
+      "id": "F016",
+      "center_px": [
+        396.56,
+        700.9
+      ],
+      "size_px": [
+        37.6,
+        33.42
+      ],
+      "label": "椅子"
+    },
+    {
+      "kind": "kitchen_cabinet",
+      "bbox_px": [
+        571.92,
+        716.68,
+        758.93,
+        759.6
+      ],
+      "rotation_deg": null,
+      "match_score": 0.9482,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "gray-counter-bottom",
+        "mirrored": false,
+        "detail_score": 0.8678,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F017",
+      "center_px": [
+        665.42,
+        738.14
+      ],
+      "size_px": [
+        187.01,
+        42.92
+      ],
+      "label": "厨房柜台"
+    },
+    {
+      "kind": "cooktop",
+      "bbox_px": [
+        631.34,
+        721.76,
+        695.05,
+        757.62
+      ],
+      "rotation_deg": null,
+      "match_score": 0.9183,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "gray-gas-hob",
+        "mirrored": false,
+        "detail_score": 0.8557,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F018",
+      "center_px": [
+        663.19,
+        739.69
+      ],
+      "size_px": [
+        63.71,
+        35.86
+      ],
+      "label": "灶台"
+    },
+    {
+      "kind": "cabinet",
+      "bbox_px": [
+        658.87,
+        889.95,
+        758.24,
+        929.45
+      ],
+      "rotation_deg": null,
+      "source": "floorcad_onnx",
+      "match_score": 0.9304,
+      "review_status": "unreviewed",
+      "evidence": {
+        "model": "floorcad-nano",
+        "raw_label": "tv_cabinet",
+        "score_type": "model_score_not_calibrated_probability",
+        "preprocessing": "background_aware_bright_strokes_on_black"
+      },
+      "id": "F019",
+      "center_px": [
+        708.56,
+        909.7
+      ],
+      "size_px": [
+        99.37,
+        39.5
+      ],
+      "label": "柜子"
+    },
+    {
+      "kind": "cabinet",
+      "bbox_px": [
+        516.56,
+        1006.63,
+        555.06,
+        1095.49
+      ],
+      "rotation_deg": null,
+      "source": "floorcad_onnx",
+      "match_score": 0.9113,
+      "review_status": "unreviewed",
+      "evidence": {
+        "model": "floorcad-nano",
+        "raw_label": "tv_cabinet",
+        "score_type": "model_score_not_calibrated_probability",
+        "preprocessing": "background_aware_bright_strokes_on_black"
+      },
+      "id": "F020",
+      "center_px": [
+        535.81,
+        1051.06
+      ],
+      "size_px": [
+        38.5,
+        88.86
+      ],
+      "label": "柜子"
+    },
+    {
+      "kind": "bed",
+      "bbox_px": [
+        601.04,
+        1013.57,
+        758.13,
+        1129.68
+      ],
+      "rotation_deg": 90,
+      "match_score": 0.9809,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "plan-bed-b",
+        "mirrored": false,
+        "detail_score": 0.9304,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F021",
+      "center_px": [
+        679.59,
+        1071.62
+      ],
+      "size_px": [
+        157.09,
+        116.11
+      ],
+      "label": "床"
+    },
+    {
+      "kind": "cabinet",
+      "bbox_px": [
+        212.17,
+        1027.69,
+        248.56,
+        1096.82
+      ],
+      "rotation_deg": null,
+      "match_score": 0.9364,
+      "source": "symbol_template",
+      "review_status": "unreviewed",
+      "evidence": {
+        "template_id": "gray-wardrobe-left",
+        "mirrored": false,
+        "detail_score": 0.6843,
+        "score_type": "normalized_correlation_not_probability"
+      },
+      "id": "F022",
+      "center_px": [
+        230.37,
+        1062.26
+      ],
+      "size_px": [
+        36.39,
+        69.13
+      ],
+      "label": "柜子"
+    },
+    {
+      "kind": "cabinet",
+      "bbox_px": [
+        516.77,
+        1111.07,
+        556.64,
+        1182.57
+      ],
+      "rotation_deg": null,
+      "source": "floorcad_onnx",
+      "match_score": 0.8758,
+      "review_status": "unreviewed",
+      "evidence": {
+        "model": "floorcad-nano",
+        "raw_label": "tv_cabinet",
+        "score_type": "model_score_not_calibrated_probability",
+        "preprocessing": "background_aware_bright_strokes_on_black"
+      },
+      "id": "F023",
+      "center_px": [
+        536.7,
+        1146.82
+      ],
+      "size_px": [
+        39.87,
+        71.5
+      ],
+      "label": "柜子"
+    }
+  ],
+  "furniture_algorithm": "furniture-symbol-match-v4+floorcad-onnx-v3",
+  "furniture_model_status": "ready",
+  "furniture_basis": "source_image; independent of wall and opening edits",
+  "limitations": [
+    "家具和设施按收录图例匹配；画法不同、遮挡和低清图片可能漏检或误检。",
+    "洗浴区不自动判断浴缸或淋浴间，需人工确认；鞋柜等用途来自参考图标注，不推断房间功能。",
+    "家具匹配分数不是置信概率；朝向为图例推测，需校核。",
+    "家具尺寸为像素，不推断单人/双人、真实尺寸或家具型号。",
+    "线稿模型输出家具候选；卫浴补检结合两种图像处理、内部轮廓和邻近马桶校验，仍可能漏检或误检。洗浴区类型待人工确认。"
+  ]
+}

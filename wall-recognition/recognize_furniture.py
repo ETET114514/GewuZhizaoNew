@@ -17,10 +17,10 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 ROOT = Path(__file__).resolve().parent
-ALGORITHM = "furniture-symbol-match-v3"
+ALGORITHM = "furniture-symbol-match-v4"
 LABELS = {"bed": "床", "sofa": "沙发", "cabinet": "柜子", "table": "桌子", "chair": "椅子", "unclassified": "待定家具",
           "coffee_table": "茶几", "dining_table": "餐桌", "shoe_cabinet": "鞋柜", "tv_console": "电视柜",
-          "kitchen_cabinet": "厨房柜台", "kitchen_sink": "水槽", "cooktop": "灶台",
+          "kitchen_cabinet": "厨房柜台", "kitchen_sink": "水槽", "cooktop": "灶台", "refrigerator": "冰箱",
           "vanity": "浴室柜", "toilet": "马桶", "wet_area": "洗浴区待确认",
           "bathtub": "浴缸", "shower": "淋浴间"}
 DIRECTIONAL_KINDS = {"bed", "sofa"}
@@ -241,7 +241,7 @@ def add_furniture(document, image):
             items.append(candidate)
     items.sort(key=lambda f: (f['bbox_px'][1], f['bbox_px'][0]))
     items = [geometry(dict(f, id=f'F{i:03d}')) for i,f in enumerate(items,1)]
-    document.update(furniture=items, furniture_algorithm=ALGORITHM+'+floorcad-onnx-v2',
+    document.update(furniture=items, furniture_algorithm=ALGORITHM+'+floorcad-onnx-v3',
                     furniture_model_status=status,
                     furniture_basis="source_image; independent of wall and opening edits")
     document.setdefault("limitations", []).extend(LIMITATIONS)

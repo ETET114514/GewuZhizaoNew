@@ -10,6 +10,18 @@ from PIL import Image, ImageOps
 ROOT = Path(__file__).resolve().parent
 
 
+def cad_ink(image):
+    """Separate dark strokes from a shaded sheet without filling its background."""
+    gray = np.asarray(image.convert('L'))
+    threshold = 215
+    if np.percentile(gray, 90) < 225:
+        if int(gray.max()) - int(gray.min()) < 15:
+            return np.zeros_like(gray)
+        otsu, _ = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        threshold = min(threshold, otsu + 1)
+    return (gray < threshold).astype('uint8')
+
+
 def letterbox(image, size=640):
     scale = min(size / image.width, size / image.height)
     width, height = round(image.width * scale), round(image.height * scale)
@@ -44,7 +56,7 @@ def predict(image, path, threshold=.3, tiled=False, cad=False):
     for region in crops:
         crop = image.crop(region)
         if cad:
-            crop = Image.fromarray(np.where(np.asarray(crop.convert('L')) < 215, 255, 0).astype('uint8')).convert('RGB')
+            crop = Image.fromarray(cad_ink(crop) * 255).convert('RGB')
         tensor, (sx, sy, left, top) = letterbox(crop, size)
         raw = runner.run(None, {runner.get_inputs()[0].name: tensor})[0][0].T
         labels = raw[:, 4:].argmax(axis=1)
@@ -76,14 +88,13 @@ CLASS_MAP = {'bed': 'bed', 'sofa': 'sofa', 'table': 'table', 'chair': 'chair',
 def interior_shapes(image, box):
     """Measure enclosed symbol outlines in local coordinates, independent of pose."""
     x0,y0,x1,y1 = [round(v) for v in box]
-    gray = np.asarray(image.convert('L'))[max(0,y0):y1,max(0,x0):x1]
-    if not gray.size:
+    ink = cad_ink(image)[max(0,y0):y1,max(0,x0):x1]
+    if not ink.size:
         return []
-    ink = (gray < 215).astype('uint8')
     contours, _ = cv2.findContours(ink, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     shapes = []
     for contour in contours:
-        area = cv2.contourArea(contour)/gray.size
+        area = cv2.contourArea(contour)/ink.size
         if .08 < area < .9:
             vertices = len(cv2.approxPolyDP(contour, .02*cv2.arcLength(contour,True), True))
             shapes.append((area, vertices))
@@ -145,5 +156,5 @@ def detect_learned(image):
                           evidence={'model':'floorcad-nano', 'raw_label':item['label'],
                                     **({'fixture_verification':verification} if verification else {}),
                                     'score_type':'model_score_not_calibrated_probability',
-                                    'preprocessing':'binary_215_and_continuous_inverse' if verification else 'bright_strokes_215_on_black'}))
+                                    'preprocessing':'background_aware_binary_and_continuous_inverse' if verification else 'background_aware_bright_strokes_on_black'}))
     return items, 'ready'

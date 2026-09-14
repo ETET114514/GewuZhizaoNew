@@ -1,0 +1,78 @@
+{
+  "source": "06.jpg",
+  "basis": "Source-style calibration targets, not independent accuracy.",
+  "targets": [
+    {
+      "kind": "dining_table",
+      "bbox_px": [
+        406,
+        595,
+        471,
+        725
+      ]
+    },
+    {
+      "kind": "cabinet",
+      "bbox_px": [
+        211,
+        1027,
+        248,
+        1097
+      ]
+    },
+    {
+      "kind": "kitchen_cabinet",
+      "bbox_px": [
+        647,
+        608,
+        757,
+        650
+      ]
+    },
+    {
+      "kind": "kitchen_cabinet",
+      "bbox_px": [
+        714,
+        651,
+        757,
+        715
+      ]
+    },
+    {
+      "kind": "kitchen_cabinet",
+      "bbox_px": [
+        572,
+        717,
+        758,
+        760
+      ]
+    },
+    {
+      "kind": "kitchen_sink",
+      "bbox_px": [
+        718,
+        657,
+        754,
+        712
+      ]
+    },
+    {
+      "kind": "cooktop",
+      "bbox_px": [
+        632,
+        722,
+        695,
+        758
+      ]
+    },
+    {
+      "kind": "refrigerator",
+      "bbox_px": [
+        579,
+        608,
+        645,
+        651
+      ]
+    }
+  ]
+}
