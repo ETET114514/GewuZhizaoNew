@@ -4,11 +4,30 @@ Work on local cross sections so a frame or railing cannot absorb an adjacent
 wall of a different width. No room closure or arbitrary gap filling is used.
 """
 import numpy as np
+import cv2
 
 from recognize_walls import runs
 
 
 def detect_outlined_walls(image, filled):
+    ordinary = _detect_outlined_walls(image, filled)
+    network = _detect_outlined_walls(image, filled, network=True)
+    if not network:
+        return ordinary
+    combined = []
+    for candidate in sorted([*ordinary,*network],key=lambda p:-p["length_px"]):
+        axis = 0 if candidate["orientation"] == "horizontal" else 1
+        if any(candidate["orientation"] == old["orientation"]
+               and abs(candidate["start_px"][1-axis]-old["start_px"][1-axis]) <= 2
+               and min(candidate["end_px"][axis],old["end_px"][axis])
+                   -max(candidate["start_px"][axis],old["start_px"][axis]) >= .85*candidate["length_px"]
+               for old in combined):
+            continue
+        combined.append(candidate)
+    return combined
+
+
+def _detect_outlined_walls(image, filled, network=False):
     rgb = np.asarray(image.convert("RGB"), dtype=np.int16)
     gray = rgb @ np.array([.299, .587, .114])
     ink = (gray < 220) & (rgb.max(axis=2) - rgb.min(axis=2) <= 20)
@@ -18,12 +37,16 @@ def detect_outlined_walls(image, filled):
     density = float(ink[ys.min():ys.max()+1,xs.min():xs.max()+1].mean()) if len(xs) else 0.
     dense = (density > .10 and len(xs) > 0
              and min(xs.max()-xs.min(),ys.max()-ys.min()) > .3*min(image.size))
+    if network and not dense:
+        return []
     frame_ink = ink
-    if dense:
+    if dense and not network:
         ink = ink & (gray < 130)
     scale = max(.5, min(image.size) / 745,
                 float(np.median([w["thickness_px"] for w in filled])) / 12 if filled else .5)
     stroke_limit = max(2, round(3 * scale))
+    if network:
+        stroke_limit = max(stroke_limit, round(3.5*scale))
     minimum_width = max(5, 5 * scale)
     maximum_width = max(24, 26 * scale)
     minimum_length = max(8, round(8 * scale))
@@ -66,7 +89,7 @@ def detect_outlined_walls(image, filled):
         # A crossing stroke may briefly interrupt a white band. Join only where
         # BOTH original edges continue, never across a blank doorway.
         merged = []
-        for t in sorted(tracks, key=lambda v: (v["lo"], v["a"])):
+        for t in sorted(tracks, key=lambda v: (v["a"], v["lo"]) if network else (v["lo"], v["a"])):
             match = None
             for old in reversed(merged):
                 if (abs(old["lo"]-t["lo"]) <= tolerance and abs(old["hi"]-t["hi"]) <= tolerance
@@ -86,7 +109,20 @@ def detect_outlined_walls(image, filled):
         for t in merged:
             a, b, lo, hi = (t[k] for k in ("a", "b", "lo", "hi"))
             thickness = hi-lo
-            if b-a < max(minimum_length, .7*thickness) or t["extras"]/(b-a) > .55:
+            if network and b-a >= 35*scale:
+                # At a junction a perpendicular stroke can make a wall edge
+                # too thick for pair extraction. Continue only while both
+                # observed edges and the empty wall core persist pixel by pixel.
+                inset = max(2, min(stroke_limit+1, (thickness-1)//2))
+                core = source[lo+inset:hi-inset]
+                valid = core.mean(axis=0) < .08 if core.size else np.zeros(source.shape[1],bool)
+                for edge in (lo,hi-1):
+                    valid &= source[max(0,edge-tolerance):edge+tolerance+1].any(axis=0)
+                while a > 0 and valid[a-1]:
+                    a -= 1
+                while b < source.shape[1] and valid[b]:
+                    b += 1
+            if b-a < max(minimum_length, .7*thickness) or (not network and t["extras"]/(b-a) > .55):
                 continue
             # At least one observed cap, junction or filled-wall transition.
             # Inspect interior pixels, not the two long strokes themselves.
@@ -111,6 +147,12 @@ def detect_outlined_walls(image, filled):
                                   bbox_px=box, thickness_px=thickness, length_px=b-a,
                                   source="automatic_paired_outline", review_status="unreviewed",
                                   evidence={"paired_edges":True, "end_caps":caps}))
+            if network:
+                inset = max(2, min(stroke_limit+1, (thickness-1)//2))
+                core = source[lo+inset:hi-inset,a+2:b-2]
+                proposals[-1]["evidence"].update(
+                    extra_edge_fraction=t["extras"]/(b-a),
+                    interior_ink_fraction=float(core.mean()) if core.size else 1.)
     # Uncapped spans at L/T junctions become walls only when they join an
     # observed wall network. This also excludes detached double furniture boxes.
     def touches(first, second, factor=1.5):
@@ -129,6 +171,8 @@ def detect_outlined_walls(image, filled):
                 return True
         return False
 
+    if network:
+        return select_outline_network(proposals, image.size, scale, touches, frame_ink)
     if dense:
         host_width = float(np.median([w["thickness_px"] for w in filled])) if filled else 12*scale
         eligible = [p for p in proposals
@@ -162,4 +206,62 @@ def detect_outlined_walls(image, filled):
         if (not filled and len(group) >= 3
                 and sum(p["length_px"] for p in group) >= 450*scale):
             accepted.extend(group)
+    return accepted
+
+
+def select_outline_network(proposals, size, scale, touches, ink):
+    """Bootstrap dense white-wall drawings from long, empty parallel bands.
+
+    Filled furniture hatch is not a wall-width prior. Require architectural
+    extent in both directions before using the observed outline width instead.
+    """
+    clean = [p for p in proposals if p["evidence"]["interior_ink_fraction"] < .06]
+    long = [p for p in clean if p["length_px"] >= .18*min(size)
+            and p["thickness_px"] >= 9*scale]
+    if len(long) < 3 or len({p["orientation"] for p in long}) < 2:
+        return []
+    bounds = np.array([p["bbox_px"] for p in long])
+    if np.any(bounds[:,2:].max(axis=0)-bounds[:,:2].min(axis=0) < .55*np.array(size)):
+        return []
+    weights = sorted(long, key=lambda p:p["thickness_px"])
+    midpoint = sum(p["length_px"] for p in weights)/2
+    cumulative = 0
+    for p in weights:
+        cumulative += p["length_px"]
+        if cumulative >= midpoint:
+            width = p["thickness_px"]
+            break
+    outside = np.pad((~ink).astype(np.uint8),1,constant_values=1)
+    cv2.floodFill(outside,None,(0,0),2)
+    outside = outside[1:-1,1:-1] == 2
+
+    def exterior(p):
+        x,y,r,b = map(int,p["bbox_px"])
+        offset = max(2,round(3*scale))
+        if p["orientation"] == "horizontal":
+            sides = [outside[max(0,y-offset),x:r],outside[min(size[1]-1,b+offset),x:r]]
+        else:
+            sides = [outside[y:b,max(0,x-offset)],outside[y:b,min(size[0]-1,r+offset)]]
+        return any(s.size and s.mean() > .6 for s in sides)
+
+    eligible = [p for p in clean if .72*width <= p["thickness_px"] <= 1.22*width
+                and p["length_px"] >= max(2*p["thickness_px"],35*scale)]
+    accepted = [p for p in eligible if p in long]
+    accepted.extend(p for p in clean if p not in accepted
+                    and .72*width <= p["thickness_px"] <= 1.22*width
+                    and p["length_px"] >= 18*scale and exterior(p))
+    # Separated rooms may have disconnected wall runs. A substantial matching
+    # band is evidence by itself; short objects must join the observed network.
+    accepted.extend(p for p in eligible if p not in accepted and p["length_px"] >= 70*scale)
+    thin = [p for p in clean if .5*width <= p["thickness_px"] < .72*width
+            and p["length_px"] >= 55*scale]
+    accepted.extend(p for p in thin if p["length_px"] >= 120*scale
+                    or (all(p["evidence"]["end_caps"])
+                        and any(touches(p,w,.6) for w in accepted)))
+    while True:
+        additions = [p for p in eligible if p not in accepted
+                     and any(touches(p,w,.6) or touches(w,p,.6) for w in accepted)]
+        if not additions:
+            break
+        accepted.extend(additions)
     return accepted

@@ -1,0 +1,146 @@
+{
+  "source": "11-light-rendered.png",
+  "basis": "Explicit source-style calibration, not independent validation",
+  "targets": [
+    {
+      "template_id": "pale-bed-top",
+      "kind": "bed",
+      "bbox_px": [
+        1096,
+        151,
+        1234,
+        274
+      ]
+    },
+    {
+      "template_id": "pale-bed-left",
+      "kind": "bed",
+      "bbox_px": [
+        510,
+        1017,
+        662,
+        1168
+      ]
+    },
+    {
+      "template_id": "pale-bed-right",
+      "kind": "bed",
+      "bbox_px": [
+        1152,
+        968,
+        1305,
+        1110
+      ]
+    },
+    {
+      "template_id": "pale-sofa-arc",
+      "kind": "sofa",
+      "bbox_px": [
+        227,
+        200,
+        427,
+        327
+      ]
+    },
+    {
+      "template_id": "pale-sofa-left",
+      "kind": "sofa",
+      "bbox_px": [
+        416,
+        834,
+        502,
+        970
+      ]
+    },
+    {
+      "template_id": "pale-sofa-lounge",
+      "kind": "sofa",
+      "bbox_px": [
+        916,
+        1034,
+        1045,
+        1133
+      ]
+    },
+    {
+      "template_id": "pale-dining",
+      "kind": "dining_table",
+      "bbox_px": [
+        492,
+        291,
+        565,
+        443
+      ]
+    },
+    {
+      "template_id": "pale-island",
+      "kind": "table",
+      "bbox_px": [
+        646,
+        268,
+        707,
+        463
+      ]
+    },
+    {
+      "template_id": "pale-armchair",
+      "kind": "chair",
+      "bbox_px": [
+        187,
+        419,
+        262,
+        502
+      ]
+    },
+    {
+      "template_id": "pale-wardrobe-short",
+      "kind": "cabinet",
+      "bbox_px": [
+        669,
+        908,
+        746,
+        949
+      ]
+    },
+    {
+      "template_id": "pale-wardrobe-long",
+      "kind": "cabinet",
+      "bbox_px": [
+        795,
+        908,
+        896,
+        949
+      ]
+    },
+    {
+      "template_id": "pale-cross-cabinet-left",
+      "kind": "cabinet",
+      "bbox_px": [
+        762,
+        258,
+        807,
+        472
+      ]
+    },
+    {
+      "template_id": "pale-cross-cabinet-right",
+      "kind": "cabinet",
+      "bbox_px": [
+        879,
+        258,
+        921,
+        431
+      ]
+    },
+    {
+      "template_id": "pale-bathtub",
+      "kind": "bathtub",
+      "bbox_px": [
+        731,
+        1205,
+        837,
+        1253
+      ]
+    }
+  ]
+}

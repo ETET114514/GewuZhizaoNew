@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
-ALGORITHM = "filled-and-outlined-walls-v2"
+ALGORITHM = "filled-and-outlined-walls-v3"
 
 def runs(line: np.ndarray) -> list[tuple[int, int]]:
     """Return half-open ranges containing True values."""

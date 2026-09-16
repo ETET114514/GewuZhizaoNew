@@ -1,0 +1,1253 @@
+{
+  "source": "微信图片_20260913184253_396_7.png",
+  "before": {
+    "furniture": [
+      {
+        "kind": "chair",
+        "bbox_px": [
+          736.22,
+          142.83,
+          781.27,
+          180.44
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.757,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "chair",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F001",
+        "center_px": [
+          758.75,
+          161.63
+        ],
+        "size_px": [
+          45.05,
+          37.61
+        ],
+        "label": "椅子"
+      },
+      {
+        "kind": "table",
+        "bbox_px": [
+          475.64,
+          242.51,
+          563.12,
+          328.67
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.6117,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "table",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F002",
+        "center_px": [
+          519.38,
+          285.59
+        ],
+        "size_px": [
+          87.48,
+          86.16
+        ],
+        "label": "桌子"
+      },
+      {
+        "kind": "table",
+        "bbox_px": [
+          753.41,
+          353.0,
+          824.03,
+          469.75
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.895,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "table",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F003",
+        "center_px": [
+          788.72,
+          411.38
+        ],
+        "size_px": [
+          70.62,
+          116.75
+        ],
+        "label": "桌子"
+      },
+      {
+        "kind": "sofa",
+        "bbox_px": [
+          562.81,
+          364.99,
+          630.16,
+          432.75
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.7202,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "sofa",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F004",
+        "center_px": [
+          596.48,
+          398.87
+        ],
+        "size_px": [
+          67.35,
+          67.76
+        ],
+        "label": "沙发"
+      },
+      {
+        "kind": "chair",
+        "bbox_px": [
+          419.84,
+          372.1,
+          476.68,
+          430.27
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.8244,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "chair",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F005",
+        "center_px": [
+          448.26,
+          401.19
+        ],
+        "size_px": [
+          56.84,
+          58.17
+        ],
+        "label": "椅子"
+      },
+      {
+        "kind": "chair",
+        "bbox_px": [
+          716.35,
+          393.23,
+          753.27,
+          427.53
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.8802,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "chair",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F006",
+        "center_px": [
+          734.81,
+          410.38
+        ],
+        "size_px": [
+          36.92,
+          34.3
+        ],
+        "label": "椅子"
+      },
+      {
+        "kind": "chair",
+        "bbox_px": [
+          364.21,
+          403.82,
+          442.15,
+          480.74
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.7401,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "chair",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F007",
+        "center_px": [
+          403.18,
+          442.28
+        ],
+        "size_px": [
+          77.94,
+          76.92
+        ],
+        "label": "椅子"
+      },
+      {
+        "kind": "chair",
+        "bbox_px": [
+          716.39,
+          431.9,
+          753.1,
+          465.93
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.7366,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "chair",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F008",
+        "center_px": [
+          734.75,
+          448.91
+        ],
+        "size_px": [
+          36.71,
+          34.03
+        ],
+        "label": "椅子"
+      },
+      {
+        "kind": "toilet",
+        "bbox_px": [
+          1019.14,
+          435.92,
+          1068.06,
+          465.27
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.9053,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "escalator",
+          "fixture_verification": "two_views_and_enclosed_bowl",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_binary_and_continuous_inverse"
+        },
+        "id": "F009",
+        "center_px": [
+          1043.6,
+          450.6
+        ],
+        "size_px": [
+          48.92,
+          29.35
+        ],
+        "label": "马桶"
+      },
+      {
+        "kind": "table",
+        "bbox_px": [
+          750.1,
+          1101.0,
+          788.67,
+          1183.99
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.6911,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "table",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F010",
+        "center_px": [
+          769.38,
+          1142.49
+        ],
+        "size_px": [
+          38.57,
+          82.99
+        ],
+        "label": "桌子"
+      },
+      {
+        "kind": "table",
+        "bbox_px": [
+          798.82,
+          1101.21,
+          837.82,
+          1183.17
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.6354,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "table",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F011",
+        "center_px": [
+          818.32,
+          1142.19
+        ],
+        "size_px": [
+          39.0,
+          81.96
+        ],
+        "label": "桌子"
+      },
+      {
+        "kind": "table",
+        "bbox_px": [
+          238.72,
+          1110.6,
+          372.14,
+          1251.86
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.6513,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "table",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F012",
+        "center_px": [
+          305.43,
+          1181.23
+        ],
+        "size_px": [
+          133.42,
+          141.26
+        ],
+        "label": "桌子"
+      },
+      {
+        "kind": "chair",
+        "bbox_px": [
+          732.37,
+          1122.22,
+          751.31,
+          1150.97
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.6973,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "chair",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F013",
+        "center_px": [
+          741.84,
+          1136.6
+        ],
+        "size_px": [
+          18.94,
+          28.75
+        ],
+        "label": "椅子"
+      },
+      {
+        "kind": "chair",
+        "bbox_px": [
+          835.81,
+          1122.58,
+          854.96,
+          1152.04
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.84,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "chair",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F014",
+        "center_px": [
+          845.38,
+          1137.31
+        ],
+        "size_px": [
+          19.15,
+          29.46
+        ],
+        "label": "椅子"
+      },
+      {
+        "kind": "toilet",
+        "bbox_px": [
+          1355.47,
+          1140.16,
+          1406.28,
+          1170.59
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.85,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "escalator",
+          "fixture_verification": "two_views_and_enclosed_bowl",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_binary_and_continuous_inverse"
+        },
+        "id": "F015",
+        "center_px": [
+          1380.88,
+          1155.38
+        ],
+        "size_px": [
+          50.81,
+          30.43
+        ],
+        "label": "马桶"
+      },
+      {
+        "kind": "bed",
+        "bbox_px": [
+          648.82,
+          1186.6,
+          790.66,
+          1289.57
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.8314,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "bed",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F016",
+        "center_px": [
+          719.74,
+          1238.09
+        ],
+        "size_px": [
+          141.84,
+          102.97
+        ],
+        "label": "床"
+      },
+      {
+        "kind": "chair",
+        "bbox_px": [
+          478.36,
+          1275.42,
+          506.82,
+          1304.43
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.7014,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "chair",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F017",
+        "center_px": [
+          492.59,
+          1289.93
+        ],
+        "size_px": [
+          28.46,
+          29.01
+        ],
+        "label": "椅子"
+      },
+      {
+        "kind": "sofa",
+        "bbox_px": [
+          435.98,
+          1291.85,
+          498.02,
+          1352.38
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.9408,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "sofa",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F018",
+        "center_px": [
+          467.0,
+          1322.12
+        ],
+        "size_px": [
+          62.04,
+          60.53
+        ],
+        "label": "沙发"
+      },
+      {
+        "kind": "cabinet",
+        "bbox_px": [
+          758.96,
+          1293.73,
+          787.34,
+          1318.96
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.7395,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "half_height_cabinet",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F019",
+        "center_px": [
+          773.15,
+          1306.35
+        ],
+        "size_px": [
+          28.38,
+          25.23
+        ],
+        "label": "柜子"
+      },
+      {
+        "kind": "cabinet",
+        "bbox_px": [
+          801.31,
+          1294.54,
+          829.15,
+          1318.86
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.7427,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "half_height_cabinet",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F020",
+        "center_px": [
+          815.23,
+          1306.7
+        ],
+        "size_px": [
+          27.84,
+          24.32
+        ],
+        "label": "柜子"
+      },
+      {
+        "kind": "cabinet",
+        "bbox_px": [
+          1245.96,
+          1312.8,
+          1273.9,
+          1342.49
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.9033,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "half_height_cabinet",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F021",
+        "center_px": [
+          1259.93,
+          1327.64
+        ],
+        "size_px": [
+          27.94,
+          29.69
+        ],
+        "label": "柜子"
+      }
+    ],
+    "furniture_algorithm": "furniture-symbol-match-v5+floorcad-onnx-v3",
+    "furniture_model_status": "ready",
+    "furniture_basis": "source_image; independent of wall and opening edits",
+    "limitations": [
+      "家具和设施按收录图例匹配；画法不同、遮挡和低清图片可能漏检或误检。",
+      "洗浴区不自动判断浴缸或淋浴间，需人工确认；鞋柜等用途来自参考图标注，不推断房间功能。",
+      "家具匹配分数不是置信概率；朝向为图例推测，需校核。",
+      "家具尺寸为像素，不推断单人/双人、真实尺寸或家具型号。",
+      "线稿模型输出家具候选；卫浴补检结合两种图像处理、内部轮廓和邻近马桶校验，仍可能漏检或误检。洗浴区类型待人工确认。"
+    ]
+  },
+  "after": {
+    "furniture": [
+      {
+        "kind": "chair",
+        "bbox_px": [
+          736.22,
+          142.83,
+          781.27,
+          180.44
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.757,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "chair",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F001",
+        "center_px": [
+          758.75,
+          161.63
+        ],
+        "size_px": [
+          45.05,
+          37.61
+        ],
+        "label": "椅子"
+      },
+      {
+        "kind": "table",
+        "bbox_px": [
+          475.64,
+          242.51,
+          563.12,
+          328.67
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.6117,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "table",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F002",
+        "center_px": [
+          519.38,
+          285.59
+        ],
+        "size_px": [
+          87.48,
+          86.16
+        ],
+        "label": "桌子"
+      },
+      {
+        "kind": "table",
+        "bbox_px": [
+          753.41,
+          353.0,
+          824.03,
+          469.75
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.895,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "table",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F003",
+        "center_px": [
+          788.72,
+          411.38
+        ],
+        "size_px": [
+          70.62,
+          116.75
+        ],
+        "label": "桌子"
+      },
+      {
+        "kind": "sofa",
+        "bbox_px": [
+          562.81,
+          364.99,
+          630.16,
+          432.75
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.7202,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "sofa",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F004",
+        "center_px": [
+          596.48,
+          398.87
+        ],
+        "size_px": [
+          67.35,
+          67.76
+        ],
+        "label": "沙发"
+      },
+      {
+        "kind": "chair",
+        "bbox_px": [
+          419.84,
+          372.1,
+          476.68,
+          430.27
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.8244,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "chair",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F005",
+        "center_px": [
+          448.26,
+          401.19
+        ],
+        "size_px": [
+          56.84,
+          58.17
+        ],
+        "label": "椅子"
+      },
+      {
+        "kind": "chair",
+        "bbox_px": [
+          716.35,
+          393.23,
+          753.27,
+          427.53
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.8802,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "chair",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F006",
+        "center_px": [
+          734.81,
+          410.38
+        ],
+        "size_px": [
+          36.92,
+          34.3
+        ],
+        "label": "椅子"
+      },
+      {
+        "kind": "chair",
+        "bbox_px": [
+          364.21,
+          403.82,
+          442.15,
+          480.74
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.7401,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "chair",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F007",
+        "center_px": [
+          403.18,
+          442.28
+        ],
+        "size_px": [
+          77.94,
+          76.92
+        ],
+        "label": "椅子"
+      },
+      {
+        "kind": "chair",
+        "bbox_px": [
+          716.39,
+          431.9,
+          753.1,
+          465.93
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.7366,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "chair",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F008",
+        "center_px": [
+          734.75,
+          448.91
+        ],
+        "size_px": [
+          36.71,
+          34.03
+        ],
+        "label": "椅子"
+      },
+      {
+        "kind": "toilet",
+        "bbox_px": [
+          1019.14,
+          435.92,
+          1068.06,
+          465.27
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.9053,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "escalator",
+          "fixture_verification": "two_views_and_enclosed_bowl",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_binary_and_continuous_inverse"
+        },
+        "id": "F009",
+        "center_px": [
+          1043.6,
+          450.6
+        ],
+        "size_px": [
+          48.92,
+          29.35
+        ],
+        "label": "马桶"
+      },
+      {
+        "kind": "table",
+        "bbox_px": [
+          750.1,
+          1101.0,
+          788.67,
+          1183.99
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.6911,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "table",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F010",
+        "center_px": [
+          769.38,
+          1142.49
+        ],
+        "size_px": [
+          38.57,
+          82.99
+        ],
+        "label": "桌子"
+      },
+      {
+        "kind": "table",
+        "bbox_px": [
+          798.82,
+          1101.21,
+          837.82,
+          1183.17
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.6354,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "table",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F011",
+        "center_px": [
+          818.32,
+          1142.19
+        ],
+        "size_px": [
+          39.0,
+          81.96
+        ],
+        "label": "桌子"
+      },
+      {
+        "kind": "table",
+        "bbox_px": [
+          238.72,
+          1110.6,
+          372.14,
+          1251.86
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.6513,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "table",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F012",
+        "center_px": [
+          305.43,
+          1181.23
+        ],
+        "size_px": [
+          133.42,
+          141.26
+        ],
+        "label": "桌子"
+      },
+      {
+        "kind": "chair",
+        "bbox_px": [
+          732.37,
+          1122.22,
+          751.31,
+          1150.97
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.6973,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "chair",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F013",
+        "center_px": [
+          741.84,
+          1136.6
+        ],
+        "size_px": [
+          18.94,
+          28.75
+        ],
+        "label": "椅子"
+      },
+      {
+        "kind": "chair",
+        "bbox_px": [
+          835.81,
+          1122.58,
+          854.96,
+          1152.04
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.84,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "chair",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F014",
+        "center_px": [
+          845.38,
+          1137.31
+        ],
+        "size_px": [
+          19.15,
+          29.46
+        ],
+        "label": "椅子"
+      },
+      {
+        "kind": "toilet",
+        "bbox_px": [
+          1355.47,
+          1140.16,
+          1406.28,
+          1170.59
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.85,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "escalator",
+          "fixture_verification": "two_views_and_enclosed_bowl",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_binary_and_continuous_inverse"
+        },
+        "id": "F015",
+        "center_px": [
+          1380.88,
+          1155.38
+        ],
+        "size_px": [
+          50.81,
+          30.43
+        ],
+        "label": "马桶"
+      },
+      {
+        "kind": "bed",
+        "bbox_px": [
+          648.82,
+          1186.6,
+          790.66,
+          1289.57
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.8314,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "bed",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F016",
+        "center_px": [
+          719.74,
+          1238.09
+        ],
+        "size_px": [
+          141.84,
+          102.97
+        ],
+        "label": "床"
+      },
+      {
+        "kind": "chair",
+        "bbox_px": [
+          478.36,
+          1275.42,
+          506.82,
+          1304.43
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.7014,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "chair",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F017",
+        "center_px": [
+          492.59,
+          1289.93
+        ],
+        "size_px": [
+          28.46,
+          29.01
+        ],
+        "label": "椅子"
+      },
+      {
+        "kind": "sofa",
+        "bbox_px": [
+          435.98,
+          1291.85,
+          498.02,
+          1352.38
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.9408,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "sofa",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F018",
+        "center_px": [
+          467.0,
+          1322.12
+        ],
+        "size_px": [
+          62.04,
+          60.53
+        ],
+        "label": "沙发"
+      },
+      {
+        "kind": "cabinet",
+        "bbox_px": [
+          758.96,
+          1293.73,
+          787.34,
+          1318.96
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.7395,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "half_height_cabinet",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F019",
+        "center_px": [
+          773.15,
+          1306.35
+        ],
+        "size_px": [
+          28.38,
+          25.23
+        ],
+        "label": "柜子"
+      },
+      {
+        "kind": "cabinet",
+        "bbox_px": [
+          801.31,
+          1294.54,
+          829.15,
+          1318.86
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.7427,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "half_height_cabinet",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F020",
+        "center_px": [
+          815.23,
+          1306.7
+        ],
+        "size_px": [
+          27.84,
+          24.32
+        ],
+        "label": "柜子"
+      },
+      {
+        "kind": "cabinet",
+        "bbox_px": [
+          1245.96,
+          1312.8,
+          1273.9,
+          1342.49
+        ],
+        "rotation_deg": null,
+        "source": "floorcad_onnx",
+        "match_score": 0.9033,
+        "review_status": "unreviewed",
+        "evidence": {
+          "model": "floorcad-nano",
+          "raw_label": "half_height_cabinet",
+          "score_type": "model_score_not_calibrated_probability",
+          "preprocessing": "background_aware_bright_strokes_on_black"
+        },
+        "id": "F021",
+        "center_px": [
+          1259.93,
+          1327.64
+        ],
+        "size_px": [
+          27.94,
+          29.69
+        ],
+        "label": "柜子"
+      }
+    ],
+    "furniture_algorithm": "furniture-symbol-match-v5+floorcad-onnx-v3",
+    "furniture_model_status": "ready",
+    "furniture_basis": "source_image; independent of wall and opening edits",
+    "limitations": [
+      "家具和设施按收录图例匹配；画法不同、遮挡和低清图片可能漏检或误检。",
+      "洗浴区不自动判断浴缸或淋浴间，需人工确认；鞋柜等用途来自参考图标注，不推断房间功能。",
+      "家具匹配分数不是置信概率；朝向为图例推测，需校核。",
+      "家具尺寸为像素，不推断单人/双人、真实尺寸或家具型号。",
+      "线稿模型输出家具候选；卫浴补检结合两种图像处理、内部轮廓和邻近马桶校验，仍可能漏检或误检。洗浴区类型待人工确认。"
+    ]
+  }
+}

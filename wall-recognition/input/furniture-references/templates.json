@@ -672,5 +672,316 @@
     "minimum_score": 0.91,
     "minimum_detail_score": 0.55,
     "minimum_short_side": 22
+  },
+  {
+    "id": "pale-bed-top",
+    "kind": "bed",
+    "image": "11-light-rendered.png",
+    "bbox_px": [
+      1084,
+      144,
+      1241,
+      281
+    ],
+    "object_bbox_px": [
+      1096,
+      151,
+      1234,
+      274
+    ],
+    "head_rotation_deg": 90,
+    "feature_mode": "soft_contrast",
+    "minimum_score": 0.89,
+    "minimum_detail_score": 0.52,
+    "minimum_short_side": 32
+  },
+  {
+    "id": "pale-bed-left",
+    "kind": "bed",
+    "image": "11-light-rendered.png",
+    "bbox_px": [
+      501,
+      1009,
+      669,
+      1174
+    ],
+    "object_bbox_px": [
+      510,
+      1017,
+      662,
+      1168
+    ],
+    "head_rotation_deg": 90,
+    "feature_mode": "soft_contrast",
+    "minimum_score": 0.89,
+    "minimum_detail_score": 0.52,
+    "minimum_short_side": 32
+  },
+  {
+    "id": "pale-bed-right",
+    "kind": "bed",
+    "image": "11-light-rendered.png",
+    "bbox_px": [
+      1143,
+      959,
+      1311,
+      1118
+    ],
+    "object_bbox_px": [
+      1152,
+      968,
+      1305,
+      1110
+    ],
+    "head_rotation_deg": 90,
+    "feature_mode": "soft_contrast",
+    "minimum_score": 0.89,
+    "minimum_detail_score": 0.52,
+    "minimum_short_side": 32
+  },
+  {
+    "id": "pale-sofa-arc",
+    "kind": "sofa",
+    "image": "11-light-rendered.png",
+    "bbox_px": [
+      217,
+      194,
+      432,
+      333
+    ],
+    "object_bbox_px": [
+      227,
+      200,
+      427,
+      327
+    ],
+    "head_rotation_deg": 0,
+    "feature_mode": "soft_contrast",
+    "minimum_score": 0.89,
+    "minimum_detail_score": 0.52,
+    "minimum_short_side": 32,
+    "orientation_unknown": true
+  },
+  {
+    "id": "pale-sofa-left",
+    "kind": "sofa",
+    "image": "11-light-rendered.png",
+    "bbox_px": [
+      407,
+      827,
+      511,
+      975
+    ],
+    "object_bbox_px": [
+      416,
+      834,
+      502,
+      970
+    ],
+    "head_rotation_deg": 0,
+    "feature_mode": "soft_contrast",
+    "minimum_score": 0.89,
+    "minimum_detail_score": 0.52,
+    "minimum_short_side": 32,
+    "orientation_unknown": true
+  },
+  {
+    "id": "pale-sofa-lounge",
+    "kind": "sofa",
+    "image": "11-light-rendered.png",
+    "bbox_px": [
+      908,
+      1025,
+      1052,
+      1140
+    ],
+    "object_bbox_px": [
+      916,
+      1034,
+      1045,
+      1133
+    ],
+    "head_rotation_deg": 0,
+    "feature_mode": "soft_contrast",
+    "minimum_score": 0.89,
+    "minimum_detail_score": 0.52,
+    "minimum_short_side": 32,
+    "orientation_unknown": true
+  },
+  {
+    "id": "pale-dining",
+    "kind": "dining_table",
+    "image": "11-light-rendered.png",
+    "bbox_px": [
+      457,
+      270,
+      595,
+      463
+    ],
+    "object_bbox_px": [
+      492,
+      291,
+      565,
+      443
+    ],
+    "head_rotation_deg": 0,
+    "feature_mode": "soft_contrast",
+    "minimum_score": 0.88,
+    "minimum_detail_score": 0.6,
+    "minimum_short_side": 32
+  },
+  {
+    "id": "pale-island",
+    "kind": "table",
+    "image": "11-light-rendered.png",
+    "bbox_px": [
+      618,
+      261,
+      714,
+      470
+    ],
+    "object_bbox_px": [
+      646,
+      268,
+      707,
+      463
+    ],
+    "head_rotation_deg": 0,
+    "feature_mode": "soft_contrast",
+    "minimum_score": 0.89,
+    "minimum_detail_score": 0.52,
+    "minimum_short_side": 32
+  },
+  {
+    "id": "pale-armchair",
+    "kind": "chair",
+    "image": "11-light-rendered.png",
+    "bbox_px": [
+      180,
+      412,
+      268,
+      508
+    ],
+    "object_bbox_px": [
+      187,
+      419,
+      262,
+      502
+    ],
+    "head_rotation_deg": 0,
+    "feature_mode": "soft_contrast",
+    "minimum_score": 0.89,
+    "minimum_detail_score": 0.52,
+    "minimum_short_side": 32
+  },
+  {
+    "id": "pale-wardrobe-short",
+    "kind": "cabinet",
+    "image": "11-light-rendered.png",
+    "bbox_px": [
+      663,
+      900,
+      754,
+      957
+    ],
+    "object_bbox_px": [
+      669,
+      908,
+      746,
+      949
+    ],
+    "head_rotation_deg": 0,
+    "feature_mode": "soft_contrast",
+    "minimum_score": 0.89,
+    "minimum_detail_score": 0.52,
+    "minimum_short_side": 22
+  },
+  {
+    "id": "pale-wardrobe-long",
+    "kind": "cabinet",
+    "image": "11-light-rendered.png",
+    "bbox_px": [
+      788,
+      900,
+      902,
+      957
+    ],
+    "object_bbox_px": [
+      795,
+      908,
+      896,
+      949
+    ],
+    "head_rotation_deg": 0,
+    "feature_mode": "soft_contrast",
+    "minimum_score": 0.89,
+    "minimum_detail_score": 0.52,
+    "minimum_short_side": 22
+  },
+  {
+    "id": "pale-cross-cabinet-left",
+    "kind": "cabinet",
+    "image": "11-light-rendered.png",
+    "bbox_px": [
+      753,
+      250,
+      814,
+      479
+    ],
+    "object_bbox_px": [
+      762,
+      258,
+      807,
+      472
+    ],
+    "head_rotation_deg": 0,
+    "feature_mode": "soft_contrast",
+    "minimum_score": 0.89,
+    "minimum_detail_score": 0.52,
+    "minimum_short_side": 22
+  },
+  {
+    "id": "pale-cross-cabinet-right",
+    "kind": "cabinet",
+    "image": "11-light-rendered.png",
+    "bbox_px": [
+      872,
+      250,
+      927,
+      437
+    ],
+    "object_bbox_px": [
+      879,
+      258,
+      921,
+      431
+    ],
+    "head_rotation_deg": 0,
+    "feature_mode": "soft_contrast",
+    "minimum_score": 0.89,
+    "minimum_detail_score": 0.52,
+    "minimum_short_side": 22
+  },
+  {
+    "id": "pale-bathtub",
+    "kind": "bathtub",
+    "image": "11-light-rendered.png",
+    "bbox_px": [
+      723,
+      1198,
+      844,
+      1260
+    ],
+    "object_bbox_px": [
+      731,
+      1205,
+      837,
+      1253
+    ],
+    "head_rotation_deg": 0,
+    "feature_mode": "soft_contrast",
+    "minimum_score": 0.89,
+    "minimum_detail_score": 0.52,
+    "minimum_short_side": 22
   }
 ]

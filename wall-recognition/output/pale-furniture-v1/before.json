@@ -1,0 +1,14 @@
+{
+  "furniture": [],
+  "furniture_algorithm": "furniture-symbol-match-v4+floorcad-onnx-v3",
+  "furniture_model_status": "ready",
+  "furniture_basis": "source_image; independent of wall and opening edits",
+  "limitations": [
+    "家具和设施按收录图例匹配；画法不同、遮挡和低清图片可能漏检或误检。",
+    "洗浴区不自动判断浴缸或淋浴间，需人工确认；鞋柜等用途来自参考图标注，不推断房间功能。",
+    "家具匹配分数不是置信概率；朝向为图例推测，需校核。",
+    "家具尺寸为像素，不推断单人/双人、真实尺寸或家具型号。",
+    "线稿模型输出家具候选；卫浴补检结合两种图像处理、内部轮廓和邻近马桶校验，仍可能漏检或误检。洗浴区类型待人工确认。"
+  ],
+  "seconds": 20.159
+}

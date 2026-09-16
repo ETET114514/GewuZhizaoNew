@@ -17,7 +17,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 ROOT = Path(__file__).resolve().parent
-ALGORITHM = "furniture-symbol-match-v4"
+ALGORITHM = "furniture-symbol-match-v5"
 LABELS = {"bed": "床", "sofa": "沙发", "cabinet": "柜子", "table": "桌子", "chair": "椅子", "unclassified": "待定家具",
           "coffee_table": "茶几", "dining_table": "餐桌", "shoe_cabinet": "鞋柜", "tv_console": "电视柜",
           "kitchen_cabinet": "厨房柜台", "kitchen_sink": "水槽", "cooktop": "灶台", "refrigerator": "冰箱",
@@ -42,19 +42,32 @@ def ink_image(image):
     return ((contrast > 14) | (gray < 90)).astype(np.float32)
 
 
+def template_features(image, mode="binary"):
+    if mode == "binary":
+        return ink_image(image)
+    if mode != "soft_contrast":
+        raise ValueError(f"Unknown template feature mode: {mode}")
+    gray = np.asarray(image.convert("L"))
+    background = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, np.ones((13, 13), np.uint8))
+    # Keep faint strokes as continuous values instead of discarding them below
+    # a hard contrast threshold. Flat rugs, fills and paper remain near zero.
+    return np.clip((background.astype(np.float32)-gray.astype(np.float32))/24., 0., 1.)
+
+
 @lru_cache(maxsize=1)
 def templates():
     folder = ROOT / "input/furniture-references"
     specs = json.loads((folder / "templates.json").read_text(encoding="utf-8"))
     result, sources, grayscale = [], {}, {}
     for spec in specs:
-        if spec["image"] not in sources:
+        key = (spec["image"], spec.get("feature_mode", "binary"))
+        if key not in sources:
             with Image.open(folder / spec["image"]) as source:
-                sources[spec["image"]] = ink_image(source)
+                sources[key] = template_features(source, key[1])
                 grayscale[spec["image"]] = np.asarray(source.convert('L'))
         # Process before cropping so border contrast agrees with the search image.
         x0, y0, x1, y1 = spec["bbox_px"]
-        crop = sources[spec["image"]][y0:y1, x0:x1]
+        crop = sources[key][y0:y1, x0:x1]
         upright = np.ascontiguousarray(np.rot90(crop, spec.get("head_rotation_deg", 0)//90))
         if "object_bbox_px" in spec:
             raw = grayscale[spec["image"]]
@@ -79,7 +92,7 @@ def resize_template(spec, base, width, height):
     transform = np.array([[sx,0,halo-px*sx],[0,sy,halo-py*sy]],dtype=np.float32)
     raw = cv2.warpAffine(spec["_raw_context"],transform,(w+2*halo,h+2*halo),
                          flags=cv2.INTER_CUBIC,borderMode=cv2.BORDER_REPLICATE)
-    ink = ink_image(Image.fromarray(raw))[halo:halo+h,halo:halo+w]
+    ink = template_features(Image.fromarray(raw), spec.get("feature_mode", "binary"))[halo:halo+h,halo:halo+w]
     return np.ascontiguousarray(np.rot90(ink,turns))
 
 
@@ -155,16 +168,21 @@ def detect_furniture(image: Image.Image, *, search_stride=3) -> list[dict]:
     # relative to the image, with no target-image paths or fixed output positions.
     factor = min(1.0, 1000 / max(image.size))
     small = image.resize((max(1, round(image.width*factor)), max(1, round(image.height*factor))))
-    ink = ink_image(small)
-    if min(ink.shape) < 28 or ink.sum() < 30:
+    if min(small.size) < 28:
         return []
-    blurred = cv2.GaussianBlur(ink, (7, 7), 1.3)
-    coarse = np.ascontiguousarray(blurred[::search_stride,::search_stride])
-    integral = cv2.integral(ink)
+    features = {}
     proposals = []
-    max_size = min(330, min(ink.shape)*.65)
+    max_size = min(330, min(small.size)*.65)
     sizes = np.geomspace(28, max_size, max(1, int(math.log(max_size/28)/math.log(1.06))+1)) if max_size >= 28 else []
     for spec, base in templates():
+        mode = spec.get("feature_mode", "binary")
+        if mode not in features:
+            ink = template_features(small, mode)
+            blurred = cv2.GaussianBlur(ink, (7, 7), 1.3)
+            features[mode] = (ink, blurred, np.ascontiguousarray(blurred[::search_stride,::search_stride]), cv2.integral(ink))
+        ink, blurred, coarse, integral = features[mode]
+        if ink.sum() < 30:
+            continue
         # Rendered upholstery and hanging-clothes symbols contain denser strokes
         # than CAD outlines. Derive their bound from the reference, capped below solid.
         max_density = min(.72, max(.42, float(base.mean()) + .13))
@@ -202,9 +220,9 @@ def detect_furniture(image: Image.Image, *, search_stride=3) -> list[dict]:
                         proposals.append(dict(kind=spec["kind"],
                             bbox_px=[round((x+a*tw)/factor, 2), round((y+b*th)/factor, 2),
                                      min(image.width, round((x+c*tw)/factor, 2)), min(image.height, round((y+d*th)/factor, 2))],
-                            rotation_deg=turn*90 if spec["kind"] in DIRECTIONAL_KINDS else None, match_score=round(float(score), 4),
+                            rotation_deg=turn*90 if spec["kind"] in DIRECTIONAL_KINDS and not spec.get("orientation_unknown") else None, match_score=round(float(score), 4),
                             source="symbol_template", review_status="unreviewed",
-                            evidence={"template_id": spec["id"], "mirrored": mirrored,
+                            evidence={"template_id": spec["id"], "mirrored": mirrored, "feature_mode": mode,
                                       "detail_score": round(detail_score, 4),
                                       **({"requires_container": spec["support_kind"]} if score < minimum_score else {}),
                                       "score_type": "normalized_correlation_not_probability"}))
