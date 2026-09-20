@@ -17,15 +17,16 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 ROOT = Path(__file__).resolve().parent
-ALGORITHM = "furniture-symbol-match-v5"
+ALGORITHM = "furniture-symbol-match-v6"
 LABELS = {"bed": "床", "sofa": "沙发", "cabinet": "柜子", "table": "桌子", "chair": "椅子", "unclassified": "待定家具",
           "coffee_table": "茶几", "dining_table": "餐桌", "shoe_cabinet": "鞋柜", "tv_console": "电视柜",
           "kitchen_cabinet": "厨房柜台", "kitchen_sink": "水槽", "cooktop": "灶台", "refrigerator": "冰箱",
           "vanity": "浴室柜", "toilet": "马桶", "wet_area": "洗浴区待确认",
-          "bathtub": "浴缸", "shower": "淋浴间"}
+          "bathtub": "浴缸", "shower": "淋浴间", "unclassified_area":"区域待确认", "water_feature":"水景 / 水池"}
 DIRECTIONAL_KINDS = {"bed", "sofa"}
-PENDING_KINDS = {"unclassified", "wet_area"}
+PENDING_KINDS = {"unclassified", "wet_area", "unclassified_area"}
 COLORS = {"bed": "#a12bba", "sofa": "#19854c", "cabinet": "#b76a12",
+          "unclassified_area":"#737080", "water_feature":"#168187",
           "shoe_cabinet": "#b76a12", "tv_console": "#b76a12", "kitchen_cabinet": "#b76a12",
           "coffee_table": "#3264b5", "dining_table": "#3264b5", "wet_area": "#737080"}
 LIMITATIONS = ["家具和设施按收录图例匹配；画法不同、遮挡和低清图片可能漏检或误检。",
@@ -121,6 +122,8 @@ def conflicting_candidates(a, b):
     iou, contained = overlap(a["bbox_px"], b["bbox_px"])
     # A sink or hob can be embedded in a counter: both are useful editable objects.
     kinds = {a["kind"], b["kind"]}
+    if bool(a['kind'] in {'unclassified_area','water_feature'}) != bool(b['kind'] in {'unclassified_area','water_feature'}):
+        return False  # Region annotations may contain separately editable objects.
     if "kitchen_cabinet" in kinds and kinds & {"kitchen_sink", "cooktop"}:
         return False
     return iou > .25 or contained > .60
@@ -186,7 +189,12 @@ def detect_furniture(image: Image.Image, *, search_stride=3) -> list[dict]:
         # Rendered upholstery and hanging-clothes symbols contain denser strokes
         # than CAD outlines. Derive their bound from the reference, capped below solid.
         max_density = min(.72, max(.42, float(base.mean()) + .13))
-        for size in sizes:
+        # Long wardrobes and textured regions lose correlation when a coarse
+        # scale step shifts their internal strokes by several pixels.
+        scale_step = spec.get('scale_step', 1.06)
+        search_sizes = (np.geomspace(28,max_size,max(1,int(math.log(max_size/28)/math.log(scale_step))+1))
+                        if scale_step != 1.06 and max_size >= 28 else sizes)
+        for size in search_sizes:
             h, w = base.shape
             w, h = max(8, round(w*size/max(base.shape))), max(8, round(h*size/max(base.shape)))
             min_side = spec.get("minimum_short_side", 40 if spec["kind"] == "bed" else 22 if spec["kind"] == "cabinet" else 28)

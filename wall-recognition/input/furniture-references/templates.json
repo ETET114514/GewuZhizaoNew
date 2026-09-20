@@ -983,5 +983,117 @@
     "minimum_score": 0.89,
     "minimum_detail_score": 0.52,
     "minimum_short_side": 22
+  },
+  {
+    "id": "pale-upper-counter",
+    "kind": "kitchen_cabinet",
+    "image": "11-light-rendered.png",
+    "bbox_px": [
+      807,
+      153,
+      925,
+      204
+    ],
+    "object_bbox_px": [
+      811,
+      159,
+      922,
+      200
+    ],
+    "head_rotation_deg": 0,
+    "feature_mode": "soft_contrast",
+    "minimum_score": 0.91,
+    "minimum_detail_score": 0.6,
+    "minimum_short_side": 22
+  },
+  {
+    "id": "pale-u-bottom-cabinet",
+    "kind": "cabinet",
+    "image": "11-light-rendered.png",
+    "bbox_px": [
+      800,
+      422,
+      894,
+      474
+    ],
+    "object_bbox_px": [
+      807,
+      429,
+      889,
+      468
+    ],
+    "head_rotation_deg": 0,
+    "feature_mode": "soft_contrast",
+    "minimum_score": 0.91,
+    "minimum_detail_score": 0.6,
+    "minimum_short_side": 22
+  },
+  {
+    "id": "pale-right-upper-wardrobe",
+    "kind": "cabinet",
+    "image": "11-light-rendered.png",
+    "bbox_px": [
+      1171,
+      826,
+      1423,
+      876
+    ],
+    "object_bbox_px": [
+      1177,
+      831,
+      1418,
+      868
+    ],
+    "head_rotation_deg": 0,
+    "feature_mode": "soft_contrast",
+    "minimum_score": 0.91,
+    "minimum_detail_score": 0.6,
+    "minimum_short_side": 22,
+    "scale_step": 1.02
+  },
+  {
+    "id": "pale-entry-upper-cabinet",
+    "kind": "cabinet",
+    "image": "11-light-rendered.png",
+    "bbox_px": [
+      916,
+      561,
+      1056,
+      617
+    ],
+    "object_bbox_px": [
+      923,
+      568,
+      1050,
+      611
+    ],
+    "head_rotation_deg": 0,
+    "feature_mode": "soft_contrast",
+    "minimum_score": 0.91,
+    "minimum_detail_score": 0.6,
+    "minimum_short_side": 22
+  },
+  {
+    "id": "pale-center-landscape-area",
+    "kind": "unclassified_area",
+    "image": "11-light-rendered.png",
+    "bbox_px": [
+      508,
+      622,
+      771,
+      769
+    ],
+    "object_bbox_px": [
+      515,
+      630,
+      764,
+      762
+    ],
+    "head_rotation_deg": 0,
+    "feature_mode": "soft_contrast",
+    "minimum_score": 0.88,
+    "minimum_detail_score": 0.6,
+    "minimum_short_side": 50,
+    "scale_step": 1.02
   }
 ]

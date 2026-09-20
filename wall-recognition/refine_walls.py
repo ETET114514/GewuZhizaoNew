@@ -9,7 +9,7 @@ from copy import deepcopy
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
-from recognize_walls import wall_render_parts
+from recognize_walls import wall_render_parts, wall_pixel_mask
 
 
 ALGORITHM = "wall-opening-wall-v1"
@@ -17,7 +17,7 @@ GENERATED = "automatic_opening_connection"
 CONSTRAINT = "opening_constraint"
 
 def is_active_opening(opening):
-    return (opening.get("review_status") != "rejected" and opening.get("kind") != "rejected"
+    return (opening.get("review_status") != "rejected" and opening.get("kind") not in ("rejected", "wall")
             and (not opening.get("requires_confirmation") or opening.get("review_status") == "confirmed"))
 
 def axis_of(item):
@@ -61,8 +61,8 @@ def initialize_refinement(document, image):
     rgb = np.asarray(image.convert("RGB"), dtype=np.int16)
     gray = rgb @ np.array([.299, .587, .114])
     settings = result.get("parameters", {})
-    dark = (gray <= settings.get("threshold", 180)) & (
-        rgb.max(axis=2)-rgb.min(axis=2) <= settings.get("max_color_spread", 10))
+    dark = wall_pixel_mask(rgb, settings.get('threshold', 180), settings.get('max_color_spread', 10),
+                           settings.get('wall_colors', ()), settings.get('color_tolerance', 8))
     scale = max(.5, min(image.size)/745)
     next_id = max((int(w["id"][1:]) for w in walls), default=0)+1
     mapping = {}

@@ -12,7 +12,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
 from recognize_walls import bridge_gaps, runs
 
 
-ALGORITHM = "wall-aware-frames-and-fitted-swing-arcs-v3"
+ALGORITHM = "wall-aware-frames-and-pale-swing-arcs-v4"
 LIMITATIONS = [
     "门窗为待校核候选；规则分数不是准确率或概率。",
     "支持水平/垂直多线窗框和平开门开启弧；浅色、遮挡和非直角符号可能漏检。",
@@ -399,6 +399,17 @@ def detect_openings(image: Image.Image, walls: list[dict]) -> list[dict]:
     anchored_doors = door_candidates(image,gray,walls,lines,scale)
     candidates += anchored_doors
     candidates += fitted_door_candidates(image,gray,walls,lines,scale,anchored_doors)
+    from recognize_pale_doors import detect_pale_doors
+    from recognize_pale_boundaries import detect_pale_boundaries
+    pale_doors = detect_pale_doors(image, walls, scale)
+    # Retain established detections when the recovery finds the same doorway.
+    for door in pale_doors:
+        if not any(old['kind']=='door' and old['orientation']==door['orientation'] and
+                   np.linalg.norm(np.mean([old['start_px'],old['end_px']],axis=0)-
+                                  np.mean([door['start_px'],door['end_px']],axis=0)) < 16*scale
+                   for old in candidates):
+            candidates.append(door)
+    candidates += detect_pale_boundaries(image, walls, scale)
     candidates = suppress(candidates, scale)
     for candidate in candidates:
         axis = 0 if candidate["orientation"] == "horizontal" else 1

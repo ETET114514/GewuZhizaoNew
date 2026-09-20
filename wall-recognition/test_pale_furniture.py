@@ -67,4 +67,31 @@ class PaleFurnitureTests(unittest.TestCase):
             canvas.paste(source.crop(box),pos)
         self.assertEqual(detect_furniture(canvas),[])
 
+    def test_added_cabinets_and_unknown_region_can_move_rotate_and_fade(self):
+        source=Image.open(ROOT/'input/furniture-references/11-light-rendered.png')
+        specs=json.loads((ROOT/'input/furniture-references/templates.json').read_text())
+        ids={'pale-upper-counter','pale-u-bottom-cabinet','pale-right-upper-wardrobe',
+             'pale-entry-upper-cabinet','pale-center-landscape-area'}
+        canvas=Image.new('RGB',(1000,800),'white')
+        truth=[]
+        for i,spec in enumerate(s for s in specs if s['id'] in ids):
+            x0,y0,x1,y1=spec['bbox_px']
+            crop=source.crop((x0,y0,x1,y1))
+            mask=Image.new('L',crop.size)
+            a,b,c,d=spec['object_bbox_px']
+            ImageDraw.Draw(mask).rectangle((a-x0,b-y0,c-x0-1,d-y0-1),fill=255)
+            crop,mask=ImageOps.mirror(crop),ImageOps.mirror(mask)
+            crop,mask=crop.rotate(90,expand=True),mask.rotate(90,expand=True)
+            size=(round(crop.width*.85),round(crop.height*.85))
+            crop=crop.resize(size)
+            crop=Image.fromarray(np.round(255-(255-np.asarray(crop).astype('float32'))*.85).astype('uint8'))
+            pos=(35+(i%3)*310,35+(i//3)*365)
+            canvas.paste(crop,pos)
+            a,b,c,d=mask.resize(size,Image.Resampling.NEAREST).getbbox()
+            truth.append((spec['kind'],[pos[0]+a,pos[1]+b,pos[0]+c,pos[1]+d]))
+        found=detect_furniture(canvas)
+        for kind,box in truth:
+            self.assertTrue(any(f['kind']==kind and overlap(f['bbox_px'],box)[0]>.7 for f in found),(kind,box,found))
+        self.assertEqual(len(found),len(truth))
+
 if __name__=='__main__':unittest.main()

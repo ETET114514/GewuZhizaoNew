@@ -13,7 +13,16 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
-ALGORITHM = "filled-and-outlined-walls-v3"
+ALGORITHM = "filled-outlined-and-multicolor-walls-v4"
+
+
+def wall_pixel_mask(rgb, threshold=180, max_color_spread=10, wall_colors=(), color_tolerance=8):
+    gray = rgb @ np.array([0.299, 0.587, 0.114])
+    mask = (gray <= threshold) & (rgb.max(axis=2)-rgb.min(axis=2) <= max_color_spread)
+    for color in wall_colors:
+        target = np.array([int(color[i:i+2], 16) for i in (1, 3, 5)])
+        mask |= np.max(np.abs(rgb-target), axis=2) <= color_tolerance
+    return mask
 
 def runs(line: np.ndarray) -> list[tuple[int, int]]:
     """Return half-open ranges containing True values."""
@@ -66,11 +75,9 @@ def detect_walls(image: Image.Image, *, threshold: int = 180,
                  max_color_spread: int = 10, min_length: int = 35,
                  min_thickness: int = 7, max_thickness: int = 24,
                  gap: int = 1, include_outlined: bool = True,
-                 junction_max_thickness: int = 64) -> list[dict]:
+                 junction_max_thickness: int = 64, wall_colors=(), color_tolerance=8) -> list[dict]:
     rgb = np.asarray(image.convert("RGB"), dtype=np.int16)
-    gray = rgb @ np.array([0.299, 0.587, 0.114])
-    spread = rgb.max(axis=2) - rgb.min(axis=2)
-    dark = (gray <= threshold) & (spread <= max_color_spread)
+    dark = wall_pixel_mask(rgb, threshold, max_color_spread, wall_colors, color_tolerance)
     candidates = []
     for orientation in ("horizontal", "vertical"):
         source = dark if orientation == "horizontal" else dark.T

@@ -141,6 +141,56 @@
         837,
         1253
       ]
+    },
+    {
+      "template_id": "pale-upper-counter",
+      "kind": "kitchen_cabinet",
+      "bbox_px": [
+        811,
+        159,
+        922,
+        200
+      ]
+    },
+    {
+      "template_id": "pale-u-bottom-cabinet",
+      "kind": "cabinet",
+      "bbox_px": [
+        807,
+        429,
+        889,
+        468
+      ]
+    },
+    {
+      "template_id": "pale-right-upper-wardrobe",
+      "kind": "cabinet",
+      "bbox_px": [
+        1177,
+        831,
+        1418,
+        868
+      ]
+    },
+    {
+      "template_id": "pale-entry-upper-cabinet",
+      "kind": "cabinet",
+      "bbox_px": [
+        923,
+        568,
+        1050,
+        611
+      ]
+    },
+    {
+      "template_id": "pale-center-landscape-area",
+      "kind": "unclassified_area",
+      "bbox_px": [
+        515,
+        630,
+        764,
+        762
+      ]
     }
   ]
 }

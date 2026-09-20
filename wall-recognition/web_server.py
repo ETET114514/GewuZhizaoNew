@@ -9,6 +9,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from io import BytesIO
 import json
 import math
+import re
 from pathlib import Path
 import secrets
 import threading
@@ -31,7 +32,25 @@ SETTINGS = dict(threshold=180, max_color_spread=10, min_length=35, min_thickness
 MAX_IMAGE_BYTES = 12 * 1024 * 1024
 
 
-def recognize_upload(payload: bytes, filename: str) -> dict:
+def recognition_options(value=None):
+    if value is None:
+        value = {}
+    if not isinstance(value, dict) or set(value)-{'wall_colors', 'color_tolerance'}:
+        raise ValueError('墙色设置格式不正确。')
+    colors = value.get('wall_colors', [])
+    tolerance = value.get('color_tolerance', 8)
+    if (not isinstance(colors, list) or len(colors)>6 or
+            any(not isinstance(c, str) or not re.fullmatch(r'#[0-9a-fA-F]{6}', c) for c in colors)):
+        raise ValueError('最多添加 6 种墙色，格式为 #RRGGBB。')
+    if isinstance(tolerance, bool) or not isinstance(tolerance, int) or not 1 <= tolerance <= 24:
+        raise ValueError('墙色容差需为 1–24 的整数。')
+    if any(min(int(c[i:i+2],16) for i in (1,3,5))+tolerance >= 253 for c in colors):
+        raise ValueError('墙色范围包含白色背景，请取墙线颜色或减小容差。')
+    return dict(wall_colors=sorted(set(c.lower() for c in colors)), color_tolerance=tolerance)
+
+
+def recognize_upload(payload: bytes, filename: str, options=None) -> dict:
+    settings = {**SETTINGS, **recognition_options(options)}
     if not payload or len(payload) > MAX_IMAGE_BYTES:
         raise ValueError("图片需小于 12 MB。")
     with Image.open(BytesIO(payload)) as original:
@@ -55,11 +74,11 @@ def recognize_upload(payload: bytes, filename: str) -> dict:
         "geometry": {"editable_fields": ["start_px", "end_px", "thickness_px"],
                      "derived_fields": ["bbox_px", "length_px", "orientation"],
                      "bbox": "left, top, right-exclusive, bottom-exclusive"},
-        "algorithm": WALL_ALGORITHM, "parameters": SETTINGS,
+        "algorithm": WALL_ALGORITHM, "parameters": settings,
         "opening_algorithm": ALGORITHM,
         "opening_basis": "source_image; independent of subsequent wall edits",
         "limitations": ["自动结果需校核；尺寸单位为像素。", *LIMITATIONS],
-        "walls": detect_walls(normalized, **SETTINGS),
+        "walls": detect_walls(normalized, **settings),
     }
     document["openings"] = detect_openings(normalized, document["walls"])
     document = initialize_refinement(document, normalized)
@@ -179,11 +198,15 @@ class ReviewHandler(BaseHTTPRequestHandler):
                 try:
                     started = perf_counter()
                     filename = unquote(self.headers.get("X-Image-Name", "floorplan.png"))[:200]
-                    cache_key = hashlib.sha256(payload).digest()
+                    raw_options = self.headers.get('X-Wall-Options', '{}')
+                    if len(raw_options)>1024:
+                        raise ValueError('墙色设置过长。')
+                    options = recognition_options(json.loads(raw_options))
+                    cache_key = hashlib.sha256(payload+json.dumps(options,sort_keys=True).encode()).digest()
                     cached = self.server.recognition_cache.get(cache_key)
                     cache_hit = cached is not None
                     if cached is None:
-                        run = recognize_upload(payload, filename)
+                        run = recognize_upload(payload, filename, options)
                         # Cache pristine recognition, never a mutable editing session.
                         self.server.recognition_cache[cache_key] = deepcopy(run)
                         while len(self.server.recognition_cache) > 3:
@@ -217,22 +240,34 @@ class ReviewHandler(BaseHTTPRequestHandler):
                         run["changes"].append(record)
                     elif route == "/api/review-opening":
                         kind=request.get("kind")
-                        if kind not in ("window","door","unclassified","rejected"):
-                            raise ValueError("请选择门、窗、待定或误报。")
+                        if kind not in ("window","door","wall","unclassified","rejected"):
+                            raise ValueError("请选择墙、门、窗、待定或误报。")
                         document=deepcopy(run["document"])
                         opening=next((o for o in document.get("openings",[]) if o["id"]==request.get("opening_id")),None)
                         if opening is None:
                             raise ValueError("门窗编号不存在，请重新选择。")
+                        next_id = run['next_id']
+                        previous_wall = opening.pop('confirmed_wall_id', None)
+                        if previous_wall:
+                            document['walls'] = [w for w in document['walls'] if w['id'] != previous_wall]
                         opening.setdefault("predicted_kind",opening["kind"])
                         opening.update(kind=kind, review_status="rejected" if kind=="rejected" else "unreviewed" if kind=="unclassified" else "confirmed")
                         if kind == "unclassified":
                             opening["requires_confirmation"] = True
-                        labels={"window":"窗","door":"门","unclassified":"待定门窗","rejected":"误报"}
+                        labels={"window":"窗","door":"门","wall":"墙体","unclassified":"待定边界","rejected":"误报"}
                         opening["label"]=labels[kind]
+                        if kind == 'wall':
+                            opening['confirmed_wall_id'] = f'W{next_id:03d}'
+                            wall = {key:deepcopy(opening[key]) for key in
+                                    ('orientation','start_px','end_px','bbox_px','length_px','thickness_px')}
+                            document['walls'].append({**wall, 'id':opening['confirmed_wall_id'],
+                                'source':'assisted_correction', 'review_status':'edited'})
+                            next_id += 1
                         document=refresh_refinement(document)
                         run["history"].append((run["document"],list(run["changes"]),run["next_id"]))
                         run["history"]=run["history"][-50:]
                         run["document"]=document
+                        run['next_id']=next_id
                         run["changes"].append({"id":opening["id"],"opening_id":opening["id"],"type":"opening_review",
                                                "summary":f"{opening['id']} 已标为{labels[kind]}"})
                     elif route == "/api/apply-edit":

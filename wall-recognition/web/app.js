@@ -6,17 +6,27 @@ const FURNITURE_COLORS = {table:'#3264b5',chair:'#19854c',bed:'#a12bba',sofa:'#1
 const DIRECTIONS = {up:'向上',down:'向下',left:'向左',right:'向右'};
 const state = {file:null,blobUrl:null,token:null,run:null,selected:null,issues:[],mode:'select',width:745,height:761,zoom:1,fitted:true,busy:false,dirty:false,formDirty:false,regionCount:0,drag:null};
 let toastTimer;
+state.wallColors=[];
+FURNITURE_COLORS.unclassified_area='#737080';
+FURNITURE_COLORS.water_feature='#168187';
 function toast(message, error=false) {
   clearTimeout(toastTimer); $('toast').textContent=message; $('toast').classList.toggle('error',error); $('toast').hidden=false;
   toastTimer=setTimeout(()=>{$('toast').hidden=true;},error?6500:4200);
 }
 function svgElement(tag, attrs={}) {const el=document.createElementNS(NS,tag); for(const [k,v] of Object.entries(attrs))el.setAttribute(k,String(v)); return el;}
 function snapshot() {return {run_id:state.run?.run_id||null,wall_count:state.run?.document.walls.length||0,walls:state.run?.document.walls||[],openings:state.run?.document.openings||[],furniture:state.run?.document.furniture||[],issues:structuredClone(state.issues),selected_id:state.selected?.id||null,unsaved:state.dirty||state.formDirty};}
-function geometryDescription(doc) {const r=doc.refinement_summary;const furniture=` · ${(doc.furniture||[]).filter(f=>f.review_status!=='rejected').length} 件家具与设施`;return (r?`${r.solid_segment_count} 段实墙 · ${r.active_opening_count} 处洞口${r.uncertain_boundary_count?` · ${r.uncertain_boundary_count} 处边界待确认`:''}`:`${doc.walls.length} 段候选`)+furniture;}
+function geometryDescription(doc) {
+  const r=doc.refinement_summary,items=(doc.furniture||[]).filter(f=>f.review_status!=='rejected');
+  const areas=items.filter(f=>['unclassified_area','water_feature'].includes(f.kind)).length;
+  const furniture=` · ${items.length-areas} 件家具与设施${areas?` · ${areas} 处区域`:''}`;
+  return (r?`${r.solid_segment_count} 段实墙 · ${r.active_opening_count} 处洞口${r.uncertain_boundary_count?` · ${r.uncertain_boundary_count} 处边界待确认`:''}`:`${doc.walls.length} 段候选`)+furniture;
+}
 function refresh() {
   const ready=Boolean(state.run), count=state.run?.document.walls.length||0;
   $('detect').disabled=!state.file||state.busy; $('detect').textContent=ready?'重新识别':'识别墙体、门窗与家具';
   $('upload').disabled=state.busy; $('sample').disabled=state.busy; $('file').disabled=state.busy;
+  for(const field of $('recognition-settings').querySelectorAll('input,button'))field.disabled=Boolean(state.busy);
+  $('wall-color-pick').disabled=!state.file||Boolean(state.busy);
   $('save').disabled=state.busy||!ready; $('undo').disabled=state.busy||!state.historySize;
   $('region-tool').disabled=!ready||state.busy; $('select-tool').disabled=state.busy; $('add-issue').disabled=state.busy;
   $('wall-count').textContent=ready?`${state.run.document.solid_wall_segments?.length??count} 段实墙`:'等待识别'; $('issue-count').textContent=state.issues.length;
@@ -31,11 +41,14 @@ function refresh() {
   $('furniture-sample').disabled=Boolean(state.busy);
   for(const field of $('furniture-form').querySelectorAll('input,select,button'))field.disabled=Boolean(state.busy);
   if(state.mode==='furniture')$('canvas-hint').textContent='拖框圈出一件家具，再选择类别并应用；Esc 取消';
+  if(state.mode==='wall-color')$('canvas-hint').textContent='点击原图中的墙线取色（忽略识别覆盖层）；Esc 取消';
 }
 function setMode(mode) {
   if(state.busy||(['region','furniture'].includes(mode)&&!state.run))return;
   if(state.formDirty) {toast('请先应用当前修改，或点击 × 取消。');return;}
   state.mode=mode; state.drag=null; $('draft-layer').replaceChildren();
+  $('wall-color-pick').setAttribute('aria-pressed',String(mode==='wall-color'));
+  $('plan').style.cursor=mode==='wall-color'?'crosshair':'';
   if(mode==='furniture')$('furniture-toggle').checked=true;
   $('stage').classList.toggle('region-mode',['region','furniture'].includes(mode)); $('plan').style.touchAction=['region','furniture'].includes(mode)?'none':'pan-x pan-y';
   for(const [id,name] of [['select-tool','select'],['region-tool','region'],['furniture-tool','furniture']]) {$(id).classList.toggle('active',mode===name);$(id).setAttribute('aria-pressed',String(mode===name));}
@@ -152,7 +165,7 @@ function focusOpening(opening) {
 function renderOpenings(layer) {
   if(!$('openings-toggle').checked)return;
   for(const o of state.run.document.openings||[]) {
-    if(o.review_status==='rejected')continue;
+    if(o.review_status==='rejected'||o.kind==='wall')continue;
     const color=o.kind==='window'?'#087e8b':o.kind==='door'?'#b74915':'#737080';
     const g=svgElement('g',{class:'opening-hit',tabindex:0,role:'button','aria-label':`${o.id} ${o.label} ${o.review_status==='confirmed'?'已确认':'待校核'}`});
     const [x0,y0,x1,y1]=o.bbox_px,active=state.focusedOpening===o.id;
@@ -173,7 +186,7 @@ function renderOpeningList() {
     const row=document.createElement('div');row.className='opening-row'+(state.focusedOpening===o.id?' focused':'');row.id=`opening-${o.id}`;
     const button=document.createElement('button');button.className='text-button';button.type='button';button.textContent=`${o.id} · ${o.label}`;button.disabled=Boolean(state.busy);button.addEventListener('click',()=>focusOpening(o));
     const status=document.createElement('small');status.textContent=o.review_status==='confirmed'?'已确认':o.review_status==='rejected'?'已排除':o.requires_confirmation?'待确认，暂不扣墙':'待校核';
-    const select=document.createElement('select');select.setAttribute('aria-label',`${o.id} 校核类别`);select.append(new Option('校核…',''),new Option('确认为窗','window'),new Option('确认为门','door'),new Option('类别待定','unclassified'),new Option('标为误报','rejected'));select.disabled=Boolean(state.busy);
+    const select=document.createElement('select');select.setAttribute('aria-label',`${o.id} 校核类别`);select.append(new Option('校核…',''),new Option('确认为墙','wall'),new Option('确认为窗','window'),new Option('确认为门','door'),new Option('类别待定','unclassified'),new Option('标为误报','rejected'));select.disabled=Boolean(state.busy);
     select.addEventListener('change',()=>{if(select.value)handle(reviewOpening(o.id,select.value));});row.append(button,status,select);list.append(row);
   }
 }
@@ -262,7 +275,7 @@ $('plan').addEventListener('pointermove',e=>{if(!state.drag||e.pointerId!==state
 $('plan').addEventListener('pointerup',e=>{if(!state.drag||e.pointerId!==state.drag.pointer)return;const b=dragBox(state.drag.start,imagePoint(e));state.drag=null;$('draft-layer').replaceChildren();$('plan').releasePointerCapture(e.pointerId);if(b[2]-b[0]<6||b[3]-b[1]<6){toast('请拖出一个稍大的矩形，圈住需要补入的构件。');return;}if(state.mode==='furniture'){setMode('select');focusFurniture({bbox_px:b,kind:'unclassified',rotation_deg:null});state.formDirty=true;return;}setMode('select');selectItem({id:`M${String(++state.regionCount).padStart(3,'0')}`,kind:'region',region_px:b});state.formDirty=true;refresh();});
 $('plan').addEventListener('pointercancel',()=>{state.drag=null;$('draft-layer').replaceChildren();});
 $('plan').addEventListener('click',e=>{if(e.target.id==='plan-image'&&state.mode==='select'&&!state.formDirty)clearSelection();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){state.drag=null;$('draft-layer').replaceChildren();if(['region','furniture'].includes(state.mode))setMode('select');}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){state.drag=null;$('draft-layer').replaceChildren();if(['region','furniture','wall-color'].includes(state.mode))setMode('select');}});
 async function api(path, options={}) {
   if(!state.token){const config=await fetch('/api/config');if(!config.ok)throw new Error('无法连接本地程序。');state.token=(await config.json()).token;}
   const response=await fetch(path,{...options,headers:{...(options.headers||{}),'X-Wall-Token':state.token}});
@@ -279,6 +292,7 @@ async function loadFile(file, guard=true) {
   try {await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(new Error('无法读取这张图片，请换一张。'));image.src=url;});if(image.width*image.height>4000000)throw new Error('本步支持最多 400 万像素，请先缩小图片。');}
   catch(error){URL.revokeObjectURL(url);throw error;}
   if(state.blobUrl)URL.revokeObjectURL(state.blobUrl);state.blobUrl=url;state.file=file;state.width=image.width;state.height=image.height;
+  state.wallColors=[];renderPalette();$('wall-color-tolerance').value='8';
   state.run=null;state.issues=[];state.selected=null;state.formDirty=false;state.dirty=false;state.regionCount=0;state.historySize=0;
   state.focusedOpening=null;state.furnitureDraft=null;state.focusedFurniture=null;$('furniture-form').hidden=true;
   $('filename').textContent=file.name;$('image-meta').textContent=`${image.width} × ${image.height} px · 等待识别`;
@@ -292,7 +306,9 @@ async function detect() {
   if(!(await allowReplacement()))return {cancelled:true};
   state.busy='detect';refresh();
   try {
-    const result=await api('/api/detect',{method:'POST',headers:{'Content-Type':state.file.type,'X-Image-Name':encodeURIComponent(state.file.name)},body:state.file});
+    const tolerance=Number($('wall-color-tolerance').value);
+    if(!Number.isInteger(tolerance)||tolerance<1||tolerance>24)throw new Error('颜色容差需为 1–24 的整数。');
+    const result=await api('/api/detect',{method:'POST',headers:{'Content-Type':state.file.type,'X-Image-Name':encodeURIComponent(state.file.name),'X-Wall-Options':JSON.stringify({wall_colors:state.wallColors,color_tolerance:tolerance})},body:state.file});
     state.run=result;state.width=result.document.image.width_px;state.height=result.document.image.height_px;state.issues=[];state.selected=null;state.formDirty=false;state.dirty=false;state.regionCount=0;state.historySize=0;
     state.focusedOpening=null;state.furnitureDraft=null;state.focusedFurniture=null;$('furniture-form').hidden=true;
     $('plan-image').setAttribute('href',result.image_url);$('plan-image').setAttribute('width',state.width);$('plan-image').setAttribute('height',state.height);$('plan').setAttribute('viewBox',`0 0 ${state.width} ${state.height}`);
@@ -323,6 +339,35 @@ $('furniture-toggle').addEventListener('change',renderPlan);
 $('furniture-tool').addEventListener('click',()=>setMode('furniture'));
 $('furniture-sample').addEventListener('click',()=>handle(loadFurnitureSample()));
 $('furniture-cancel').addEventListener('click',clearSelection);
+function renderPalette() {
+  $('wall-palette').replaceChildren();
+  for(const color of state.wallColors){
+    const button=document.createElement('button');button.type='button';button.className='palette-chip';button.disabled=Boolean(state.busy);
+    const swatch=document.createElement('span');swatch.style.backgroundColor=color;
+    button.append(swatch,document.createTextNode(`${color} ×`));button.setAttribute('aria-label',`删除墙色 ${color}`);
+    button.addEventListener('click',()=>{state.wallColors=state.wallColors.filter(c=>c!==color);renderPalette();});$('wall-palette').append(button);
+  }
+  $('wall-color-hint').textContent=state.wallColors.length?`已添加 ${state.wallColors.length} 种墙色；重新识别后生效。`:'尚未添加额外墙色。浅色外围线会另列为待确认边界，可确认为墙或窗。';
+}
+function addWallColor(color) {
+  if(state.wallColors.includes(color)){toast('这个颜色已经添加。');return;}
+  if(state.wallColors.length>=6)throw new Error('最多添加 6 种墙色，请先删除不需要的颜色。');
+  const tolerance=Number($('wall-color-tolerance').value);
+  if(Math.min(...[1,3,5].map(i=>parseInt(color.slice(i,i+2),16)))+tolerance>=253)throw new Error('颜色范围包含白色背景，请选墙线颜色或减小容差。');
+  state.wallColors.push(color);renderPalette();toast(`已添加墙色 ${color}，重新识别后生效。`);
+}
+$('wall-color-add').addEventListener('click',()=>handle(Promise.resolve().then(()=>addWallColor($('wall-color').value))));
+$('wall-color-pick').addEventListener('click',()=>setMode(state.mode==='wall-color'?'select':'wall-color'));
+$('plan').addEventListener('click',e=>{
+  if(state.mode!=='wall-color'||state.busy)return;
+  e.preventDefault();e.stopImmediatePropagation();const point=imagePoint(e);
+  handle((async()=>{
+    const bitmap=await createImageBitmap(state.file);const canvas=document.createElement('canvas');canvas.width=bitmap.width;canvas.height=bitmap.height;
+    const context=canvas.getContext('2d',{willReadFrequently:true});context.fillStyle='white';context.fillRect(0,0,canvas.width,canvas.height);context.drawImage(bitmap,0,0);bitmap.close();
+    const rgb=context.getImageData(Math.max(0,Math.min(canvas.width-1,Math.round(point[0]))),Math.max(0,Math.min(canvas.height-1,Math.round(point[1]))),1,1).data;
+    const color='#'+[...rgb].slice(0,3).map(v=>v.toString(16).padStart(2,'0')).join('');$('wall-color').value=color;addWallColor(color);setMode('select');
+  })());
+},true);
 $('furniture-kind').addEventListener('change',updateFurnitureDirection);
 $('furniture-form').addEventListener('submit',e=>{e.preventDefault();handle(submitFurniture());});
 for(const input of $('furniture-form').querySelectorAll('input,select'))input.addEventListener('input',()=>{state.formDirty=true;});

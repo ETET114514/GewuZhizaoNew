@@ -50,6 +50,51 @@ class WebWorkflowTests(unittest.TestCase):
         with urlopen(self.origin + self.detected["image_url"]) as response:
             self.assertEqual(hashlib.sha256(response.read()).hexdigest(), self.detected["document"]["image"]["sha256"])
 
+    def test_wall_confirmation_reclassification_and_undo(self):
+        from copy import deepcopy
+        identifier='pale-boundary-test'
+        run=deepcopy(self.server.sessions[self.detected['run_id']])
+        run['history']=[]
+        self.server.sessions[identifier]=run
+        before=deepcopy(run['document'])
+        opening=before['openings'][0]
+        request={'run_id':identifier,'opening_id':opening['id'],'kind':'wall'}
+        status,result=self.post('/api/review-opening',request)
+        self.assertEqual(status,200)
+        changed=next(o for o in result['document']['openings'] if o['id']==opening['id'])
+        wall_id=changed['confirmed_wall_id']
+        self.assertTrue(any(w['id']==wall_id for w in result['document']['walls']))
+        self.assertTrue(any(w['host_wall_id']==wall_id for w in result['document']['solid_wall_segments']))
+        status,result=self.post('/api/review-opening',{**request,'kind':'window'})
+        self.assertEqual(status,200)
+        self.assertFalse(any(w['id']==wall_id for w in result['document']['walls']))
+        self.post('/api/undo-edit',{'run_id':identifier})
+        status,result=self.post('/api/undo-edit',{'run_id':identifier})
+        self.assertEqual(result['document'],before)
+
+    def test_palette_changes_recognition_cache_and_saved_parameters(self):
+        from PIL import Image,ImageDraw
+        from io import BytesIO
+        im=Image.new('RGB',(256,256),'white')
+        ImageDraw.Draw(im).rectangle((30,50,220,59),fill='#c1d9ea')
+        buf=BytesIO();im.save(buf,format='PNG')
+        def detect(options):
+            request=Request(self.origin+'/api/detect',data=buf.getvalue(),headers={
+                'X-Wall-Token':self.token,'Origin':self.origin,'X-Wall-Options':json.dumps(options)})
+            with urlopen(request) as response:return json.load(response)
+        plain=detect({})
+        selected=detect({'wall_colors':['#c1d9ea']})
+        repeated=detect({'wall_colors':['#C1D9EA']})
+        self.assertFalse(selected['cache_hit'])
+        self.assertTrue(repeated['cache_hit'])
+        self.assertEqual(plain['document']['coarse_walls'],[])
+        self.assertEqual(len(selected['document']['coarse_walls']),1)
+        self.assertEqual(selected['document']['parameters']['wall_colors'],['#c1d9ea'])
+        status,saved=self.post('/api/save-project',{'run_id':selected['run_id']})
+        self.assertEqual(status,200)
+        doc=json.loads((Path(self.temp.name)/'projects'/saved['saved_name']/'walls.json').read_text(encoding='utf-8'))
+        self.assertEqual(doc['parameters'],selected['document']['parameters'])
+
     def test_repeated_recognition_reuses_pristine_data_not_user_edits(self):
         def detect(name):
             request=Request(self.origin+'/api/detect',data=(ROOT/'input/floorplan.png').read_bytes(),
