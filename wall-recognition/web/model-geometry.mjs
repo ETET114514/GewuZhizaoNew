@@ -64,8 +64,13 @@ export function buildModel(doc) {
         add((a+b)/2-frame/2,(a+b)/2+frame/2,o.bottom,o.top,o.thickness,color,'frame');
         add(a+frame,b-frame,o.bottom+frameH,o.top-frameH,10/scale,'#a7d8e5','glass');
       }else{
-        const leaf=Math.min(s.door_width_mm/scale,b-a-2*frame);
-        add(a+frame,a+frame+leaf,o.bottom+.015,o.top-frameH,35/scale,'#d1ae8b','door');
+        // Detected openings own their width; the nominal leaf only applies in preset mode.
+        // Fit within the actual clipped frame, with a small reveal on both sides.
+        const clearWidth=b-a-2*frame,reveal=Math.min(3/scale,clearWidth/20);
+        const available=clearWidth-2*reveal;
+        const leaf=s.width_mode==='preset'?Math.min(s.door_width_mm/scale,available):available;
+        const leafStart=(a+b-leaf)/2;
+        add(leafStart,leafStart+leaf,o.bottom+.015,o.top-frameH,35/scale,'#d1ae8b','door');
       }
     }
   }

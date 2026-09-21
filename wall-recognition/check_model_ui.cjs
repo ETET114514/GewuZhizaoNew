@@ -4,7 +4,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
 (async()=>{
-  const output=path.join(__dirname,'output/model-v1');fs.mkdirSync(output,{recursive:true});
+  const output=path.join(__dirname,process.env.REVIEW_OUTPUT||'output/model-v1');fs.mkdirSync(output,{recursive:true});
   const browser=await chromium.launch({channel:'msedge',headless:true});
   try{
     const page=await browser.newPage({viewport:{width:1440,height:1000}});page.setDefaultTimeout(120000);
@@ -26,6 +26,10 @@ const path=require('node:path');
     await page.locator('#open-model:not([disabled])').click();
     await page.locator('#model-canvas canvas').waitFor();
     assert.match(await page.locator('#model-summary').innerText(),/2800 mm/);
+    assert(await page.locator('[data-setting=door_width_mm]').isDisabled());
+    await page.locator('[data-setting=width_mode]').selectOption('preset');
+    assert(await page.locator('[data-setting=door_width_mm]').isEnabled());
+    await page.locator('[data-setting=width_mode]').selectOption('detected');
     const color=page.locator('[data-setting=wall_color]');await color.fill('#87a7bd');
     const settings=page.waitForResponse(r=>r.url().endsWith('/api/model-settings'));
     await page.locator('#apply-model').click();const applied=await (await settings).json();

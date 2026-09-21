@@ -41,3 +41,35 @@ test('no scale is not silently estimated; furniture is grounded and rejected fur
   assert(model.boxes.filter(b=>b.kind==='furniture').every(b=>b.center[1]-b.size[1]/2>=-1e-9));
   doc.model_settings={show_furniture:false};assert.equal(buildModel(doc).furnitureCount,0);
 });
+
+test('detected doors fill the frame in either orientation, across scales, without an 800 mm cap',()=>{
+  for(const scale of [10,20])for(const vertical of [false,true]){
+    const doc=fixture();doc.scale_mm_per_px=scale;
+    doc.model_settings={door_width_mm:600}; // Inactive preset must not limit a detected opening.
+    if(vertical)for(const item of [...doc.walls,...doc.openings]){item.orientation='vertical';item.start_px.reverse();item.end_px.reverse();}
+    const model=buildModel(doc),leaf=model.boxes.find(b=>b.id==='D1'&&b.kind==='door');
+    const axis=vertical?2:0,expected=(100*scale-80-6)/1000;
+    assert(Math.abs(leaf.size[axis]-expected)<1e-9);
+    const center=(100-(vertical?doc.image.height_px:doc.image.width_px)/2)*scale/1000;
+    assert(Math.abs(leaf.center[axis]-center)<1e-9);
+    assert(leaf.size[axis]>.8);
+  }
+});
+
+test('preset doors retain the requested width and are centered within the frame',()=>{
+  const doc=fixture();doc.model_settings={width_mode:'preset',door_width_mm:800,opening_width_mm:1200};
+  const model=buildModel(doc),leaf=model.boxes.find(b=>b.id==='D1'&&b.kind==='door');
+  assert(Math.abs(leaf.size[0]-.8)<1e-9);
+  assert(Math.abs(leaf.center[0]-(-1.5))<1e-9);
+});
+
+test('clipped door leaves fit the actual frame with equal reveals and do not change source pixels',()=>{
+  for(const width_mode of ['detected','preset']){
+    const doc=fixture();doc.model_settings={width_mode};doc.walls[0].end_px=[110,100];
+    const before=JSON.stringify(doc),model=buildModel(doc),o=model.openings.find(o=>o.id==='D1');
+    const leaf=model.boxes.find(b=>b.id==='D1'&&b.kind==='door'),[a,b]=o.spans[0];
+    assert(Math.abs(leaf.size[0]-((b-a)*10-80-6)/1000)<1e-9);
+    assert(Math.abs(leaf.center[0]-((a+b)/2-250)*.01)<1e-9);
+    assert.match(model.warnings.join(' '),/裁切/);assert.equal(JSON.stringify(doc),before);
+  }
+});

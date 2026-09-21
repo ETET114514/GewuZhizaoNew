@@ -2,6 +2,10 @@
 (() => {
   let points=null,drag=null,viewer=null,defaults=null,lastDocument=null,modelDirty=false;
   const dialog=$('model-dialog'),form=$('model-form');
+  function syncWidthControls(){
+    const preset=form.querySelector('[data-setting="width_mode"]').value==='preset';
+    for(const key of ['door_width_mm','opening_width_mm','window_width_mm'])form.querySelector(`[data-setting="${key}"]`).disabled=Boolean(state.busy)||!preset;
+  }
   function message(text,error=false){$('model-message').textContent=text;$('model-message').style.color=error?'#b34735':'';}
   function drawLine(){
     if(!points)return;
@@ -22,11 +26,13 @@
       if(dialog.open&&doc?.scale_mm_per_px&&viewer){fillSettings();renderModel(false);}
       else if(dialog.open&&!doc?.scale_mm_per_px){dialog.close();toast('比例标定已撤销，请重新标定后查看三维。');}
     }
+    syncWidthControls();
   }
   function fillSettings(){
     const settings={...defaults,...state.run.document.model_settings};
     for(const el of form.querySelectorAll('[data-setting]')){const value=settings[el.dataset.setting];if(el.type==='checkbox')el.checked=value;else el.value=value;}
     modelDirty=false;$('model-draft-status').textContent='参数随项目保存，可在应用后撤销。';
+    syncWidthControls();
   }
   function readSettings(){
     const result={};for(const el of form.querySelectorAll('[data-setting]'))result[el.dataset.setting]=el.type==='checkbox'?el.checked:el.type==='number'?Number(el.value):el.value;
@@ -102,6 +108,7 @@
   dialog.addEventListener('cancel',e=>{if(modelDirty||state.busy){e.preventDefault();close();}});
   $('model-reset').addEventListener('click',()=>viewer?.reset());$('model-top').addEventListener('click',()=>viewer?.reset(true));
   form.addEventListener('input',()=>{modelDirty=true;state.formDirty=true;$('model-draft-status').textContent='预览中 · 尚未应用或保存';$('model-undo').disabled=true;
+    syncWidthControls();
     try{renderModel(false,true);message('');}catch(error){message(error.message,true);}
   });
   form.addEventListener('submit',e=>{e.preventDefault();(async()=>{try{await applySettings({settings:readSettings()});}catch(error){message(error.message,true);}})();});
