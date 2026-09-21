@@ -1,7 +1,7 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const NS = 'http://www.w3.org/2000/svg';
-const TYPES = {too_short:'墙段太短',too_long:'墙段太长',missing_corner:'缺少转角',position:'位置不对',thickness:'厚度不对',false_positive:'不应该是墙',missing_wall:'这里漏了墙',other:'其他问题',opening_review:'门窗校核',furniture_edit:'家具修改'};
+const TYPES = {too_short:'墙段太短',too_long:'墙段太长',missing_corner:'缺少转角',position:'位置不对',thickness:'厚度不对',false_positive:'不应该是墙',missing_wall:'这里漏了墙',other:'其他问题',opening_review:'门窗校核',furniture_edit:'家具修改',model_settings:'三维设置'};
 const FURNITURE_COLORS = {table:'#3264b5',chair:'#19854c',bed:'#a12bba',sofa:'#19854c',cabinet:'#b76a12',shoe_cabinet:'#b76a12',tv_console:'#b76a12',kitchen_cabinet:'#b76a12',coffee_table:'#3264b5',dining_table:'#3264b5',wet_area:'#737080',unclassified:'#737080'};
 const DIRECTIONS = {up:'向上',down:'向下',left:'向左',right:'向右'};
 const state = {file:null,blobUrl:null,token:null,run:null,selected:null,issues:[],mode:'select',width:745,height:761,zoom:1,fitted:true,busy:false,dirty:false,formDirty:false,regionCount:0,drag:null};
@@ -22,6 +22,7 @@ function geometryDescription(doc) {
   return (r?`${r.solid_segment_count} 段实墙 · ${r.active_opening_count} 处洞口${r.uncertain_boundary_count?` · ${r.uncertain_boundary_count} 处边界待确认`:''}`:`${doc.walls.length} 段候选`)+furniture;
 }
 function refresh() {
+  window.dispatchEvent(new Event('wall-state-change'));
   const ready=Boolean(state.run), count=state.run?.document.walls.length||0;
   $('detect').disabled=!state.file||state.busy; $('detect').textContent=ready?'重新识别':'识别墙体、门窗与家具';
   $('upload').disabled=state.busy; $('sample').disabled=state.busy; $('file').disabled=state.busy;
@@ -47,6 +48,7 @@ function setMode(mode) {
   if(state.busy||(['region','furniture'].includes(mode)&&!state.run))return;
   if(state.formDirty) {toast('请先应用当前修改，或点击 × 取消。');return;}
   state.mode=mode; state.drag=null; $('draft-layer').replaceChildren();
+  if(mode!=='calibrate')window.dispatchEvent(new Event('wall-mode-change'));
   $('wall-color-pick').setAttribute('aria-pressed',String(mode==='wall-color'));
   $('plan').style.cursor=mode==='wall-color'?'crosshair':'';
   if(mode==='furniture')$('furniture-toggle').checked=true;

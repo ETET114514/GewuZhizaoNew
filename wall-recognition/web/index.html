@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="在本机识别户型墙体，逐段修改墙体并保存校正反馈。">
-  <title>筑见 · 户型校核</title><link rel="stylesheet" href="/app.css"><script src="/app.js" defer></script>
+  <title>筑见 · 户型校核</title><link rel="stylesheet" href="/app.css"><script src="/app.js" defer></script><script src="/model-ui.js" defer></script>
 </head>
 <body>
   <header class="header">
@@ -28,6 +28,16 @@
       <div class="legend"><span><i class="dot blue"></i>候选墙段</span><span><i class="dot orange"></i>已标问题</span><span><i class="dot teal"></i>漏识别区域</span><span class="legend-note">尺寸为像素 · 自动结果需要人工校核</span></div>
     </section>
     <aside class="review-panel" aria-label="墙体修改">
+      <section class="model-entry">
+        <span class="eyebrow">3D WHITE MODEL</span><h2>立体建模</h2>
+        <p id="calibration-status" class="opening-help">识别后，在图上标定一段已知长度。</p>
+        <div class="model-actions"><button id="calibrate" class="button" disabled>拉线标定</button><button id="open-model" class="button primary" disabled>查看三维</button></div>
+        <form id="calibration-form" hidden>
+          <p id="calibration-distance" class="opening-help"></p>
+          <label class="field">实际长度（mm）<input id="calibration-length" type="number" min="1" max="1000000" step="any" value="6000" required></label>
+          <div class="model-actions"><button class="button primary" type="submit">应用比例</button><button id="cancel-calibration" class="button" type="button">取消</button></div>
+        </form>
+      </section>
       <div class="review-heading"><div><span class="eyebrow">REVIEW</span><h2>墙体修改</h2></div><span id="wall-count" class="count-pill">等待识别</span></div>
       <div id="empty-selection" class="empty-selection"><span class="empty-icon" aria-hidden="true">⌖</span><h3 id="empty-title">从识别开始</h3><p id="empty-copy">点击「识别墙体、门窗与家具」，然后选择图中需要修改的墙段。</p><div class="mini-guide"><span>1</span> 点击墙段编号或线条<br><span>2</span> 指定方向、目标和调整量<br><span>3</span> 应用修改，墙体立即更新</div></div>
       <form id="issue-form" class="issue-form" hidden>
@@ -61,5 +71,33 @@
     </aside>
   </main>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <dialog id="model-dialog" class="model-dialog">
+    <header class="model-header"><div><span class="eyebrow">SPACE PREVIEW</span><h2>三维空间预览 <span class="model-badge">白模</span></h2></div><button id="close-model" class="button">返回二维</button></header>
+    <div class="model-layout">
+      <section class="model-scene"><div id="model-canvas"></div><div class="model-view-actions"><button id="model-reset" class="button">透视</button><button id="model-top" class="button">俯视</button></div><p class="model-gesture">拖动旋转 · 滚轮缩放 · 右键平移</p></section>
+      <aside class="model-controls">
+        <p id="model-summary" class="opening-help" role="status"></p>
+        <form id="model-form">
+          <h3>墙体与地面</h3>
+          <label class="field">墙高（mm）<input data-setting="wall_height_mm" type="number" min="100" max="20000" step="any" required></label>
+          <div class="field-row"><label class="field">墙体颜色<input data-setting="wall_color" type="color"></label><label class="field">地面颜色<input data-setting="floor_color" type="color"></label></div>
+          <h3>门窗预设</h3>
+          <label class="field">洞口宽度来源<select data-setting="width_mode"><option value="detected">按图上尺寸与比例换算</option><option value="preset">使用下面的预设宽度</option></select></label>
+          <div class="field-row"><label class="field">门扇宽（mm）<input data-setting="door_width_mm" type="number" min="100" max="20000" step="any" required></label><label class="field">门洞宽（mm）<input data-setting="opening_width_mm" type="number" min="100" max="20000" step="any" required></label></div>
+          <div class="field-row"><label class="field">窗洞宽（mm）<input data-setting="window_width_mm" type="number" min="100" max="20000" step="any" required></label><label class="field">门洞高（mm）<input data-setting="door_height_mm" type="number" min="100" max="20000" step="any" required></label></div>
+          <div class="field-row"><label class="field">窗洞高（mm）<input data-setting="window_height_mm" type="number" min="100" max="20000" step="any" required></label><label class="field">窗台离地（mm）<input data-setting="sill_height_mm" type="number" min="0" max="20000" step="any" required></label></div>
+          <p class="opening-help">门框、窗框与家具为简化示意。预设洞口超出墙段时会裁切；未确定类别的洞口暂保留缺口。</p>
+          <label class="model-check"><input data-setting="show_furniture" type="checkbox"> 显示简化家具</label>
+          <label class="model-check"><input data-setting="show_plan" type="checkbox"> 显示原户型底图</label>
+          <button id="apply-model" class="button primary full" type="submit">应用尺寸与外观</button>
+          <p id="model-draft-status" class="opening-help" role="status"></p>
+        </form>
+        <div class="model-actions"><button id="model-undo" class="button">撤销</button><button id="model-save" class="button">保存项目</button></div>
+        <p id="model-message" class="opening-help" role="status"></p>
+        <details id="model-warnings"><summary>待校核项目</summary><ul id="model-warning-list"></ul></details>
+        <p class="opening-help">地面暂用整张图大小的矩形底板，尚未按房间分区。修改二维构件后，重新打开三维会自动更新。</p>
+      </aside>
+    </div>
+  </dialog>
   <dialog id="confirm-dialog"><form method="dialog"><h2 id="confirm-title">替换当前识别结果？</h2><p>当前项目有未保存的修改。请先保存，或确认放弃这些修改。</p><div class="dialog-actions"><button class="button" value="cancel">返回</button><button class="button danger" value="discard">放弃并继续</button></div></form></dialog>
 </body></html>
