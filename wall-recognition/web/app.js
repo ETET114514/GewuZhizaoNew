@@ -4,6 +4,7 @@ const NS = 'http://www.w3.org/2000/svg';
 const TYPES = {too_short:'墙段太短',too_long:'墙段太长',missing_corner:'缺少转角',position:'位置不对',thickness:'厚度不对',false_positive:'不应该是墙',missing_wall:'这里漏了墙',other:'其他问题',opening_review:'门窗校核',furniture_edit:'家具修改',model_settings:'三维设置'};
 const FURNITURE_COLORS = {table:'#3264b5',chair:'#19854c',bed:'#a12bba',sofa:'#19854c',cabinet:'#b76a12',shoe_cabinet:'#b76a12',tv_console:'#b76a12',kitchen_cabinet:'#b76a12',coffee_table:'#3264b5',dining_table:'#3264b5',wet_area:'#737080',unclassified:'#737080'};
 const DIRECTIONS = {up:'向上',down:'向下',left:'向左',right:'向右'};
+TYPES.wall_connection='墙体连接修复';
 const state = {file:null,blobUrl:null,token:null,run:null,selected:null,issues:[],mode:'select',width:745,height:761,zoom:1,fitted:true,busy:false,dirty:false,formDirty:false,regionCount:0,drag:null};
 let toastTimer;
 state.wallColors=[];
@@ -29,6 +30,9 @@ function refresh() {
   for(const field of $('recognition-settings').querySelectorAll('input,button'))field.disabled=Boolean(state.busy);
   $('wall-color-pick').disabled=!state.file||Boolean(state.busy);
   $('save').disabled=state.busy||!ready; $('undo').disabled=state.busy||!state.historySize;
+  $('connect-walls').disabled=Boolean(state.busy)||!ready;
+  const connection=state.run?.document.wall_connection;
+  $('connection-status').textContent=connection?`橙色补接 ${connection.repair_wall_count} 段 · ${connection.free_end_count} 个自由端点待校核（含正常墙端）`:'补接短缝与转角，保留门窗；支持撤销。';
   $('region-tool').disabled=!ready||state.busy; $('select-tool').disabled=state.busy; $('add-issue').disabled=state.busy;
   $('wall-count').textContent=ready?`${state.run.document.solid_wall_segments?.length??count} 段实墙`:'等待识别'; $('issue-count').textContent=state.issues.length;
   $('pipeline-status').textContent=ready?`粗墙 → 门窗 → 实墙整理：${geometryDescription(state.run.document)}`:'识别流程：粗识别墙体 → 识别门窗 → 保留洞口并整理墙体';
@@ -103,6 +107,15 @@ async function undoEdit() {
   if(state.formDirty){toast('请先应用当前修改，或点击 × 取消。');return;}
   state.busy='undo';refresh();try{const result=await api('/api/undo-edit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({run_id:state.run.run_id})});state.busy=false;adoptEdits(result);toast('已撤销上一步，构件已恢复');}finally{state.busy=false;refresh();}
 }
+async function connectWalls() {
+  if(state.busy||!state.run)return;
+  if(state.formDirty){toast('请先应用当前修改，或点击 × 取消。');return;}
+  state.busy='connect';refresh();
+  try {
+    const result=await api('/api/connect-walls',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({run_id:state.run.run_id})});
+    state.busy=false;adoptEdits(result);toast(result.changes.at(-1).summary);
+  }finally{state.busy=false;refresh();}
+}
 function renderIssues() {
   const list=$('issue-list');list.replaceChildren();
   if(!state.issues.length){const p=document.createElement('p');p.className='list-empty';p.textContent='执行后的修改会出现在这里';list.append(p);return;}
@@ -111,6 +124,11 @@ function renderIssues() {
     const open=document.createElement('button');open.className='issue-open';open.type='button';
     const id=document.createElement('strong');id.textContent=issue.id;const type=document.createElement('span');type.textContent=TYPES[issue.type];
     const note=document.createElement('p');note.textContent=issue.summary||issue.note;open.append(id,type,note);
+    if(issue.type==='wall_connection')open.addEventListener('click',event=>{
+      event.stopImmediatePropagation();
+      const wall=state.run.document.walls.find(w=>issue.wall_ids?.includes(w.id));
+      if(wall)selectItem(wall);else toast('本次没有保留的补接墙段。');
+    });
     open.addEventListener('click',()=>{const furniture=state.run.document.furniture?.find(f=>f.id===issue.furniture_id);if(furniture){focusFurniture(furniture);return;}const opening=state.run.document.openings?.find(o=>o.id===issue.opening_id);if(opening){focusOpening(opening);return;}const wall=state.run.document.walls.find(w=>w.id===issue.wall_id);if(wall)selectItem(wall);else toast('这段墙已删除，可以撤销上一步恢复最近的修改。');});
     const remove=document.createElement('button');remove.className='issue-remove';remove.textContent='×';remove.setAttribute('aria-label',`移除 ${issue.id} 的问题`);
     remove.addEventListener('click',()=>{if(state.busy)return;state.issues=state.issues.filter(i=>i.id!==issue.id);state.dirty=true;if(state.selected?.id===issue.id)clearSelection();$('save-status').textContent='问题清单已修改，需重新保存';renderIssues();renderPlan();refresh();});
@@ -132,7 +150,7 @@ function renderPlan() {
       const solidParts=wall.solid_parts??[wall];
       for(const part of solidParts) {
         const [a,b,c,d]=part.bbox_px;
-        group.append(svgElement('rect',{x:a,y:b,width:c-a,height:d-b,class:'wall-shape','data-solid-id':part.id}));
+        group.append(svgElement('rect',{x:a,y:b,width:c-a,height:d-b,class:wall.source==='assisted_wall_connection'?'wall-shape connection-shape':'wall-shape','data-solid-id':part.id}));
         group.append(svgElement('line',{x1:part.start_px[0],y1:part.start_px[1],x2:part.end_px[0],y2:part.end_px[1],class:'wall-center'}));
       }
       for(const hint of wall.opening_hints||[])group.append(svgElement('line',{x1:hint.start_px[0],y1:hint.start_px[1],x2:hint.end_px[0],y2:hint.end_px[1],class:'opening-gap',stroke:'#087e8b','stroke-width':1,'stroke-dasharray':'4 4'}));
@@ -335,6 +353,7 @@ function handle(promise) {Promise.resolve(promise).catch(error=>toast(error.mess
 $('upload').addEventListener('click',()=>{$('file').value='';$('file').click();});
 $('file').addEventListener('change',()=>{if($('file').files[0])handle(loadFile($('file').files[0]));});
 $('sample').addEventListener('click',()=>handle(loadSample()));$('detect').addEventListener('click',()=>handle(detect()));$('save').addEventListener('click',()=>handle(saveProject()));$('undo').addEventListener('click',()=>handle(undoEdit()));
+$('connect-walls').addEventListener('click',()=>handle(connectWalls()));
 $('select-tool').addEventListener('click',()=>setMode('select'));$('region-tool').addEventListener('click',()=>setMode('region'));$('overlay-toggle').addEventListener('change',renderPlan);
 $('openings-toggle').addEventListener('change',renderPlan);
 $('furniture-toggle').addEventListener('change',renderPlan);

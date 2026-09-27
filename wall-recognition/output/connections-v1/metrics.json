@@ -1,0 +1,20 @@
+[
+  {
+    "name": "default",
+    "added": 1,
+    "free_ends_before": 31,
+    "free_ends_after": 29
+  },
+  {
+    "name": "dense",
+    "added": 11,
+    "free_ends_before": 40,
+    "free_ends_after": 30
+  },
+  {
+    "name": "pale",
+    "added": 2,
+    "free_ends_before": 31,
+    "free_ends_after": 28
+  }
+]

@@ -8,6 +8,7 @@ export function buildModel(doc) {
   if(!Number.isFinite(scale)||scale<=0)throw new Error('请先在二维图上标定一段已知长度。');
   const unit=scale/1000,W=doc.image.width_px,H=doc.image.height_px,height=s.wall_height_mm/1000;
   const boxes=[],warnings=[],openings=[];
+  if(doc.wall_connection?.free_end_count)warnings.push(`墙体仍有 ${doc.wall_connection.free_end_count} 个自由端点（含正常墙端），请核对连接后再确认模型。`);
   const box=(id,kind,x0,z0,x1,z1,bottom,top,color)=>{
     if(x1-x0<1e-6||z1-z0<1e-6||top-bottom<1e-6)return;
     boxes.push({id,kind,size:[(x1-x0)*unit,top-bottom,(z1-z0)*unit],

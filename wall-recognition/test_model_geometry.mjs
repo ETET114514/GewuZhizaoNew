@@ -5,6 +5,17 @@ function fixture(){return {image:{width_px:500,height_px:300},scale_mm_per_px:10
   walls:[{id:'W1',orientation:'horizontal',start_px:[0,100],end_px:[500,100],thickness_px:20}],
   openings:[{id:'D1',kind:'door',orientation:'horizontal',start_px:[50,100],end_px:[150,100],thickness_px:20},
     {id:'O1',kind:'window',orientation:'horizontal',start_px:[250,100],end_px:[400,100],thickness_px:20}],furniture:[]};}
+test('connection pieces fill the 3D crack and retain opening subtraction',()=>{
+  const doc=fixture();doc.walls=[{...doc.walls[0],end_px:[200,100]},
+    {...doc.walls[0],id:'W2',start_px:[204,100]},
+    {...doc.walls[0],id:'W3',source:'assisted_wall_connection',start_px:[200,100],end_px:[204,100]}];
+  doc.wall_connection={free_end_count:2};
+  const model=buildModel(doc);
+  assert.equal(solidAt(model,202,1),true);
+  assert.equal(solidAt(model,100,1),false);
+  assert.equal(solidAt(model,300,1.5),false);
+  assert(model.warnings.some(w=>w.includes('自由端点')));
+});
 function solidAt(model,x,y,z=100){return model.boxes.filter(b=>b.kind==='wall').some(b=>{
   const p=[(x-250)*.01,y,(z-150)*.01];return p.every((v,i)=>v>b.center[i]-b.size[i]/2+1e-7&&v<b.center[i]+b.size[i]/2-1e-7);
 });}

@@ -206,6 +206,10 @@ def refresh_refinement(document):
         solid.extend(deepcopy(parts))
     result["walls"] = walls
     result["solid_wall_segments"] = solid
+    if 'wall_connection' in result:
+        from connect_walls import connection_audit, SOURCE
+        result['wall_connection'].update(connection_audit(result))
+        result['wall_connection']['repair_wall_count'] = sum(w.get('source') == SOURCE for w in walls)
     result["refinement_summary"] = dict(
         coarse_wall_count=len(result.get("coarse_walls", [])),
         active_opening_count=len(active),

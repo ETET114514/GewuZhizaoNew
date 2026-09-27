@@ -26,6 +26,7 @@ from copy import deepcopy
 from refine_walls import initialize_refinement, refresh_refinement
 from recognize_furniture import add_furniture, apply_furniture_edit, furniture_export
 from model_settings import apply_model_settings
+from connect_walls import connect_walls
 
 ROOT = Path(__file__).resolve().parent
 ISSUE_TYPES = {"too_short", "too_long", "missing_corner", "position", "thickness", "false_positive", "missing_wall", "other"}
@@ -228,7 +229,7 @@ class ReviewHandler(BaseHTTPRequestHandler):
                                          "elapsed_ms": round((perf_counter()-started)*1000), "cache_hit": cache_hit})
                 finally:
                     self.server.detect_lock.release()
-            elif route in ("/api/apply-edit", "/api/undo-edit", "/api/save-project", "/api/review-opening", "/api/edit-furniture", "/api/model-settings"):
+            elif route in ("/api/apply-edit", "/api/undo-edit", "/api/save-project", "/api/review-opening", "/api/edit-furniture", "/api/model-settings", "/api/connect-walls"):
                 request = json.loads(payload)
                 if not isinstance(request, dict) or not isinstance(request.get("run_id"), str):
                     raise ValueError("操作格式不正确。")
@@ -236,7 +237,14 @@ class ReviewHandler(BaseHTTPRequestHandler):
                     run = self.server.sessions.get(request["run_id"])
                     if run is None:
                         raise ValueError("识别结果已过期，请重新识别。")
-                    if route == '/api/model-settings':
+                    if route == '/api/connect-walls':
+                        with Image.open(BytesIO(run['png'])) as image:
+                            document, record, next_id = connect_walls(run['document'], image, run['next_id'])
+                        run['history'].append((run['document'], list(run['changes']), run['next_id']))
+                        run['history'] = run['history'][-50:]
+                        run['document'], run['next_id'] = document, next_id
+                        run['changes'].append(record)
+                    elif route == '/api/model-settings':
                         document, record = apply_model_settings(run['document'], request)
                         run['history'].append((run['document'], list(run['changes']), run['next_id']))
                         run['history'] = run['history'][-50:]

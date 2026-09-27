@@ -50,6 +50,38 @@ class WebWorkflowTests(unittest.TestCase):
         with urlopen(self.origin + self.detected["image_url"]) as response:
             self.assertEqual(hashlib.sha256(response.read()).hexdigest(), self.detected["document"]["image"]["sha256"])
 
+    def test_connection_repair_save_and_undo(self):
+        from copy import deepcopy
+        from io import BytesIO
+        from PIL import Image
+        from refine_walls import segment, initialize_refinement
+        run = deepcopy(self.server.sessions[self.detected['run_id']])
+        image = Image.new('RGB', (400, 400), 'white')
+        walls = [dict(id='W001', **segment(0, 20, 100, 100, 10)),
+                 dict(id='W002', **segment(0, 104, 200, 100, 10))]
+        run['document'].update(image=dict(width_px=400, height_px=400), walls=walls, openings=[], furniture=[])
+        run['document'] = initialize_refinement(run['document'], image)
+        png = BytesIO(); image.save(png, format='PNG')
+        run.update(png=png.getvalue(), history=[], changes=[], next_id=3)
+        before = deepcopy(run['document'])
+        self.server.sessions['connect-test'] = run
+        request = dict(run_id='connect-test')
+        status, result = self.post('/api/connect-walls', request)
+        self.assertEqual(status, 200)
+        self.assertEqual(result['history_size'], 1)
+        self.assertEqual(result['document']['wall_connection']['repair_wall_count'], 1)
+        self.assertEqual(len(result['document']['solid_wall_segments']), 3)
+        status, saved = self.post('/api/save-project', request)
+        self.assertEqual(status, 200)
+        destination = Path(self.temp.name)/'projects'/saved['saved_name']
+        exported = json.loads((destination/'walls.json').read_text(encoding='utf-8'))
+        solids = json.loads((destination/'solid-walls.json').read_text(encoding='utf-8'))
+        self.assertEqual(exported, result['document'])
+        self.assertEqual(solids['solid_wall_segments'], exported['solid_wall_segments'])
+        _, undone = self.post('/api/undo-edit', request)
+        self.assertEqual(undone['document'], before)
+        self.assertEqual(run['next_id'], 3)
+
     def test_wall_confirmation_reclassification_and_undo(self):
         from copy import deepcopy
         identifier='pale-boundary-test'
