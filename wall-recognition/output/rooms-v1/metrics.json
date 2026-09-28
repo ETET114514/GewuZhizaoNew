@@ -1,0 +1,35 @@
+[
+  {
+    "name": "default",
+    "regions": 1,
+    "virtual_boundaries": 10,
+    "skipped": [],
+    "pending": []
+  },
+  {
+    "name": "dense",
+    "regions": 0,
+    "virtual_boundaries": 6,
+    "skipped": [
+      "O003",
+      "O006",
+      "O007",
+      "O008"
+    ],
+    "pending": []
+  },
+  {
+    "name": "pale",
+    "regions": 5,
+    "virtual_boundaries": 16,
+    "skipped": [
+      "O003"
+    ],
+    "pending": [
+      "O005",
+      "O006",
+      "O011",
+      "O014"
+    ]
+  }
+]

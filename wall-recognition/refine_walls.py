@@ -218,6 +218,9 @@ def refresh_refinement(document):
         constrained_wall_count=sum(bool(w.get("opening_hints")) for w in walls),
         solid_segment_count=len(solid),
         excluded_length_px=round(sum(h["length_px"] for w in walls for h in w.get("opening_hints", [])), 2))
+    if 'room_partition' in result:
+        from partition_rooms import partition_rooms
+        result['room_partition'] = partition_rooms(result)
     return result
 
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="在本机识别户型墙体，逐段修改墙体并保存校正反馈。">
-  <title>筑见 · 户型校核</title><link rel="stylesheet" href="/app.css"><script src="/app.js" defer></script><script src="/model-ui.js" defer></script>
+  <title>筑见 · 户型校核</title><link rel="stylesheet" href="/app.css"><script src="/app.js" defer></script><script src="/model-ui.js" defer></script><script src="/room-ui.js" defer></script>
 </head>
 <body>
   <header class="header">
@@ -33,10 +33,39 @@
         <span class="eyebrow">3D WHITE MODEL</span><h2>立体建模</h2>
         <p id="calibration-status" class="opening-help">识别后，在图上标定一段已知长度。</p>
         <div class="model-actions"><button id="calibrate" class="button" disabled>拉线标定</button><button id="open-model" class="button primary" disabled>查看三维</button></div>
+        <details class="thickness-calibration"><summary>备选：按墙厚估算比例</summary>
+          <p class="opening-help">选一段厚度可靠的实墙，填写实际墙厚。估算会影响整个模型比例；已知长度时优先拉线标定。</p>
+          <form id="wall-calibration-form"><label class="field">依据墙段<select id="scale-wall"></select></label>
+          <label class="field">实际墙厚（mm）<input id="scale-thickness" type="number" min="50" max="2000" step="any" value="200" required></label>
+          <button id="apply-wall-scale" class="button full" disabled>应用墙厚估算</button></form>
+        </details>
         <form id="calibration-form" hidden>
           <p id="calibration-distance" class="opening-help"></p>
           <label class="field">实际长度（mm）<input id="calibration-length" type="number" min="1" max="1000000" step="any" value="6000" required></label>
           <div class="model-actions"><button class="button primary" type="submit">应用比例</button><button id="cancel-calibration" class="button" type="button">取消</button></div>
+        </form>
+      </section>
+      <section class="room-section">
+        <div class="issues-heading"><h3>按门洞分割区域</h3><span id="room-count">未分析</span></div>
+        <p class="opening-help">以墙体为边界，门洞分隔相邻空间，窗洞补齐外围边界。虚拟分界不改变真实墙体与三维洞口。</p>
+        <button id="partition-rooms" class="button full" disabled>分割区域</button>
+        <label class="model-check"><input id="rooms-toggle" type="checkbox" checked> 显示区域与虚拟分界</label>
+        <div id="room-list"></div><p id="room-status" class="opening-help" role="status">识别并校核墙体、门窗后，可尝试分割。无需比例标定。</p>
+        <button id="room-add" class="button full" disabled>手绘补区域</button>
+        <p class="opening-help">手绘区域优先于自动分区，并避开实墙。自动边界改变后，请重新检查区域与材质。</p>
+        <div id="room-draw-tools" hidden><p id="room-draw-hint" class="opening-help"></p><div class="model-actions"><button id="room-draw-finish" class="button">完成轮廓</button><button id="room-draw-back" class="button">退回一点</button><button id="room-draw-cancel" class="button">取消</button></div></div>
+        <form id="room-edit-form" hidden>
+          <h4 id="room-edit-id"></h4>
+          <label class="field">区域名称<input id="room-name" maxlength="40" required></label>
+          <label class="field">地面材质<select id="room-material"><option value="solid">纯色</option><option value="tile">瓷砖</option><option value="wood">木地板</option></select></label>
+          <label class="field">地面颜色<input id="room-color" type="color" value="#e5d7be"></label>
+          <div class="field-row"><label class="field">板块宽（mm）<input id="room-width" type="number" min="50" max="5000" step="any" value="600" required></label><label class="field">板块长（mm）<input id="room-length" type="number" min="50" max="5000" step="any" value="600" required></label></div>
+          <label class="field">铺设方向（°）<input id="room-angle" type="number" min="0" max="360" step="any" value="0" required></label>
+          <button class="button primary full" type="submit">应用区域与材质</button>
+          <button id="room-cancel-edit" class="button full" type="button">放弃未应用设置</button>
+          <div class="model-actions"><button id="room-redraw" class="button" type="button">重画轮廓</button><button id="room-split" class="button" type="button">画线切分</button><button id="room-delete" class="button" type="button">排除区域</button></div>
+          <label class="field">合并目标<select id="room-merge-target"></select></label><button id="room-merge" class="button full" type="button">与目标合并</button>
+          <p class="opening-help">合并保留各部分轮廓，不跨墙填地。瓷砖和木纹为程序生成示意纹理；需标定比例后查看实际铺设尺度。</p>
         </form>
       </section>
       <div class="review-heading"><div><span class="eyebrow">REVIEW</span><h2>墙体修改</h2></div><span id="wall-count" class="count-pill">等待识别</span></div>
@@ -90,13 +119,14 @@
           <p class="opening-help">按图换算时，门扇自动适配门框内宽；宽度预设仅在“使用预设宽度”时生效。门框、窗框与家具为简化示意。超出墙段的洞口会裁切；未定类型洞口暂保留缺口。</p>
           <label class="model-check"><input data-setting="show_furniture" type="checkbox"> 显示简化家具</label>
           <label class="model-check"><input data-setting="show_plan" type="checkbox"> 显示原户型底图</label>
+          <label class="model-check"><input data-setting="show_room_floors" type="checkbox"> 显示按区域铺设的地面</label>
           <button id="apply-model" class="button primary full" type="submit">应用尺寸与外观</button>
           <p id="model-draft-status" class="opening-help" role="status"></p>
         </form>
         <div class="model-actions"><button id="model-undo" class="button">撤销</button><button id="model-save" class="button">保存项目</button></div>
         <p id="model-message" class="opening-help" role="status"></p>
         <details id="model-warnings"><summary>待校核项目</summary><ul id="model-warning-list"></ul></details>
-        <p class="opening-help">地面暂用整张图大小的矩形底板，尚未按房间分区。修改二维构件后，重新打开三维会自动更新。</p>
+        <p class="opening-help">已划区域按各自材质铺地；未划区域保留纯色底板。可在二维区域面板修改轮廓、材质和铺设方向。</p>
       </aside>
     </div>
   </dialog>

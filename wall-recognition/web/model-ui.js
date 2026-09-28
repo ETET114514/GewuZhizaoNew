@@ -17,7 +17,11 @@
     const doc=state.run?.document,ready=Boolean(doc);
     $('calibrate').disabled=!ready||Boolean(state.busy);
     $('open-model').disabled=!ready||Boolean(state.busy);
-    $('calibration-status').textContent=doc?.scale_mm_per_px?`已标定 · ${doc.scale_mm_per_px.toFixed(3)} mm/px · 可重新拉线`:'识别后，拉出一段已知长度并输入实际尺寸。';
+    $('calibration-status').textContent=doc?.scale_mm_per_px?`${doc.calibration?.method==='wall_thickness'?'墙厚估算':'长度标定'} · ${doc.scale_mm_per_px.toFixed(3)} mm/px · 可重新标定`:'识别后，拉出一段已知长度并输入实际尺寸。';
+    const scaleChoice=$('scale-wall').value;
+    $('scale-wall').replaceChildren();for(const w of doc?.walls||[])if(w.review_status!=='rejected'&&(w.solid_parts??[w]).length)$('scale-wall').append(new Option(`${w.id} · 图上厚 ${w.thickness_px.toFixed(1)} px`,w.id));
+    if([...$('scale-wall').options].some(o=>o.value===scaleChoice))$('scale-wall').value=scaleChoice;
+    for(const el of $('wall-calibration-form').querySelectorAll('input,select,button'))el.disabled=Boolean(state.busy)||!$('scale-wall').options.length;
     for(const el of $('calibration-form').querySelectorAll('input,button'))el.disabled=Boolean(state.busy);
     for(const el of form.querySelectorAll('input,select,button'))el.disabled=Boolean(state.busy);
     $('model-save').disabled=Boolean(state.busy);$('model-undo').disabled=Boolean(state.busy)||!state.historySize||modelDirty;
@@ -99,6 +103,11 @@
     if(!points)throw new Error('请先选择两个标定端点。');
     await applySettings({calibration:{points_px:points,length_mm:Number($('calibration-length').value)}});
     cancelCalibration();toast('比例已标定，可以查看三维模型。');
+  })());});
+  $('wall-calibration-form').addEventListener('submit',e=>{e.preventDefault();handle((async()=>{
+    if(state.formDirty)throw new Error('请先应用或取消当前修改。');
+    await applySettings({wall_calibration:{wall_id:$('scale-wall').value,thickness_mm:Number($('scale-thickness').value)}});
+    toast('已按墙厚估算比例，可撤销或重新拉线标定。');
   })());});
   window.addEventListener('wall-mode-change',()=>{points=null;drag=null;$('calibration-form').hidden=true;});
   window.addEventListener('wall-state-change',sync);

@@ -1,6 +1,7 @@
 import * as THREE from './vendor/three.module.min.js';
 import {OrbitControls} from './vendor/OrbitControls.js';
 import {buildModel} from './model-geometry.mjs';
+import {buildFloors,floorGeometry,floorTexture} from './floor-geometry.mjs';
 
 export function createViewer(container) {
   const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
@@ -25,10 +26,16 @@ export function createViewer(container) {
       const mesh=new THREE.Mesh(new THREE.BoxGeometry(...b.size),material);mesh.position.set(...b.center);mesh.userData={id:b.id,kind:b.kind};group.add(mesh);
     }
     const floor=new THREE.Mesh(new THREE.BoxGeometry(model.width,.08,model.depth),new THREE.MeshStandardMaterial({color:model.settings.floor_color,roughness:1}));floor.position.y=-.045;group.add(floor);
+    if(model.settings.show_room_floors!==false)for(const region of buildFloors(doc)){
+      const texture=floorTexture(region.settings);
+      const material=new THREE.MeshStandardMaterial({color:texture?'#ffffff':region.settings.color,map:texture,roughness:region.settings.material==='tile'?.5:.8,side:THREE.DoubleSide});
+      const mesh=new THREE.Mesh(floorGeometry(region.polygons,region.settings),material);mesh.position.y=.006;
+      mesh.userData={id:region.id,kind:'room-floor'};group.add(mesh);
+    }
     if(model.settings.show_plan){new THREE.TextureLoader().load(imageUrl,texture=>{
       if(ticket!==version){texture.dispose();return;}texture.colorSpace=THREE.SRGBColorSpace;
       const plane=new THREE.Mesh(new THREE.PlaneGeometry(model.width,model.depth),new THREE.MeshBasicMaterial({map:texture,transparent:true,opacity:.85}));
-      plane.rotation.x=-Math.PI/2;plane.position.y=.002;group.add(plane);render();
+      plane.rotation.x=-Math.PI/2;plane.position.y=.012;group.add(plane);render();
     });}
     resize();if(fit)reset();render();return model;
   }

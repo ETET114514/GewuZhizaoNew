@@ -1,7 +1,7 @@
 // Pure geometry: millimetres in settings, metres in the scene, source pixels retained.
 export const DEFAULTS = Object.freeze({wall_height_mm:2800,door_height_mm:2100,window_height_mm:1500,
   sill_height_mm:900,door_width_mm:800,opening_width_mm:900,window_width_mm:800,width_mode:'detected',
-  wall_color:'#e4ddd3',floor_color:'#ffffff',show_furniture:true,show_plan:false});
+  wall_color:'#e4ddd3',floor_color:'#ffffff',show_furniture:true,show_plan:false,show_room_floors:true});
 
 export function buildModel(doc) {
   const s={...DEFAULTS,...doc.model_settings},scale=doc.scale_mm_per_px;

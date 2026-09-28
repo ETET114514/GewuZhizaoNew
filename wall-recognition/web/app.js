@@ -5,6 +5,8 @@ const TYPES = {too_short:'墙段太短',too_long:'墙段太长',missing_corner:'
 const FURNITURE_COLORS = {table:'#3264b5',chair:'#19854c',bed:'#a12bba',sofa:'#19854c',cabinet:'#b76a12',shoe_cabinet:'#b76a12',tv_console:'#b76a12',kitchen_cabinet:'#b76a12',coffee_table:'#3264b5',dining_table:'#3264b5',wet_area:'#737080',unclassified:'#737080'};
 const DIRECTIONS = {up:'向上',down:'向下',left:'向左',right:'向右'};
 TYPES.wall_connection='墙体连接修复';
+TYPES.room_partition='区域分割';
+TYPES.room_edit='区域与地面修改';
 const state = {file:null,blobUrl:null,token:null,run:null,selected:null,issues:[],mode:'select',width:745,height:761,zoom:1,fitted:true,busy:false,dirty:false,formDirty:false,regionCount:0,drag:null};
 let toastTimer;
 state.wallColors=[];
@@ -42,6 +44,7 @@ function refresh() {
   $('canvas-hint').textContent=['region','furniture'].includes(state.mode)?'在图上拖出矩形，圈出漏掉的墙；Esc 取消':ready?'点击墙段直接修改 · 漏掉的墙可框选后补入':'先运行识别，再点击图中有问题的墙段';
   $('loading').hidden=state.busy!=='detect';
   renderOpeningList();renderFurnitureList();
+  renderRoomList();
   $('furniture-tool').disabled=!ready||Boolean(state.busy);$('furniture-apply').disabled=Boolean(state.busy);
   $('furniture-sample').disabled=Boolean(state.busy);
   for(const field of $('furniture-form').querySelectorAll('input,select,button'))field.disabled=Boolean(state.busy);
@@ -116,6 +119,57 @@ async function connectWalls() {
     state.busy=false;adoptEdits(result);toast(result.changes.at(-1).summary);
   }finally{state.busy=false;refresh();}
 }
+async function partitionRooms() {
+  if(state.busy||!state.run)return;
+  if(state.formDirty){toast('请先应用当前修改，或点击 × 取消。');return;}
+  state.busy='partition';refresh();
+  try {
+    const result=await api('/api/partition-rooms',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({run_id:state.run.run_id})});
+    state.busy=false;state.focusedRoom=null;$('rooms-toggle').checked=true;adoptEdits(result);
+    toast(result.changes.at(-1).summary);
+  }finally{state.busy=false;refresh();}
+}
+function focusRoom(room) {
+  if(state.busy||state.mode!=='select')return;
+  if(state.formDirty){toast('请先应用当前修改，或点击 × 取消。');return;}
+  clearSelection();state.focusedRoom=room.id;$('rooms-toggle').checked=true;renderPlan();renderRoomList();
+  $('room-layer').querySelector(`[data-room-id="${room.id}"]`)?.scrollIntoView({block:'nearest',inline:'nearest'});
+  window.dispatchEvent(new Event('room-focus-change'));
+}
+function renderRoomList() {
+  const partition=state.run?.document.room_partition;
+  $('partition-rooms').disabled=Boolean(state.busy)||!state.run;
+  $('partition-rooms').textContent=partition?'重新分割区域':'分割区域';
+  $('rooms-toggle').disabled=Boolean(state.busy)||!partition;
+  $('room-count').textContent=partition?`${partition.region_count} 个候选`:'未分析';
+  $('room-status').textContent=partition?partition.warnings.join(' '):'识别并校核墙体、门窗后，可尝试分割。无需比例标定。';
+  $('room-list').replaceChildren();
+  for(const room of partition?.regions||[]){
+    const button=document.createElement('button');button.className='button room-choice';button.textContent=`${room.id} · ${room.name&&room.name!==room.id?room.name:'区域待校核'}`;
+    button.setAttribute('aria-pressed',String(state.focusedRoom===room.id));button.disabled=Boolean(state.busy);
+    button.addEventListener('click',()=>focusRoom(room));$('room-list').append(button);
+  }
+}
+function renderRooms() {
+  let layer=$('room-layer');
+  if(!layer){layer=svgElement('g',{id:'room-layer'});$('plan-image').after(layer);}
+  layer.replaceChildren();
+  if(!$('rooms-toggle').checked)return;
+  const partition=state.run?.document.room_partition;
+  for(const [index,room] of (partition?.regions||[]).entries()){
+    const color=['#23a59a','#9b77d3','#e5a43c','#5b94df','#dd819a','#83a93c'][index%6];
+    const group=svgElement('g',{role:'button',tabindex:0,'aria-label':`${room.id} 区域待校核`,'data-room-id':room.id});
+    const d=room.rings_px.map(ring=>'M'+ring.map(p=>p.join(',')).join('L')+'Z').join(' ');
+    group.append(svgElement('path',{d,fill:color,'fill-opacity':state.focusedRoom===room.id ? 0.4 : 0.2,stroke:color,'stroke-width':1.5/state.zoom,'fill-rule':'evenodd'}));
+    const label=svgElement('text',{x:room.label_px[0],y:room.label_px[1],'text-anchor':'middle',fill:color,stroke:'white','stroke-width':3/state.zoom,'paint-order':'stroke',style:`font-size:${13/state.zoom}px;font-weight:700`});label.textContent=room.id;group.append(label);
+    group.addEventListener('click',event=>{event.stopPropagation();focusRoom(room);});
+    group.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();focusRoom(room);}});layer.append(group);
+  }
+  for(const boundary of partition?.virtual_boundaries||[]){
+    const line=svgElement('line',{x1:boundary.start_px[0],y1:boundary.start_px[1],x2:boundary.end_px[0],y2:boundary.end_px[1],stroke:'#b054a1','stroke-width':2/state.zoom,'stroke-dasharray':`${4/state.zoom} ${3/state.zoom}`,'pointer-events':'none'});
+    const title=svgElement('title');title.textContent=`${boundary.id} 分区虚拟边界`;line.append(title);layer.append(line);
+  }
+}
 function renderIssues() {
   const list=$('issue-list');list.replaceChildren();
   if(!state.issues.length){const p=document.createElement('p');p.className='list-empty';p.textContent='执行后的修改会出现在这里';list.append(p);return;}
@@ -124,6 +178,8 @@ function renderIssues() {
     const open=document.createElement('button');open.className='issue-open';open.type='button';
     const id=document.createElement('strong');id.textContent=issue.id;const type=document.createElement('span');type.textContent=TYPES[issue.type];
     const note=document.createElement('p');note.textContent=issue.summary||issue.note;open.append(id,type,note);
+    if(issue.type==='room_edit')open.addEventListener('click',event=>{event.stopImmediatePropagation();const room=state.run.document.room_partition?.regions.find(r=>r.id===issue.room_id);if(room)focusRoom(room);else toast('该区域已变化，可撤销恢复。');});
+    if(issue.type==='room_partition')open.addEventListener('click',event=>{event.stopImmediatePropagation();$('room-list').scrollIntoView({block:'nearest'});});
     if(issue.type==='wall_connection')open.addEventListener('click',event=>{
       event.stopImmediatePropagation();
       const wall=state.run.document.walls.find(w=>issue.wall_ids?.includes(w.id));
@@ -138,6 +194,7 @@ function renderIssues() {
 function renderPlan() {
   const layer=$('wall-layer');layer.replaceChildren();const regions=$('region-layer');regions.replaceChildren();
   $('furniture-layer').replaceChildren();
+  renderRooms();
   if(!state.run)return;
   renderFurniture();
   const visible=$('overlay-toggle').checked;
@@ -354,6 +411,8 @@ $('upload').addEventListener('click',()=>{$('file').value='';$('file').click();}
 $('file').addEventListener('change',()=>{if($('file').files[0])handle(loadFile($('file').files[0]));});
 $('sample').addEventListener('click',()=>handle(loadSample()));$('detect').addEventListener('click',()=>handle(detect()));$('save').addEventListener('click',()=>handle(saveProject()));$('undo').addEventListener('click',()=>handle(undoEdit()));
 $('connect-walls').addEventListener('click',()=>handle(connectWalls()));
+$('partition-rooms').addEventListener('click',()=>handle(partitionRooms()));
+$('rooms-toggle').addEventListener('change',renderPlan);
 $('select-tool').addEventListener('click',()=>setMode('select'));$('region-tool').addEventListener('click',()=>setMode('region'));$('overlay-toggle').addEventListener('change',renderPlan);
 $('openings-toggle').addEventListener('change',renderPlan);
 $('furniture-toggle').addEventListener('change',renderPlan);

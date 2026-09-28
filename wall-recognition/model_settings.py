@@ -6,7 +6,7 @@ import re
 DEFAULTS = dict(wall_height_mm=2800, door_height_mm=2100, window_height_mm=1500,
                 sill_height_mm=900, door_width_mm=800, opening_width_mm=900,
                 window_width_mm=800, width_mode='detected', wall_color='#e4ddd3',
-                floor_color='#ffffff', show_furniture=True, show_plan=False)
+                floor_color='#ffffff', show_furniture=True, show_plan=False, show_room_floors=True)
 
 
 def number(value, low, high, label):
@@ -39,6 +39,22 @@ def apply_model_settings(document, request):
     if settings['door_width_mm'] > settings['opening_width_mm']:
         raise ValueError('预设门扇宽度不能大于门洞宽度。')
     result['model_settings'] = settings
+    if 'calibration' in request and 'wall_calibration' in request:
+        raise ValueError('一次只能选择一种标定方式。')
+    if 'wall_calibration' in request:
+        calibration = request['wall_calibration']
+        if not isinstance(calibration, dict):
+            raise ValueError('墙厚估算格式不正确。')
+        wall = next((w for w in document['walls'] if w['id'] == calibration.get('wall_id')
+                     and w.get('review_status') != 'rejected' and w.get('solid_parts', [w])), None)
+        if wall is None:
+            raise ValueError('请选择一段有效实墙作为墙厚依据。')
+        actual = number(calibration.get('thickness_mm'), 50, 2000, '实际墙厚（mm）')
+        pixels = number(wall.get('thickness_px'), .1, 2000, '图上墙厚')
+        result['scale_mm_per_px'] = number(actual/pixels, .01, 10000, '比例（mm/px）')
+        result['calibration'] = dict(method='wall_thickness', wall_id=wall['id'],
+                                    thickness_mm=actual, thickness_px=pixels,
+                                    image_sha256=document['image']['sha256'])
     if 'calibration' in request:
         calibration = request['calibration']
         if not isinstance(calibration, dict):
@@ -55,5 +71,5 @@ def apply_model_settings(document, request):
         scale = number(length/distance, .01, 10000, '比例（mm/px）')
         result['calibration'] = dict(points_px=points, length_mm=length, image_sha256=document['image']['sha256'])
         result['scale_mm_per_px'] = scale
-    summary = '已更新比例标定' if 'calibration' in request else '已更新三维尺寸与外观'
+    summary = '已按墙厚估算比例' if 'wall_calibration' in request else '已更新比例标定' if 'calibration' in request else '已更新三维尺寸与外观'
     return result, dict(id='MODEL', type='model_settings', summary=summary)

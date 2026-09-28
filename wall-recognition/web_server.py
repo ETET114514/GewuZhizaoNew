@@ -27,6 +27,8 @@ from refine_walls import initialize_refinement, refresh_refinement
 from recognize_furniture import add_furniture, apply_furniture_edit, furniture_export
 from model_settings import apply_model_settings
 from connect_walls import connect_walls
+from partition_rooms import partition_rooms
+from room_editing import apply_room_edit
 
 ROOT = Path(__file__).resolve().parent
 ISSUE_TYPES = {"too_short", "too_long", "missing_corner", "position", "thickness", "false_positive", "missing_wall", "other"}
@@ -160,7 +162,7 @@ class ReviewHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         route = urlsplit(self.path).path
         pages = {"/": ("index.html", "text/html; charset=utf-8"), "/app.css": ("app.css", "text/css; charset=utf-8"), "/app.js": ("app.js", "text/javascript; charset=utf-8")}
-        for name in ('model-ui.js', 'model-viewer.js', 'model-geometry.mjs',
+        for name in ('model-ui.js', 'model-viewer.js', 'model-geometry.mjs', 'floor-geometry.mjs', 'room-ui.js',
                      'vendor/three.module.min.js', 'vendor/three.core.min.js', 'vendor/OrbitControls.js'):
             pages['/'+name] = (name, 'text/javascript; charset=utf-8')
         if route in pages:
@@ -229,7 +231,7 @@ class ReviewHandler(BaseHTTPRequestHandler):
                                          "elapsed_ms": round((perf_counter()-started)*1000), "cache_hit": cache_hit})
                 finally:
                     self.server.detect_lock.release()
-            elif route in ("/api/apply-edit", "/api/undo-edit", "/api/save-project", "/api/review-opening", "/api/edit-furniture", "/api/model-settings", "/api/connect-walls"):
+            elif route in ("/api/apply-edit", "/api/undo-edit", "/api/save-project", "/api/review-opening", "/api/edit-furniture", "/api/model-settings", "/api/connect-walls", "/api/partition-rooms", "/api/edit-room"):
                 request = json.loads(payload)
                 if not isinstance(request, dict) or not isinstance(request.get("run_id"), str):
                     raise ValueError("操作格式不正确。")
@@ -237,7 +239,21 @@ class ReviewHandler(BaseHTTPRequestHandler):
                     run = self.server.sessions.get(request["run_id"])
                     if run is None:
                         raise ValueError("识别结果已过期，请重新识别。")
-                    if route == '/api/connect-walls':
+                    if route == '/api/edit-room':
+                        document, record = apply_room_edit(run['document'], request)
+                        run['history'].append((run['document'], list(run['changes']), run['next_id']))
+                        run['history'] = run['history'][-50:]
+                        run['document'] = document
+                        run['changes'].append(record)
+                    elif route == '/api/partition-rooms':
+                        document = deepcopy(run['document'])
+                        document['room_partition'] = partition_rooms(document)
+                        run['history'].append((run['document'], list(run['changes']), run['next_id']))
+                        run['history'] = run['history'][-50:]
+                        run['document'] = document
+                        run['changes'].append(dict(id='REGIONS', type='room_partition',
+                            summary=f"按墙体与门窗边界分出 {document['room_partition']['region_count']} 个候选区域"))
+                    elif route == '/api/connect-walls':
                         with Image.open(BytesIO(run['png'])) as image:
                             document, record, next_id = connect_walls(run['document'], image, run['next_id'])
                         run['history'].append((run['document'], list(run['changes']), run['next_id']))
@@ -304,6 +320,8 @@ class ReviewHandler(BaseHTTPRequestHandler):
                         destination.mkdir(parents=True, exist_ok=False)
                         (destination / "floorplan.png").write_bytes(run["png"])
                         (destination / "furniture.json").write_text(json.dumps(furniture_export(run["document"]), ensure_ascii=False, indent=2), encoding="utf-8")
+                        if 'room_partition' in run['document']:
+                            (destination / 'regions.json').write_text(json.dumps(run['document']['room_partition'], ensure_ascii=False, indent=2), encoding='utf-8')
                         for filename, data in (("walls.json", run["document"]), ("changes.json", run["changes"])):
                             (destination / filename).write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
                         (destination / "solid-walls.json").write_text(json.dumps({
