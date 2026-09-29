@@ -29,6 +29,7 @@ from model_settings import apply_model_settings
 from connect_walls import connect_walls
 from partition_rooms import partition_rooms
 from room_editing import apply_room_edit
+from project_store import list_projects, load_project
 
 ROOT = Path(__file__).resolve().parent
 ISSUE_TYPES = {"too_short", "too_long", "missing_corner", "position", "thickness", "false_positive", "missing_wall", "other"}
@@ -162,7 +163,7 @@ class ReviewHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         route = urlsplit(self.path).path
         pages = {"/": ("index.html", "text/html; charset=utf-8"), "/app.css": ("app.css", "text/css; charset=utf-8"), "/app.js": ("app.js", "text/javascript; charset=utf-8")}
-        for name in ('model-ui.js', 'model-viewer.js', 'model-geometry.mjs', 'floor-geometry.mjs', 'room-ui.js',
+        for name in ('model-ui.js', 'model-viewer.js', 'model-geometry.mjs', 'floor-geometry.mjs', 'room-ui.js', 'wall-lengths.mjs', 'wall-length-ui.js', 'room-areas.mjs', 'toolbar-ui.js',
                      'vendor/three.module.min.js', 'vendor/three.core.min.js', 'vendor/OrbitControls.js'):
             pages['/'+name] = (name, 'text/javascript; charset=utf-8')
         if route in pages:
@@ -198,7 +199,21 @@ class ReviewHandler(BaseHTTPRequestHandler):
             if not 0 < length <= limit:
                 raise ValueError("文件或反馈大小超出限制。")
             payload = self.rfile.read(length)
-            if route == "/api/detect":
+            if route == '/api/projects':
+                self.send_json(200, list_projects(self.server.feedback_root.parent / 'projects'))
+            elif route == '/api/open-project':
+                request = json.loads(payload)
+                if not isinstance(request, dict):
+                    raise ValueError('项目请求格式不正确。')
+                run = load_project(self.server.feedback_root.parent / 'projects', request.get('project_id'))
+                run_id = uuid.uuid4().hex
+                with self.server.state_lock:
+                    if len(self.server.sessions) >= 8:
+                        self.server.sessions.pop(next(iter(self.server.sessions)))
+                    self.server.sessions[run_id] = run
+                self.send_json(200, dict(run_id=run_id, document=run['document'], changes=run['changes'],
+                    history_size=0, project_id=request['project_id'], image_url=f'/api/runs/{run_id}/image'))
+            elif route == "/api/detect":
                 if not self.server.detect_lock.acquire(blocking=False):
                     self.send_json(409, {"error": "正在处理另一张图片，请稍后重试。"})
                     return
@@ -319,6 +334,7 @@ class ReviewHandler(BaseHTTPRequestHandler):
                         destination = self.server.feedback_root.parent / "projects" / name
                         destination.mkdir(parents=True, exist_ok=False)
                         (destination / "floorplan.png").write_bytes(run["png"])
+                        (destination / 'project.json').write_text(json.dumps(dict(version=1, next_id=run['next_id'])), encoding='utf-8')
                         (destination / "furniture.json").write_text(json.dumps(furniture_export(run["document"]), ensure_ascii=False, indent=2), encoding="utf-8")
                         if 'room_partition' in run['document']:
                             (destination / 'regions.json').write_text(json.dumps(run['document']['room_partition'], ensure_ascii=False, indent=2), encoding='utf-8')

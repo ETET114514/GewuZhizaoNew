@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="在本机识别户型墙体，逐段修改墙体并保存校正反馈。">
-  <title>筑见 · 户型校核</title><link rel="stylesheet" href="/app.css"><script src="/app.js" defer></script><script src="/model-ui.js" defer></script><script src="/room-ui.js" defer></script>
+  <title>筑见 · 户型校核</title><link rel="stylesheet" href="/app.css"><script src="/app.js" defer></script><script src="/model-ui.js" defer></script><script src="/room-ui.js" defer></script><script src="/wall-length-ui.js" defer></script><script src="/toolbar-ui.js" defer></script>
 </head>
 <body>
   <header class="header">
@@ -11,28 +11,20 @@
     <div class="drawing-actions"><button id="undo" class="button" disabled>撤销上一步</button><button id="save" class="button primary" disabled>保存项目 <span aria-hidden="true">↗</span></button></div>
   </header>
   <div class="workflow"><div class="steps"><span id="step1" class="step active"><b>01</b> 导入户型</span><span class="step-line"></span><span id="step2" class="step"><b>02</b> 识别构件</span><span class="step-line"></span><span id="step3" class="step"><b>03</b> 修改校核</span></div><span class="privacy">图片与项目保存在这台电脑</span></div>
-  <main class="workspace">
-    <section class="drawing-panel" aria-label="户型图工作区">
-      <div class="drawing-header"><div><span class="eyebrow">FLOOR PLAN</span><h1 id="filename">示例户型.png</h1><p id="image-meta">正在准备底图…</p></div><div class="drawing-actions"><button id="upload" class="button">导入图片</button><button id="detect" class="button primary" disabled>识别墙体、门窗与家具</button></div></div>
-      <input id="file" type="file" accept="image/png,image/jpeg,image/webp" hidden>
-      <details class="recognition-settings" id="recognition-settings">
+<section id="workspace-toolbar" class="workspace-toolbar" aria-label="工作台工具栏">
+<div class="toolbar-tabs" role="tablist" aria-label="工具分类"><button id="tab-project" role="tab" aria-controls="tools-project" aria-selected="false" tabindex="-1">项目</button><button id="tab-recognition" role="tab" aria-controls="tools-recognition" aria-selected="true" tabindex="0">识别与修复</button><button id="tab-edit" role="tab" aria-controls="tools-edit" aria-selected="false" tabindex="-1">编辑与分区</button><button id="tab-measure" role="tab" aria-controls="tools-measure" aria-selected="false" tabindex="-1">测量</button><button id="tab-display" role="tab" aria-controls="tools-display" aria-selected="false" tabindex="-1">显示与三维</button></div>
+<div id="tools-project" class="ribbon-panel" role="tabpanel" aria-labelledby="tab-project" hidden><div class="ribbon-group"><span class="ribbon-caption">导入与恢复</span><div class="ribbon-actions"><button id="upload" class="button">导入图片</button><button id="open-projects" class="button">打开项目</button></div></div><div class="ribbon-group"><span class="ribbon-caption">示例图</span><div class="ribbon-actions"><button id="sample" class="text-button">使用示例图</button><button id="furniture-sample" class="button full">载入家具示例图</button></div></div><p class="ribbon-note">保存与撤销固定在右上角，随时可用。</p></div>
+<div id="tools-recognition" class="ribbon-panel" role="tabpanel" aria-labelledby="tab-recognition"><div class="ribbon-group"><span class="ribbon-caption">自动提取</span><button id="detect" class="button primary" disabled>识别墙体、门窗与家具</button></div><div class="ribbon-group"><span class="ribbon-caption">墙体修复</span><button id="connect-walls" class="button" disabled>尝试连接墙体</button></div><div class="ribbon-settings"><details class="recognition-settings" id="recognition-settings">
         <summary>识别设置 · 同图多种墙色</summary>
         <p>自动识别深色墙与双线墙；浅色或彩色墙可额外取色，最多 6 种。颜色只用于筛选，仍需满足墙段形状。更改后点击重新识别。</p>
         <div class="palette-controls"><label>墙色 <input id="wall-color" type="color" value="#e4e4e4"></label><button id="wall-color-add" class="button" type="button">添加颜色</button><button id="wall-color-pick" class="button" type="button" aria-pressed="false">在原图上取色</button><label>颜色容差 <input id="wall-color-tolerance" type="number" value="8" min="1" max="24" step="1"></label></div>
         <div id="wall-palette" class="wall-palette" aria-label="额外墙色"></div><p id="wall-color-hint" role="status">尚未添加额外墙色。浅色外围线会另列为待确认边界，可确认为墙或窗。</p>
-      </details>
-      <p id="pipeline-status" class="pipeline-status">识别流程：粗识别墙体 → 识别门窗 → 保留洞口并整理墙体</p>
-      <div class="connection-tools"><button id="connect-walls" class="button" disabled>尝试连接墙体</button><span id="connection-status" role="status">补接短缝与转角，保留门窗；支持撤销。</span></div>
-      <div class="tools"><div class="tool-group"><button id="select-tool" class="tool active" aria-pressed="true">↖ 选择墙段</button><button id="region-tool" class="tool" disabled aria-pressed="false">▧ 框选漏墙</button></div><label class="visibility"><input id="overlay-toggle" type="checkbox" checked> 墙段</label><label class="visibility"><input id="openings-toggle" type="checkbox" checked> 门窗</label><label class="visibility"><input id="furniture-toggle" type="checkbox" checked> 家具</label><button id="sample" class="text-button">使用示例图</button></div>
-      <div id="stage" class="stage" tabindex="0" aria-label="户型图，可点击墙段或框选漏识别区域"><div id="paper" class="paper"><svg id="plan" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 745 761" aria-label="户型图与可选墙段"><image id="plan-image" width="745" height="761" href="/api/sample-image"/><g id="furniture-layer"></g><g id="wall-layer"></g><g id="region-layer"></g><g id="draft-layer"></g></svg></div><div id="loading" class="loading" hidden><div class="spinner"></div><strong>正在识别墙体、门窗与家具</strong><span>从图中提取墙段、门窗及家具候选，请稍候…</span></div></div>
-      <div class="canvas-footer"><p id="canvas-hint">先运行识别，再点击墙段直接修改</p><div class="zoom-controls"><button id="zoom-out" aria-label="缩小">−</button><span id="zoom-label">适应</span><button id="zoom-in" aria-label="放大">＋</button><button id="fit" class="fit-button">适应画布</button></div></div>
-      <div class="legend"><span><i class="dot blue"></i>候选墙段</span><span><i class="dot orange"></i>已标问题</span><span><i class="dot teal"></i>漏识别区域</span><span class="legend-note">尺寸为像素 · 自动结果需要人工校核</span></div>
-    </section>
-    <aside class="review-panel" aria-label="墙体修改">
-      <section class="model-entry">
-        <span class="eyebrow">3D WHITE MODEL</span><h2>立体建模</h2>
+      </details></div><div class="ribbon-status"><p id="pipeline-status" class="pipeline-status">识别流程：粗识别墙体 → 识别门窗 → 保留洞口并整理墙体</p><span id="connection-status" role="status">补接短缝与转角，保留门窗；支持撤销。</span></div></div>
+<div id="tools-edit" class="ribbon-panel" role="tabpanel" aria-labelledby="tab-edit" hidden><div class="ribbon-group"><span class="ribbon-caption">墙体与家具</span><div class="ribbon-actions"><button id="select-tool" class="tool active" aria-pressed="true">↖ 选择墙段</button><button id="region-tool" class="tool" disabled aria-pressed="false">▧ 框选漏墙</button><button id="furniture-tool" class="button full" disabled aria-pressed="false">▧ 框选补家具 / 设施 / 区域</button></div></div><div class="ribbon-group"><span class="ribbon-caption">房间区域</span><div class="ribbon-actions"><button id="partition-rooms" class="button full" disabled>分割区域</button><button id="room-add" class="button full" disabled>手绘补区域</button></div></div><p class="ribbon-note">选中图上对象，在右侧修改属性、轮廓与材质。</p></div>
+<div id="tools-measure" class="ribbon-panel" role="tabpanel" aria-labelledby="tab-measure" hidden><div class="ribbon-group"><span class="ribbon-caption">比例</span><button id="calibrate" class="button" disabled>拉线标定</button></div><div class="ribbon-group"><span class="ribbon-caption">墙长标注</span><div class="dimension-tools" aria-label="墙长标注"><label><input id="wall-lengths-toggle" type="checkbox" disabled> 显示墙长</label><label title="开启时在转角及 T/X 形交接处分段；关闭时合并相接的共线墙段。仅影响标注。"><input id="wall-corners-toggle" type="checkbox" checked disabled> 按拐角分段</label><span id="wall-lengths-hint" role="status">识别后可显示墙长。</span></div></div><div class="ribbon-group"><span class="ribbon-caption">房间面积</span><label class="visibility"><input id="room-areas-toggle" type="checkbox" checked disabled> 显示面积</label><span class="ribbon-note">随区域图层显示 · 单位 m²</span></div><section class="model-entry">
+
         <p id="calibration-status" class="opening-help">识别后，在图上标定一段已知长度。</p>
-        <div class="model-actions"><button id="calibrate" class="button" disabled>拉线标定</button><button id="open-model" class="button primary" disabled>查看三维</button></div>
+
         <details class="thickness-calibration"><summary>备选：按墙厚估算比例</summary>
           <p class="opening-help">选一段厚度可靠的实墙，填写实际墙厚。估算会影响整个模型比例；已知长度时优先拉线标定。</p>
           <form id="wall-calibration-form"><label class="field">依据墙段<select id="scale-wall"></select></label>
@@ -44,18 +36,30 @@
           <label class="field">实际长度（mm）<input id="calibration-length" type="number" min="1" max="1000000" step="any" value="6000" required></label>
           <div class="model-actions"><button class="button primary" type="submit">应用比例</button><button id="cancel-calibration" class="button" type="button">取消</button></div>
         </form>
-      </section>
+      </section></div>
+<div id="tools-display" class="ribbon-panel" role="tabpanel" aria-labelledby="tab-display" hidden><div class="ribbon-group"><span class="ribbon-caption">二维图层</span><div class="ribbon-actions"><label class="visibility"><input id="overlay-toggle" type="checkbox" checked> 墙段</label><label class="visibility"><input id="openings-toggle" type="checkbox" checked> 门窗</label><label class="visibility"><input id="furniture-toggle" type="checkbox" checked> 家具</label><label class="model-check"><input id="rooms-toggle" type="checkbox" checked> 显示区域与虚拟分界</label></div></div><div class="ribbon-group"><span class="ribbon-caption">空间预览</span><button id="open-model" class="button primary" disabled>查看三维</button></div><p class="ribbon-note">三维沿用当前标定、墙体、区域和材质。</p></div>
+</section>
+  <main class="workspace">
+    <section class="drawing-panel" aria-label="户型图工作区">
+      <div class="drawing-header"><div><span class="eyebrow">FLOOR PLAN</span><h1 id="filename">示例户型.png</h1><p id="image-meta">正在准备底图…</p></div></div>
+      <input id="file" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+
+      <div id="stage" class="stage" tabindex="0" aria-label="户型图，可点击墙段或框选漏识别区域"><div id="paper" class="paper"><svg id="plan" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 745 761" aria-label="户型图与可选墙段"><image id="plan-image" width="745" height="761" href="/api/sample-image"/><g id="furniture-layer"></g><g id="wall-layer"></g><g id="region-layer"></g><g id="draft-layer"></g></svg></div><div id="loading" class="loading" hidden><div class="spinner"></div><strong>正在识别墙体、门窗与家具</strong><span>从图中提取墙段、门窗及家具候选，请稍候…</span></div></div>
+      <div class="canvas-footer"><p id="canvas-hint">先运行识别，再点击墙段直接修改</p><div class="zoom-controls"><button id="zoom-out" aria-label="缩小">−</button><span id="zoom-label">适应</span><button id="zoom-in" aria-label="放大">＋</button><button id="fit" class="fit-button">适应画布</button></div></div>
+      <div class="legend"><span><i class="dot blue"></i>候选墙段</span><span><i class="dot orange"></i>已标问题</span><span><i class="dot teal"></i>漏识别区域</span><span class="legend-note">几何为像素 · 标注按比例换算</span></div>
+    </section>
+    <aside class="review-panel" aria-label="墙体修改">
+
       <section class="room-section">
-        <div class="issues-heading"><h3>按门洞分割区域</h3><span id="room-count">未分析</span></div>
+        <div class="issues-heading"><h3>房间区域</h3><span id="room-count">未分析</span></div>
         <p class="opening-help">以墙体为边界，门洞分隔相邻空间，窗洞补齐外围边界。虚拟分界不改变真实墙体与三维洞口。</p>
-        <button id="partition-rooms" class="button full" disabled>分割区域</button>
-        <label class="model-check"><input id="rooms-toggle" type="checkbox" checked> 显示区域与虚拟分界</label>
-        <div id="room-list"></div><p id="room-status" class="opening-help" role="status">识别并校核墙体、门窗后，可尝试分割。无需比例标定。</p>
-        <button id="room-add" class="button full" disabled>手绘补区域</button>
+
+        <div class="area-summary"><span>已划区域合计</span><strong id="room-area-total">—</strong><p id="room-area-hint" role="status">分区并标定后显示参考面积。</p></div><div id="room-list"></div><p id="room-status" class="opening-help" role="status">识别并校核墙体、门窗后，可尝试分割。无需比例标定。</p>
+
         <p class="opening-help">手绘区域优先于自动分区，并避开实墙。自动边界改变后，请重新检查区域与材质。</p>
         <div id="room-draw-tools" hidden><p id="room-draw-hint" class="opening-help"></p><div class="model-actions"><button id="room-draw-finish" class="button">完成轮廓</button><button id="room-draw-back" class="button">退回一点</button><button id="room-draw-cancel" class="button">取消</button></div></div>
         <form id="room-edit-form" hidden>
-          <h4 id="room-edit-id"></h4>
+          <h4 id="room-edit-id"></h4><p id="room-selected-area" class="opening-help"></p>
           <label class="field">区域名称<input id="room-name" maxlength="40" required></label>
           <label class="field">地面材质<select id="room-material"><option value="solid">纯色</option><option value="tile">瓷砖</option><option value="wood">木地板</option></select></label>
           <label class="field">地面颜色<input id="room-color" type="color" value="#e5d7be"></label>
@@ -82,8 +86,7 @@
       <section class="furniture-section">
         <div class="issues-heading"><h3>家具、设施与区域候选</h3><span id="furniture-count">0</span></div>
         <p class="opening-help">紫色床、绿色沙发、橙色柜台、蓝色桌子、青色厨卫。洗浴区需确认类型；点选修改或框选补漏。</p>
-        <button id="furniture-tool" class="button full" disabled aria-pressed="false">▧ 框选补家具 / 设施 / 区域</button>
-        <button id="furniture-sample" class="button full">载入家具示例图</button>
+
         <form id="furniture-form" hidden>
           <div class="selected-heading"><h3 id="furniture-selected-id">F001</h3><button id="furniture-cancel" class="icon-button" type="button" aria-label="取消家具修改">×</button></div>
           <label class="field">家具类别<select id="furniture-kind"><optgroup label="待确认"><option value="unclassified">待定家具</option><option value="unclassified_area">区域待确认</option><option value="water_feature">水景 / 水池</option><option value="wet_area">洗浴区待确认</option></optgroup><optgroup label="家具"><option value="bed">床</option><option value="sofa">沙发</option><option value="cabinet">柜子</option><option value="table">桌子</option><option value="chair">椅子</option><option value="coffee_table">茶几</option><option value="dining_table">餐桌</option><option value="shoe_cabinet">鞋柜</option><option value="tv_console">电视柜</option></optgroup><optgroup label="厨房"><option value="kitchen_cabinet">厨房柜台</option><option value="kitchen_sink">水槽</option><option value="cooktop">灶台</option><option value="refrigerator">冰箱</option></optgroup><optgroup label="卫浴"><option value="vanity">浴室柜</option><option value="toilet">马桶</option><option value="bathtub">浴缸</option><option value="shower">淋浴间</option></optgroup></select></label>
@@ -129,6 +132,12 @@
         <p class="opening-help">已划区域按各自材质铺地；未划区域保留纯色底板。可在二维区域面板修改轮廓、材质和铺设方向。</p>
       </aside>
     </div>
+  </dialog>
+  <dialog id="projects-dialog" aria-labelledby="projects-title">
+    <div class="project-heading"><h2 id="projects-title">打开已保存项目</h2><button id="close-projects" class="button">关闭</button></div>
+    <p>恢复底图、构件、区域、材质和比例，继续编辑。历史修改记录保留；撤销从本次打开后开始。再次保存会生成新版本。</p>
+    <p id="projects-message" role="status"></p><div id="projects-list" class="projects-list"></div>
+    <button id="refresh-projects" class="button">刷新列表</button>
   </dialog>
   <dialog id="confirm-dialog"><form method="dialog"><h2 id="confirm-title">替换当前识别结果？</h2><p>当前项目有未保存的修改。请先保存，或确认放弃这些修改。</p><div class="dialog-actions"><button class="button" value="cancel">返回</button><button class="button danger" value="discard">放弃并继续</button></div></form></dialog>
 </body></html>

@@ -76,4 +76,5 @@
   $('room-delete').addEventListener('click',()=>handle(edit({action:'delete',room_id:state.focusedRoom})));
   $('room-merge').addEventListener('click',()=>handle(edit({action:'merge',room_id:state.focusedRoom,target_room_id:$('room-merge-target').value})));
   window.addEventListener('wall-state-change',sync);window.addEventListener('room-focus-change',sync);sync();
+  window.addEventListener('project-replacing',()=>{drawing=null;dirty=false;lastDoc=null;lastId=null;$('room-draw-tools').hidden=true;$('draft-layer').replaceChildren();$('plan').style.cursor='';});
 })();

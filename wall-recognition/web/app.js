@@ -9,6 +9,7 @@ TYPES.room_partition='区域分割';
 TYPES.room_edit='区域与地面修改';
 const state = {file:null,blobUrl:null,token:null,run:null,selected:null,issues:[],mode:'select',width:745,height:761,zoom:1,fitted:true,busy:false,dirty:false,formDirty:false,regionCount:0,drag:null};
 let toastTimer;
+let roomMeasurements=null;
 state.wallColors=[];
 FURNITURE_COLORS.unclassified_area='#737080';
 FURNITURE_COLORS.water_feature='#168187';
@@ -29,6 +30,7 @@ function refresh() {
   const ready=Boolean(state.run), count=state.run?.document.walls.length||0;
   $('detect').disabled=!state.file||state.busy; $('detect').textContent=ready?'重新识别':'识别墙体、门窗与家具';
   $('upload').disabled=state.busy; $('sample').disabled=state.busy; $('file').disabled=state.busy;
+  $('open-projects').disabled=Boolean(state.busy);
   for(const field of $('recognition-settings').querySelectorAll('input,button'))field.disabled=Boolean(state.busy);
   $('wall-color-pick').disabled=!state.file||Boolean(state.busy);
   $('save').disabled=state.busy||!ready; $('undo').disabled=state.busy||!state.historySize;
@@ -137,15 +139,22 @@ function focusRoom(room) {
   window.dispatchEvent(new Event('room-focus-change'));
 }
 function renderRoomList() {
-  const partition=state.run?.document.room_partition;
+  const doc=state.run?.document,partition=doc?.room_partition;
+  const rooms=partition?.regions||[],scaled=Number.isFinite(doc?.scale_mm_per_px)&&doc.scale_mm_per_px>0;
+  const areas=rooms.map(room=>roomMeasurements?.roomAreaM2(room,doc.scale_mm_per_px)??null);
+  $('room-areas-toggle').disabled=Boolean(state.busy)||!rooms.length;
+  $('room-area-total').textContent=rooms.length&&areas.every(a=>a!==null)?roomMeasurements.formatRoomArea(areas.reduce((a,b)=>a+b,0)):'—';
+  $('room-area-hint').textContent=!rooms.length?'先分割或手绘房间区域，再标定比例。':!scaled?'请在“测量”中标定比例，才能计算实际面积。':!roomMeasurements?'正在加载面积工具…':areas.some(a=>a===null)?'部分区域轮廓无效，暂不合计。请重新检查区域。':'参考地面面积：扣除实墙与轮廓孔洞；家具不扣除，门槛按分区边界归属。仅合计已划区域，请校核轮廓。';
+  const selectedIndex=rooms.findIndex(room=>room.id===state.focusedRoom);
+  $('room-selected-area').textContent=selectedIndex<0?'':`参考面积 · ${scaled?roomMeasurements?.formatRoomArea(areas[selectedIndex])??'—':'未标定'}`;
   $('partition-rooms').disabled=Boolean(state.busy)||!state.run;
   $('partition-rooms').textContent=partition?'重新分割区域':'分割区域';
   $('rooms-toggle').disabled=Boolean(state.busy)||!partition;
   $('room-count').textContent=partition?`${partition.region_count} 个候选`:'未分析';
   $('room-status').textContent=partition?partition.warnings.join(' '):'识别并校核墙体、门窗后，可尝试分割。无需比例标定。';
   $('room-list').replaceChildren();
-  for(const room of partition?.regions||[]){
-    const button=document.createElement('button');button.className='button room-choice';button.textContent=`${room.id} · ${room.name&&room.name!==room.id?room.name:'区域待校核'}`;
+  for(const [index,room] of rooms.entries()){
+    const button=document.createElement('button');button.className='button room-choice';button.textContent=`${room.id} · ${room.name&&room.name!==room.id?room.name:'区域待校核'} · ${scaled?roomMeasurements?.formatRoomArea(areas[index])??'—':'未标定'}`;
     button.setAttribute('aria-pressed',String(state.focusedRoom===room.id));button.disabled=Boolean(state.busy);
     button.addEventListener('click',()=>focusRoom(room));$('room-list').append(button);
   }
@@ -153,6 +162,9 @@ function renderRoomList() {
 function renderRooms() {
   let layer=$('room-layer');
   if(!layer){layer=svgElement('g',{id:'room-layer'});$('plan-image').after(layer);}
+  let labels=$('room-label-layer');
+  if(!labels){labels=svgElement('g',{id:'room-label-layer','pointer-events':'none'});}
+  $('draft-layer').before(labels);labels.replaceChildren();
   layer.replaceChildren();
   if(!$('rooms-toggle').checked)return;
   const partition=state.run?.document.room_partition;
@@ -161,7 +173,14 @@ function renderRooms() {
     const group=svgElement('g',{role:'button',tabindex:0,'aria-label':`${room.id} 区域待校核`,'data-room-id':room.id});
     const d=room.rings_px.map(ring=>'M'+ring.map(p=>p.join(',')).join('L')+'Z').join(' ');
     group.append(svgElement('path',{d,fill:color,'fill-opacity':state.focusedRoom===room.id ? 0.4 : 0.2,stroke:color,'stroke-width':1.5/state.zoom,'fill-rule':'evenodd'}));
-    const label=svgElement('text',{x:room.label_px[0],y:room.label_px[1],'text-anchor':'middle',fill:color,stroke:'white','stroke-width':3/state.zoom,'paint-order':'stroke',style:`font-size:${13/state.zoom}px;font-weight:700`});label.textContent=room.id;group.append(label);
+    const area=roomMeasurements?.roomAreaM2(room,state.run.document.scale_mm_per_px);
+    const areaText=roomMeasurements?.formatRoomArea(area)??'—';
+    group.setAttribute('aria-label',`${room.id} ${room.name||'区域待校核'}，参考面积 ${areaText}`);
+    const label=svgElement('text',{x:room.label_px[0],y:room.label_px[1],'text-anchor':'middle',fill:color,stroke:'white','stroke-width':3/state.zoom,'paint-order':'stroke',style:`font-size:${13/state.zoom}px;font-weight:700`});label.textContent=room.id;
+    if($('room-areas-toggle').checked&&area!=null){
+      const areaLabel=svgElement('tspan',{x:room.label_px[0],dy:17/state.zoom,class:'room-area-label',style:`font-size:${12/state.zoom}px`});areaLabel.textContent=areaText;label.append(areaLabel);
+    }
+    labels.append(label);
     group.addEventListener('click',event=>{event.stopPropagation();focusRoom(room);});
     group.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();focusRoom(room);}});layer.append(group);
   }
@@ -192,6 +211,8 @@ function renderIssues() {
   }
 }
 function renderPlan() {
+  // Derived display layers also refresh on zoom, selection and geometry edits.
+  window.dispatchEvent(new Event('wall-plan-rendered'));
   const layer=$('wall-layer');layer.replaceChildren();const regions=$('region-layer');regions.replaceChildren();
   $('furniture-layer').replaceChildren();
   renderRooms();
@@ -215,7 +236,7 @@ function renderPlan() {
       let lx=Math.max(0,Math.min(state.width-lw,(x0+x1)/2-lw/2)),ly=Math.max(0,(y0+y1)/2-lh/2);
       for(let tries=0;tries<14&&labels.some(b=>lx<b[0]+lw&&lx+lw>b[0]&&ly<b[1]+lh&&ly+lh>b[1]);tries++)ly=Math.min(state.height-lh,ly+lh+2/state.zoom);
       const labelGroup=svgElement('g',{class:group.getAttribute('class'),'aria-hidden':'true'});
-      labels.push([lx,ly]);labelGroup.append(svgElement('line',{x1:(x0+x1)/2,y1:(y0+y1)/2,x2:lx+lw/2,y2:ly+lh/2,stroke:problemIds.has(wall.id)?'#c4611b':'#286be5','stroke-width':.8/state.zoom,'pointer-events':'none'}));labelGroup.append(svgElement('rect',{x:lx,y:ly,width:lw,height:lh,rx:3/state.zoom,class:'wall-label'}));const text=svgElement('text',{x:lx+lw/2,y:ly+13.2/state.zoom,'text-anchor':'middle',class:'wall-text',style:`font-size:${fs}px`});text.textContent=wall.id;labelGroup.append(text);if((state.zoom>=.6&&solidParts.some(p=>p.length_px>15))||state.selected?.id===wall.id)floatingLabels.push(labelGroup);
+      labels.push([lx,ly]);labelGroup.append(svgElement('line',{x1:(x0+x1)/2,y1:(y0+y1)/2,x2:lx+lw/2,y2:ly+lh/2,stroke:problemIds.has(wall.id)?'#c4611b':'#286be5','stroke-width':.8/state.zoom,'pointer-events':'none'}));labelGroup.append(svgElement('rect',{x:lx,y:ly,width:lw,height:lh,rx:3/state.zoom,class:'wall-label'}));const text=svgElement('text',{x:lx+lw/2,y:ly+13.2/state.zoom,'text-anchor':'middle',class:'wall-text',style:`font-size:${fs}px`});text.textContent=wall.id;labelGroup.append(text);if((state.zoom>=.6&&solidParts.some(p=>p.length_px>15)&&!$('wall-lengths-toggle').checked)||state.selected?.id===wall.id)floatingLabels.push(labelGroup);
       group.addEventListener('click',e=>{if(state.mode==='select'){e.stopPropagation();selectItem(wall);}});
       labelGroup.addEventListener('click',e=>{if(state.mode==='select'){e.stopPropagation();selectItem(wall);}});
       group.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectItem(wall);}});layer.append(group);
@@ -406,6 +427,62 @@ async function saveProject() {
     $('save-status').textContent=`项目已保存 · ${result.saved_name}`;toast(`已保存 ${result.solid_count??state.run.document.solid_wall_segments?.length??result.count} 段实墙、${result.furniture_count??0} 件家具与设施及门窗、修改记录。`);return result;
   } finally {state.busy=false;refresh();}
 }
+async function showProjects(){
+  if(state.busy)return;
+  const dialog=$('projects-dialog'),list=$('projects-list');
+  if(!dialog.open)dialog.showModal();
+  $('projects-message').textContent='正在读取本机保存的项目…';list.replaceChildren();
+  $('refresh-projects').disabled=true;
+  try{
+    const result=await api('/api/projects',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    for(const project of result.projects){
+      const button=document.createElement('button');button.className='button project-choice';
+      const title=document.createElement('strong');title.textContent=project.filename||project.id;
+      const detail=document.createElement('span');detail.textContent=project.error||`${project.wall_count} 段墙 · ${project.room_count} 个区域 · ${project.calibrated?'已标定':'未标定'}`;
+      const version=document.createElement('small');version.textContent=project.id;
+      button.append(title,detail,version);button.disabled=Boolean(project.error);button.dataset.invalid=String(Boolean(project.error));
+      button.addEventListener('click',()=>handle(openProject(project.id)));list.append(button);
+    }
+    $('projects-message').textContent=result.projects.length?`按保存时间从新到旧${result.truncated?'，显示最近 100 个项目':''}。`:'还没有保存的项目。识别并编辑后，点击“保存项目”即可。';
+  }catch(error){$('projects-message').textContent=error.message;}finally{$('refresh-projects').disabled=false;}
+}
+async function openProject(id){
+  if(state.busy)return;
+  if(!(await allowReplacement()))return;
+  state.busy='open-project';refresh();
+  for(const button of $('projects-dialog').querySelectorAll('button'))button.disabled=true;
+  $('projects-message').textContent='正在恢复项目…';
+  try{
+    const result=await api('/api/open-project',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({project_id:id})});
+    const response=await fetch(result.image_url);if(!response.ok)throw new Error('项目底图读取失败。');
+    const blob=await response.blob(), image=new Image(),url=URL.createObjectURL(blob);
+    try{await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(new Error('项目底图无法显示。'));image.src=url;});}
+    finally{URL.revokeObjectURL(url);}
+    // Replace only after both document and image are ready, preserving the old draft on failure.
+    window.dispatchEvent(new Event('project-replacing'));
+    if(state.blobUrl)URL.revokeObjectURL(state.blobUrl);state.blobUrl=null;
+    const doc=result.document;state.file=new File([blob],doc.image.original_filename||'floorplan.png',{type:'image/png'});
+    state.run=result;state.width=doc.image.width_px;state.height=doc.image.height_px;
+    state.issues=result.changes;state.historySize=result.history_size;state.regionCount=0;
+    state.formDirty=false;state.dirty=false;state.focusedRoom=null;state.focusedOpening=null;state.focusedFurniture=null;state.furnitureDraft=null;
+    state.wallColors=[...(doc.parameters?.wall_colors||[])];renderPalette();$('wall-color-tolerance').value=doc.parameters?.color_tolerance??8;
+    $('filename').textContent=state.file.name;$('image-meta').textContent=`${state.width} × ${state.height} px · ${geometryDescription(doc)}`;
+    $('plan').setAttribute('viewBox',`0 0 ${state.width} ${state.height}`);
+    for(const key of ['width','height'])$('plan-image').setAttribute(key,state[key]);$('plan-image').setAttribute('href',result.image_url);
+    $('target').replaceChildren(new Option('不指定墙段',''));for(const wall of doc.walls)$('target').append(new Option(wall.id,wall.id));
+    for(const key of ['overlay-toggle','openings-toggle','furniture-toggle','rooms-toggle'])$(key).checked=true;
+    state.busy=false;setMode('select');clearSelection();renderIssues();fit();
+    $('save-status').textContent=`已打开 ${id} · 修改后保存为新版本`;$('projects-dialog').close();
+    toast('项目已恢复，可继续编辑；撤销从本次打开后开始。');
+  }catch(error){$('projects-message').textContent=error.message;}
+  finally{state.busy=false;refresh();$('close-projects').disabled=false;$('refresh-projects').disabled=false;
+    for(const button of $('projects-list').querySelectorAll('button'))button.disabled=button.dataset.invalid==='true';
+  }
+}
+$('open-projects').addEventListener('click',()=>handle(showProjects()));
+$('refresh-projects').addEventListener('click',()=>handle(showProjects()));
+$('close-projects').addEventListener('click',()=>{if(!state.busy)$('projects-dialog').close();});
+$('projects-dialog').addEventListener('cancel',e=>{if(state.busy)e.preventDefault();});
 function handle(promise) {Promise.resolve(promise).catch(error=>toast(error.message||'操作失败，请重试。',true));}
 $('upload').addEventListener('click',()=>{$('file').value='';$('file').click();});
 $('file').addEventListener('change',()=>{if($('file').files[0])handle(loadFile($('file').files[0]));});
@@ -468,4 +545,6 @@ async function registerTools() {
   ];
   for(const definition of definitions){try{await document.modelContext.registerTool(definition,{signal:lifecycle.signal});}catch{/* Optional browser capability; manual workflow remains available. */}}
 }
+$('room-areas-toggle').addEventListener('change',()=>{if($('room-areas-toggle').checked)$('rooms-toggle').checked=true;renderPlan();});
+import('/room-areas.mjs').then(module=>{roomMeasurements=module;renderPlan();renderRoomList();}).catch(()=>{$('room-area-hint').textContent='面积工具加载失败，请刷新页面。';});
 handle(new URLSearchParams(location.search).get('sample')==='furniture'?loadFurnitureSample(false):loadSample(false));handle(registerTools());refresh();

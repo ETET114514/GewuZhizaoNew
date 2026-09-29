@@ -1,0 +1,33 @@
+test_apply_edit_save_geometry_and_undo (test_web.WebWorkflowTests.test_apply_edit_save_geometry_and_undo) ... ok
+test_connection_repair_save_and_undo (test_web.WebWorkflowTests.test_connection_repair_save_and_undo) ... ok
+test_fixture_categories_and_bathing_confirmation_save_undo (test_web.WebWorkflowTests.test_fixture_categories_and_bathing_confirmation_save_undo) ... ok
+test_furniture_edit_save_and_shared_undo (test_web.WebWorkflowTests.test_furniture_edit_save_and_shared_undo) ... ok
+test_local_request_protection_and_page_assets (test_web.WebWorkflowTests.test_local_request_protection_and_page_assets) ... ok
+test_opening_review_save_and_undo (test_web.WebWorkflowTests.test_opening_review_save_and_undo) ... ok
+test_palette_changes_recognition_cache_and_saved_parameters (test_web.WebWorkflowTests.test_palette_changes_recognition_cache_and_saved_parameters) ... ok
+test_real_recognition_matches_existing_program (test_web.WebWorkflowTests.test_real_recognition_matches_existing_program) ... ok
+test_reject_stale_wall_outside_region_and_malformed_body (test_web.WebWorkflowTests.test_reject_stale_wall_outside_region_and_malformed_body) ... ok
+test_repeated_recognition_reuses_pristine_data_not_user_edits (test_web.WebWorkflowTests.test_repeated_recognition_reuses_pristine_data_not_user_edits) ... ok
+test_save_wall_problem_and_missing_region_with_paired_source (test_web.WebWorkflowTests.test_save_wall_problem_and_missing_region_with_paired_source) ... ok
+test_wall_confirmation_reclassification_and_undo (test_web.WebWorkflowTests.test_wall_confirmation_reclassification_and_undo) ... ok
+test_api_calibration_material_save_and_undo (test_room_editing.RoomEditingTests.test_api_calibration_material_save_and_undo) ... ok
+test_invalid_edits_are_atomic (test_room_editing.RoomEditingTests.test_invalid_edits_are_atomic) ... ok
+test_manual_overrides_auto_and_clips_walls_without_overlap (test_room_editing.RoomEditingTests.test_manual_overrides_auto_and_clips_walls_without_overlap) ... ok
+test_manual_polygon_split_merge_reshape_delete (test_room_editing.RoomEditingTests.test_manual_polygon_split_merge_reshape_delete) ... ok
+test_material_persists_on_repartition_without_changing_walls (test_room_editing.RoomEditingTests.test_material_persists_on_repartition_without_changing_walls) ... ok
+test_thickness_estimate_is_explicit_and_keeps_geometry (test_room_editing.RoomEditingTests.test_thickness_estimate_is_explicit_and_keeps_geometry) ... ok
+test_door_splits_rooms_without_changing_real_geometry (test_rooms.RoomPartitionTests.test_door_splits_rooms_without_changing_real_geometry) ... ok
+test_edit_recomputes_partition (test_rooms.RoomPartitionTests.test_edit_recomputes_partition) ... ok
+test_empty_and_small_wall_cavities_are_not_rooms (test_rooms.RoomPartitionTests.test_empty_and_small_wall_cavities_are_not_rooms) ... ok
+test_furniture_is_not_a_boundary_and_inner_wall_is_a_hole (test_rooms.RoomPartitionTests.test_furniture_is_not_a_boundary_and_inner_wall_is_a_hole) ... ok
+test_partition_api_save_geometry_edit_and_undo (test_rooms.RoomPartitionTests.test_partition_api_save_geometry_edit_and_undo) ... ok
+test_pending_rejected_or_floating_doors_are_not_barriers (test_rooms.RoomPartitionTests.test_pending_rejected_or_floating_doors_are_not_barriers) ... ok
+test_window_can_complete_perimeter_and_fractional_leak_stays_open (test_rooms.RoomPartitionTests.test_window_can_complete_perimeter_and_fractional_leak_stays_open) ... ok
+test_api_save_and_undo_calibration_with_settings (test_model_settings.ModelSettingsTests.test_api_save_and_undo_calibration_with_settings) ... ok
+test_invalid_values_do_not_mutate_document (test_model_settings.ModelSettingsTests.test_invalid_values_do_not_mutate_document) ... ok
+test_scale_and_settings_preserve_pixel_geometry (test_model_settings.ModelSettingsTests.test_scale_and_settings_preserve_pixel_geometry) ... ok
+
+----------------------------------------------------------------------
+Ran 28 tests in 38.085s
+
+OK

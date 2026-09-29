@@ -14,3 +14,47 @@
 .connection-tools{display:flex;align-items:center;gap:12px;padding:8px 20px;border-top:1px solid #e5eaf1;flex-wrap:wrap}.connection-tools span{font-size:12px;color:#62748b;line-height:1.6}.wall-hit .connection-shape{fill:#e6903655;stroke:#c76b17}.wall-hit.selected .connection-shape{stroke:#ad4c00;stroke-width:2}
 .room-section{padding:18px 24px;border-bottom:1px solid #e5eaf1}.room-section h3{margin:0;font-size:15px}.room-section .model-check{font-size:12px;margin:12px 0}.room-choice{font-size:12px;margin:3px;padding:7px 9px}.room-choice[aria-pressed="true"]{border-color:#23a59a;background:#e2f4f1}#room-layer [role="button"]{cursor:pointer}
 .thickness-calibration{margin-top:14px;font-size:12px}.thickness-calibration summary{cursor:pointer;color:#5e7088}#room-edit-form{padding-top:10px}#room-edit-form h4{margin:10px 0}#room-edit-form .model-actions{flex-wrap:wrap;margin:10px 0}#room-draw-tools{padding:8px;background:#faf0f8;border-radius:8px}#room-draw-tools .model-actions{flex-wrap:wrap}
+#projects-dialog{width:min(620px,92vw);max-width:620px;max-height:85dvh}.project-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}.project-heading h2{margin:0}.projects-list{display:grid;gap:10px;margin:14px 0;max-height:45dvh;overflow:auto}.project-choice{display:flex;flex-direction:column;gap:6px;text-align:left;white-space:normal;overflow-wrap:anywhere}.project-choice span,.project-choice small{font-size:12px;color:#65758a}.header>.drawing-actions{flex-wrap:wrap;flex-direction:row}@media(max-width:550px){.header{height:auto;min-height:100px;flex-wrap:wrap;gap:10px;padding-block:12px}}
+.dimension-tools{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:9px 20px;background:#f8fafc;border-top:1px solid #e5eaf1;font-size:12px;color:#43586c}.dimension-tools label{display:flex;align-items:center;gap:6px;white-space:nowrap;cursor:pointer}.dimension-tools input{accent-color:#245ee5}.dimension-tools span{font-size:11px;color:#748294;flex:1;min-width:190px}.dimension-tools input:disabled{cursor:not-allowed}
+
+/* The ribbon owns tools; the side panel owns selected-object properties. */
+body{display:flex;flex-direction:column;min-height:100dvh}
+.header{height:64px;flex:none}.workflow{height:44px;flex:none}
+.workspace{height:auto;flex:1;min-height:400px}
+@media(min-width:801px){body{height:100dvh}.workspace{overflow:hidden}}
+.workspace-toolbar{flex:none;margin:0 24px 14px;border:1px solid #d9e2ee;border-radius:10px;background:white;box-shadow:0 3px 12px #28426706;overflow:hidden}
+.toolbar-tabs{display:flex;gap:4px;padding:0 12px;background:#f7f9fc;border-bottom:1px solid var(--line);overflow-x:auto}
+.toolbar-tabs [role=tab]{flex:none;border:0;border-bottom:3px solid transparent;padding:11px 18px 9px;background:none;color:#64748b;font-size:13px;font-weight:600}
+.toolbar-tabs [aria-selected=true]{color:#245ee5;border-bottom-color:#245ee5;background:white}
+.toolbar-tabs [role=tab]:hover{color:#245ee5}.toolbar-tabs [role=tab]:focus-visible{outline-offset:-3px}
+.ribbon-panel{display:flex;align-items:center;gap:14px 22px;flex-wrap:wrap;padding:12px 18px;max-height:240px;overflow:auto;min-height:86px}
+.ribbon-group{display:flex;flex-direction:column;gap:8px;padding-right:22px;border-right:1px solid var(--line);min-width:0}
+.ribbon-caption{font-size:11px;letter-spacing:1px;color:#7d8ba0}
+.ribbon-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ribbon-panel .full{width:auto}.ribbon-panel .text-button{display:inline-flex;min-height:36px}
+.ribbon-panel .button,.ribbon-panel .tool{min-height:36px;font-size:13px;padding:8px 12px;white-space:nowrap}
+.ribbon-note{font-size:12px;color:#78889b;line-height:1.6}
+.ribbon-status{flex-basis:100%;display:flex;gap:12px 24px;flex-wrap:wrap;font-size:11px;color:#78889b;border-top:1px solid #eef1f5;padding-top:8px}
+.ribbon-status .pipeline-status{padding:0;background:none;border:0;font-size:11px}
+.ribbon-settings{flex:1;min-width:250px}
+.ribbon-panel .recognition-settings{margin:0;padding:10px 12px;font-size:12px}
+.ribbon-panel .recognition-settings[open]{min-width:min(560px,100%)}
+.ribbon-panel .dimension-tools{padding:0;border:0;background:none;max-width:390px;gap:8px 18px}
+.ribbon-panel .dimension-tools span{flex-basis:100%}
+.ribbon-panel .model-entry{padding:8px 0 0;border:0;border-top:1px solid #eef1f5;background:none;flex-basis:100%;display:flex;align-items:flex-start;gap:12px 28px;flex-wrap:wrap}
+.ribbon-panel .model-entry .opening-help{margin:0;font-size:12px}
+.ribbon-panel .thickness-calibration{margin:0;max-width:540px}
+.ribbon-panel .thickness-calibration[open]{flex-basis:100%;max-width:none}
+.ribbon-panel #wall-calibration-form,.ribbon-panel #calibration-form{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-top:12px}
+.ribbon-panel #wall-calibration-form .field,.ribbon-panel #calibration-form .field{margin:0;max-width:240px;font-size:12px}
+.ribbon-panel #calibration-form .opening-help{flex-basis:100%}
+.ribbon-panel #calibration-form{flex-basis:100%;margin-top:0}
+.ribbon-panel .model-check{margin:0;font-size:13px}.ribbon-panel .visibility{color:#43586c}
+.drawing-header{padding:14px 20px}.drawing-header .eyebrow{display:none}
+.area-summary{padding:12px;background:#f0f7f6;border:1px solid #dcece8;border-radius:8px;margin:12px 0}
+.area-summary>span{font-size:12px;color:#608177}.area-summary>strong{display:block;font:600 23px system-ui;color:#237e70;margin-top:4px}
+.area-summary p{font-size:11px;line-height:1.65;color:#6b837f;margin-top:6px}
+.room-choice{width:100%;margin:3px 0;justify-content:flex-start;text-align:left;line-height:1.6}
+#room-selected-area{color:#237e70;font-weight:600}
+@media(max-width:1100px){.workspace-toolbar{margin-inline:14px}.ribbon-panel{gap:12px}.ribbon-group{padding-right:12px}}
+@media(max-width:800px){body{height:auto}.header{height:auto;min-height:64px;padding-block:10px;gap:10px}.workflow{height:44px}.workspace{min-height:0;overflow:visible}.drawing-panel{height:65dvh;min-height:430px;max-height:none}.workspace-toolbar{margin-bottom:12px}.toolbar-tabs{padding:0 4px;gap:0}.toolbar-tabs [role=tab]{padding-inline:13px}.ribbon-panel{padding:12px;max-height:260px}.ribbon-group{border:0}.ribbon-note{flex-basis:100%}.ribbon-panel .dimension-tools{max-width:100%}.ribbon-settings{min-width:0;flex-basis:100%}.ribbon-panel .recognition-settings[open]{min-width:0}.ribbon-panel .thickness-calibration{max-width:100%}.header>.drawing-actions .button{font-size:12px;padding:7px 10px}.area-summary{margin-block:10px}}
