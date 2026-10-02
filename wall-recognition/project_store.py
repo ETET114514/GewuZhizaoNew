@@ -62,6 +62,10 @@ def validate_document(doc):
                     or item['id'] in ids or not numbers(item.get('bbox_px'), 4)):
                 raise ValueError(f'项目的 {key} 编号或坐标不正确。')
             ids.add(item['id'])
+            if key == 'furniture' and 'model_3d' in item:
+                from furniture_model import model_options, validate_footprint
+                model_options(item['model_3d'])
+                validate_footprint(image, item['bbox_px'], item['model_3d'])
             if key == 'walls' and (not numbers(item.get('start_px'), 2)
                     or not numbers(item.get('end_px'), 2)
                     or type(item.get('thickness_px')) not in (float, int)

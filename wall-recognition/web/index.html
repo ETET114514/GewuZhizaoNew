@@ -107,9 +107,26 @@
   <dialog id="model-dialog" class="model-dialog">
     <header class="model-header"><div><span class="eyebrow">SPACE PREVIEW</span><h2>三维空间预览 <span class="model-badge">白模</span></h2></div><button id="close-model" class="button">返回二维</button></header>
     <div class="model-layout">
-      <section class="model-scene"><div id="model-canvas"></div><div class="model-view-actions"><button id="model-reset" class="button">透视</button><button id="model-top" class="button">俯视</button></div><p class="model-gesture">拖动旋转 · 滚轮缩放 · 右键平移</p></section>
+      <section class="model-scene"><div id="model-canvas"></div><div class="model-view-actions"><button id="model-reset" class="button">透视</button><button id="model-top" class="button">俯视</button><label class="button"><input id="model-wall-ghost" type="checkbox">淡化墙体</label></div><p class="model-gesture">拖动旋转 · 滚轮缩放 · 右键平移</p></section>
       <aside class="model-controls">
         <p id="model-summary" class="opening-help" role="status"></p>
+        <section class="model-furniture-section">
+          <h3>逐件家具编辑</h3>
+          <label class="field">选择家具<select id="model-furniture-select"></select></label>
+          <p class="opening-help">也可点击三维中的家具；选中后高亮。待定区域请先在二维确认类别。</p>
+          <form id="model-furniture-form" hidden>
+            <div class="field-row"><label class="field">中心 X（mm）<input id="mf-x" type="number" min="0" step="any" required></label><label class="field">中心 Y（mm）<input id="mf-y" type="number" min="0" step="any" required></label></div>
+            <div class="field-row"><label class="field">横向占地（mm）<input id="mf-width" type="number" min="20" max="50000" step="any" required></label><label class="field">纵向占地（mm）<input id="mf-depth" type="number" min="20" max="50000" step="any" required></label></div>
+            <div class="field-row"><label class="field">家具高度（mm）<input id="mf-height" type="number" min="20" max="10000" step="any" required></label><label class="field">离地高度（mm）<input id="mf-elevation" type="number" min="0" max="10000" step="any" required></label></div>
+            <div class="field-row"><label class="field">整体旋转（°）<input id="mf-rotation" type="number" min="0" max="360" step="any" required></label><label class="field">主体颜色<input id="mf-color" type="color"></label></div>
+            <p class="opening-help">X 向右、Y 向下，原点在底图左上角；占地按未旋转的二维框填写，整体旋转为顺时针附加角度。高度为结构外包高度；位置、占地和旋转同步二维，重新标定会改变占地实际尺寸。</p>
+            <div class="model-actions"><button id="mf-focus" class="button" type="button">定位家具</button><button id="mf-reset" class="button" type="button">默认外观</button></div>
+            <button id="mf-apply" class="button primary full" type="submit">应用家具修改</button>
+            <button id="mf-discard" class="button full" type="button">放弃未应用</button>
+            <p id="mf-status" class="opening-help" role="status"></p>
+          </form>
+        </section>
+        <details class="model-global-settings"><summary>全局墙体、门窗与显示设置</summary>
         <form id="model-form">
           <h3>墙体与地面</h3>
           <label class="field">墙高（mm）<input data-setting="wall_height_mm" type="number" min="100" max="20000" step="any" required></label>
@@ -120,12 +137,13 @@
           <div class="field-row"><label class="field">窗洞宽（mm）<input data-setting="window_width_mm" type="number" min="100" max="20000" step="any" required></label><label class="field">门洞高（mm）<input data-setting="door_height_mm" type="number" min="100" max="20000" step="any" required></label></div>
           <div class="field-row"><label class="field">窗洞高（mm）<input data-setting="window_height_mm" type="number" min="100" max="20000" step="any" required></label><label class="field">窗台离地（mm）<input data-setting="sill_height_mm" type="number" min="0" max="20000" step="any" required></label></div>
           <p class="opening-help">按图换算时，门扇自动适配门框内宽；宽度预设仅在“使用预设宽度”时生效。门框、窗框与家具为简化示意。超出墙段的洞口会裁切；未定类型洞口暂保留缺口。</p>
-          <label class="model-check"><input data-setting="show_furniture" type="checkbox"> 显示简化家具</label>
+          <label class="model-check"><input data-setting="show_furniture" type="checkbox"> 显示家具模型</label>
           <label class="model-check"><input data-setting="show_plan" type="checkbox"> 显示原户型底图</label>
           <label class="model-check"><input data-setting="show_room_floors" type="checkbox"> 显示按区域铺设的地面</label>
           <button id="apply-model" class="button primary full" type="submit">应用尺寸与外观</button>
           <p id="model-draft-status" class="opening-help" role="status"></p>
         </form>
+        </details>
         <div class="model-actions"><button id="model-undo" class="button">撤销</button><button id="model-save" class="button">保存项目</button></div>
         <p id="model-message" class="opening-help" role="status"></p>
         <details id="model-warnings"><summary>待校核项目</summary><ul id="model-warning-list"></ul></details>

@@ -1,3 +1,4 @@
+import {buildFurniture} from './furniture-models.mjs';
 // Pure geometry: millimetres in settings, metres in the scene, source pixels retained.
 export const DEFAULTS = Object.freeze({wall_height_mm:2800,door_height_mm:2100,window_height_mm:1500,
   sill_height_mm:900,door_width_mm:800,opening_width_mm:900,window_width_mm:800,width_mode:'detected',
@@ -75,27 +76,7 @@ export function buildModel(doc) {
       }
     }
   }
-  const furniture=(doc.furniture||[]).filter(f=>f.review_status!=='rejected');
-  if(s.show_furniture)for(const f of furniture){
-    if(['unclassified','unclassified_area','wet_area','water_feature'].includes(f.kind))continue;
-    const [x0,z0,x1,z1]=f.bbox_px,w=x1-x0,d=z1-z0;
-    const add=(rx,rz,rw,rd,lo,hi,color)=>box(f.id,'furniture',x0+w*rx,z0+d*rz,x0+w*(rx+rw),z0+d*(rz+rd),lo,hi,color);
-    const back=(lo,hi,color)=>{
-      if(f.rotation_deg===90)add(.9,0,.1,1,lo,hi,color);
-      else if(f.rotation_deg===180)add(0,.9,1,.1,lo,hi,color);
-      else if(f.rotation_deg===270)add(0,0,.1,1,lo,hi,color);
-      else add(0,0,1,.1,lo,hi,color);
-    };
-    if(f.kind==='bed'){add(0,0,1,1,.08,.32,'#b69c84');add(.025,.025,.95,.95,.32,.55,'#eeeae4');back(.32,1,'#aa9380');}
-    else if(['sofa','chair'].includes(f.kind)){add(0,0,1,1,.12,.44,'#9dada8');back(.44,.85,'#899e97');}
-    else if(['table','dining_table','coffee_table'].includes(f.kind)){
-      const h=f.kind==='coffee_table'?.4:.75;add(0,0,1,1,h-.06,h,'#c6b294');
-      for(const x of [.08,.84])for(const z of [.08,.84])add(x,z,.08,.08,0,h-.06,'#8d806f');
-    }else{
-      const h={cabinet:2,shoe_cabinet:1.1,tv_console:.5,kitchen_cabinet:.85,kitchen_sink:.86,cooktop:.9,refrigerator:1.8,vanity:.8,toilet:.65,bathtub:.55,shower:.08}[f.kind]??.7;
-      add(0,0,1,1,0,h,['toilet','bathtub','vanity','kitchen_sink'].includes(f.kind)?'#f3f5f3':'#bec4c1');
-    }
-  }
+  if(s.show_furniture)boxes.push(...buildFurniture(doc));
   return {boxes,warnings:[...new Set(warnings)],openings,width:W*unit,depth:H*unit,height,settings:s,
     wallCount:walls.length,furnitureCount:new Set(boxes.filter(b=>b.kind==='furniture').map(b=>b.id)).size};
 }

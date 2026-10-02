@@ -300,7 +300,10 @@ def apply_furniture_edit(document, request):
         kind = request.get("kind", item["kind"])
         if kind not in LABELS:
             raise ValueError("请选择支持的家具或设施类别。")
-        box = request.get("bbox_px", item.get("bbox_px"))
+        from furniture_model import model_options, placement_box, validate_footprint
+        if 'placement_mm' in request and 'bbox_px' in request:
+            raise ValueError('实际尺寸与像素框不能同时提交。')
+        box = placement_box(result, request['placement_mm']) if 'placement_mm' in request else request.get("bbox_px", item.get("bbox_px"))
         width, height = result["image"]["width_px"], result["image"]["height_px"]
         if (not isinstance(box, list) or len(box) != 4 or
                 not all(type(v) in (int, float) and math.isfinite(v) for v in box) or
@@ -311,6 +314,12 @@ def apply_furniture_edit(document, request):
             raise ValueError("朝向需为未知或 0、90、180、270 度。")
         if kind not in DIRECTIONAL_KINDS:
             rotation = None
+        if 'model_3d' in request:
+            if request['model_3d'] is None:
+                item.pop('model_3d', None)
+            else:
+                item['model_3d'] = {**item.get('model_3d', {}), **model_options(request['model_3d'])}
+        validate_footprint(result['image'], box, item.get('model_3d', {}))
         if item.get("source") in {"symbol_template", "floorcad_onnx"}:
             item.setdefault("prediction", {key: deepcopy(item.get(key)) for key in ("kind", "bbox_px", "rotation_deg", "match_score")})
         item.update(kind=kind, bbox_px=list(box), rotation_deg=rotation,
@@ -335,7 +344,12 @@ def draw_furniture(image, items):
             continue
         color = COLORS.get(item["kind"], "#168187")
         x0, y0, x1, y1 = item["bbox_px"]
-        draw.rectangle((x0,y0,x1-1,y1-1), outline=color, width=3)
+        angle = math.radians(item.get('model_3d', {}).get('rotation_deg', 0))
+        cx, cy = (x0+x1)/2, (y0+y1)/2
+        points = [(cx+math.cos(angle)*(x-cx)-math.sin(angle)*(y-cy),
+                   cy+math.sin(angle)*(x-cx)+math.cos(angle)*(y-cy))
+                  for x, y in [(x0,y0),(x1,y0),(x1,y1),(x0,y1)]]
+        draw.line(points+[points[0]], fill=color, width=3)
         label = f"{item['id']} {item['label'] if font_path.exists() else item['kind']}"
         box = draw.textbbox((x0,max(0,y0-23)),label,font=font)
         draw.rectangle(box, fill="white")

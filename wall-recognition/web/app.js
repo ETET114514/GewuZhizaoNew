@@ -322,7 +322,7 @@ function renderFurniture() {
     const [x0,y0,x1,y1]=f.bbox_px,color=FURNITURE_COLORS[f.kind]||'#168187';
     const active=f.id===state.focusedFurniture;
     const group=svgElement('g',{class:'furniture-hit',role:'button',tabindex:0,'aria-label':`${f.id} ${f.label||'家具'}`});
-    group.append(svgElement('rect',{x:x0,y:y0,width:x1-x0,height:y1-y0,fill:color,'fill-opacity':active?.16:.05,stroke:color,'stroke-width':(active?3:2)/state.zoom,'stroke-dasharray':f.review_status==='confirmed'?'none':`${5/state.zoom} ${3/state.zoom}`}));
+    group.append(svgElement('rect',{transform:`rotate(${f.model_3d?.rotation_deg||0} ${(x0+x1)/2} ${(y0+y1)/2})`,x:x0,y:y0,width:x1-x0,height:y1-y0,fill:color,'fill-opacity':active?.16:.05,stroke:color,'stroke-width':(active?3:2)/state.zoom,'stroke-dasharray':f.review_status==='confirmed'?'none':`${5/state.zoom} ${3/state.zoom}`}));
     const text=`${f.id} ${f.label||'家具'}`,fontSize=12/state.zoom;
     const labelWidth=Array.from(text).reduce((n,c)=>n+(c.charCodeAt(0)>255?1:.65),0)*fontSize;
     const lx=Math.max(2,Math.min(state.width-labelWidth-2,x0+3/state.zoom));
@@ -336,7 +336,7 @@ function renderFurniture() {
     const label=svgElement('text',{x:lx,y:ly,fill:color,stroke:'white','stroke-width':3/state.zoom,'paint-order':'stroke',style:`font-size:${fontSize}px;font-weight:700`});
     label.textContent=text;group.append(label);
     if(f.rotation_deg!=null){const cx=(x0+x1)/2,cy=(y0+y1)/2;
-      const arrow=svgElement('text',{x:cx,y:cy,fill:color,'text-anchor':'middle',style:`font-size:${20/state.zoom}px`,transform:`rotate(${f.rotation_deg} ${cx} ${cy})`,'pointer-events':'none'});arrow.textContent='↑';group.append(arrow);}
+      const arrow=svgElement('text',{x:cx,y:cy,fill:color,'text-anchor':'middle',style:`font-size:${20/state.zoom}px`,transform:`rotate(${f.rotation_deg+(f.model_3d?.rotation_deg||0)} ${cx} ${cy})`,'pointer-events':'none'});arrow.textContent='↑';group.append(arrow);}
     group.addEventListener('click',e=>{e.stopPropagation();focusFurniture(f);});
     group.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();focusFurniture(f);}});
     $('furniture-layer').append(group);
