@@ -1,0 +1,28 @@
+[
+  {
+    "fixture": "pipeline-v1",
+    "automatic_regions": 1,
+    "candidates": 8,
+    "free_ends": 30,
+    "skipped_openings": [],
+    "pending_openings": [],
+    "elapsed_ms": 34,
+    "truncated": false
+  },
+  {
+    "fixture": "doors-v3",
+    "automatic_regions": 2,
+    "candidates": 6,
+    "free_ends": 23,
+    "skipped_openings": [
+      "O005",
+      "O006",
+      "O008",
+      "O011",
+      "O012"
+    ],
+    "pending_openings": [],
+    "elapsed_ms": 7,
+    "truncated": false
+  }
+]

@@ -27,6 +27,7 @@ from refine_walls import initialize_refinement, refresh_refinement
 from recognize_furniture import add_furniture, apply_furniture_edit, furniture_export
 from model_settings import apply_model_settings
 from connect_walls import connect_walls
+from closure_diagnostics import diagnose_closure, preview_gap, resolve_gap
 from partition_rooms import partition_rooms
 from room_editing import apply_room_edit
 from project_store import list_projects, load_project
@@ -163,7 +164,7 @@ class ReviewHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         route = urlsplit(self.path).path
         pages = {"/": ("index.html", "text/html; charset=utf-8"), "/app.css": ("app.css", "text/css; charset=utf-8"), "/app.js": ("app.js", "text/javascript; charset=utf-8")}
-        for name in ('model-ui.js', 'model-viewer.js', 'model-geometry.mjs', 'floor-geometry.mjs', 'room-ui.js', 'wall-lengths.mjs', 'wall-length-ui.js', 'room-areas.mjs', 'toolbar-ui.js', 'furniture-models.mjs',
+        for name in ('closure-ui.js', 'model-ui.js', 'model-viewer.js', 'model-geometry.mjs', 'floor-geometry.mjs', 'room-ui.js', 'wall-lengths.mjs', 'wall-length-ui.js', 'room-areas.mjs', 'toolbar-ui.js', 'furniture-models.mjs',
                      'vendor/three.module.min.js', 'vendor/three.core.min.js', 'vendor/OrbitControls.js'):
             pages['/'+name] = (name, 'text/javascript; charset=utf-8')
         if route in pages:
@@ -246,7 +247,7 @@ class ReviewHandler(BaseHTTPRequestHandler):
                                          "elapsed_ms": round((perf_counter()-started)*1000), "cache_hit": cache_hit})
                 finally:
                     self.server.detect_lock.release()
-            elif route in ("/api/apply-edit", "/api/undo-edit", "/api/save-project", "/api/review-opening", "/api/edit-furniture", "/api/model-settings", "/api/connect-walls", "/api/partition-rooms", "/api/edit-room"):
+            elif route in ("/api/diagnose-closure", "/api/preview-gap", "/api/resolve-gap", "/api/apply-edit", "/api/undo-edit", "/api/save-project", "/api/review-opening", "/api/edit-furniture", "/api/model-settings", "/api/connect-walls", "/api/partition-rooms", "/api/edit-room"):
                 request = json.loads(payload)
                 if not isinstance(request, dict) or not isinstance(request.get("run_id"), str):
                     raise ValueError("操作格式不正确。")
@@ -254,7 +255,18 @@ class ReviewHandler(BaseHTTPRequestHandler):
                     run = self.server.sessions.get(request["run_id"])
                     if run is None:
                         raise ValueError("识别结果已过期，请重新识别。")
-                    if route == '/api/edit-room':
+                    if route in ('/api/diagnose-closure', '/api/preview-gap'):
+                        response = (diagnose_closure(run['document']) if route == '/api/diagnose-closure'
+                                    else preview_gap(run['document'], request, run['next_id']))
+                        self.send_json(200, response)
+                        return
+                    if route == '/api/resolve-gap':
+                        document, record, next_id = resolve_gap(run['document'], request, run['next_id'])
+                        run['history'].append((run['document'], list(run['changes']), run['next_id']))
+                        run['history'] = run['history'][-50:]
+                        run['document'], run['next_id'] = document, next_id
+                        run['changes'].append(record)
+                    elif route == '/api/edit-room':
                         document, record = apply_room_edit(run['document'], request)
                         run['history'].append((run['document'], list(run['changes']), run['next_id']))
                         run['history'] = run['history'][-50:]

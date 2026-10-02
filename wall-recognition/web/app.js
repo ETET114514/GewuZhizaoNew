@@ -199,6 +199,7 @@ function renderIssues() {
     const note=document.createElement('p');note.textContent=issue.summary||issue.note;open.append(id,type,note);
     if(issue.type==='room_edit')open.addEventListener('click',event=>{event.stopImmediatePropagation();const room=state.run.document.room_partition?.regions.find(r=>r.id===issue.room_id);if(room)focusRoom(room);else toast('该区域已变化，可撤销恢复。');});
     if(issue.type==='room_partition')open.addEventListener('click',event=>{event.stopImmediatePropagation();$('room-list').scrollIntoView({block:'nearest'});});
+    if(issue.type==='gap_review')open.addEventListener('click',event=>{event.stopImmediatePropagation();$('diagnose-closure').click();});
     if(issue.type==='wall_connection')open.addEventListener('click',event=>{
       event.stopImmediatePropagation();
       const wall=state.run.document.walls.find(w=>issue.wall_ids?.includes(w.id));

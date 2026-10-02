@@ -72,6 +72,8 @@ def validate_document(doc):
                     or not math.isfinite(item['thickness_px']) or item['thickness_px'] <= 0):
                 raise ValueError('项目墙段几何不正确。')
     scale = doc.get('scale_mm_per_px')
+    from closure_diagnostics import ignored_ids
+    ignored_ids(doc)
     if scale is not None and (type(scale) not in (int, float) or not math.isfinite(scale) or scale <= 0):
         raise ValueError('项目比例不正确。')
     if 'room_partition' in doc:

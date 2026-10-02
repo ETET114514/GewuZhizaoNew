@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="在本机识别户型墙体，逐段修改墙体并保存校正反馈。">
-  <title>筑见 · 户型校核</title><link rel="stylesheet" href="/app.css"><script src="/app.js" defer></script><script src="/model-ui.js" defer></script><script src="/room-ui.js" defer></script><script src="/wall-length-ui.js" defer></script><script src="/toolbar-ui.js" defer></script>
+  <title>筑见 · 户型校核</title><link rel="stylesheet" href="/app.css"><script src="/app.js" defer></script><script src="/model-ui.js" defer></script><script src="/room-ui.js" defer></script><script src="/wall-length-ui.js" defer></script><script src="/toolbar-ui.js" defer></script><script src="/closure-ui.js" defer></script>
 </head>
 <body>
   <header class="header">
@@ -14,7 +14,7 @@
 <section id="workspace-toolbar" class="workspace-toolbar" aria-label="工作台工具栏">
 <div class="toolbar-tabs" role="tablist" aria-label="工具分类"><button id="tab-project" role="tab" aria-controls="tools-project" aria-selected="false" tabindex="-1">项目</button><button id="tab-recognition" role="tab" aria-controls="tools-recognition" aria-selected="true" tabindex="0">识别与修复</button><button id="tab-edit" role="tab" aria-controls="tools-edit" aria-selected="false" tabindex="-1">编辑与分区</button><button id="tab-measure" role="tab" aria-controls="tools-measure" aria-selected="false" tabindex="-1">测量</button><button id="tab-display" role="tab" aria-controls="tools-display" aria-selected="false" tabindex="-1">显示与三维</button></div>
 <div id="tools-project" class="ribbon-panel" role="tabpanel" aria-labelledby="tab-project" hidden><div class="ribbon-group"><span class="ribbon-caption">导入与恢复</span><div class="ribbon-actions"><button id="upload" class="button">导入图片</button><button id="open-projects" class="button">打开项目</button></div></div><div class="ribbon-group"><span class="ribbon-caption">示例图</span><div class="ribbon-actions"><button id="sample" class="text-button">使用示例图</button><button id="furniture-sample" class="button full">载入家具示例图</button></div></div><p class="ribbon-note">保存与撤销固定在右上角，随时可用。</p></div>
-<div id="tools-recognition" class="ribbon-panel" role="tabpanel" aria-labelledby="tab-recognition"><div class="ribbon-group"><span class="ribbon-caption">自动提取</span><button id="detect" class="button primary" disabled>识别墙体、门窗与家具</button></div><div class="ribbon-group"><span class="ribbon-caption">墙体修复</span><button id="connect-walls" class="button" disabled>尝试连接墙体</button></div><div class="ribbon-settings"><details class="recognition-settings" id="recognition-settings">
+<div id="tools-recognition" class="ribbon-panel" role="tabpanel" aria-labelledby="tab-recognition"><div class="ribbon-group"><span class="ribbon-caption">自动提取</span><button id="detect" class="button primary" disabled>识别墙体、门窗与家具</button></div><div class="ribbon-group"><span class="ribbon-caption">墙体修复</span><button id="connect-walls" class="button" disabled>尝试连接墙体</button><button id="diagnose-closure" class="button" disabled>闭合诊断</button></div><div class="ribbon-settings"><details class="recognition-settings" id="recognition-settings">
         <summary>识别设置 · 同图多种墙色</summary>
         <p>自动识别深色墙与双线墙；浅色或彩色墙可额外取色，最多 6 种。颜色只用于筛选，仍需满足墙段形状。更改后点击重新识别。</p>
         <div class="palette-controls"><label>墙色 <input id="wall-color" type="color" value="#e4e4e4"></label><button id="wall-color-add" class="button" type="button">添加颜色</button><button id="wall-color-pick" class="button" type="button" aria-pressed="false">在原图上取色</button><label>颜色容差 <input id="wall-color-tolerance" type="number" value="8" min="1" max="24" step="1"></label></div>
@@ -50,6 +50,19 @@
     </section>
     <aside class="review-panel" aria-label="墙体修改">
 
+      <section id="closure-panel" class="closure-section" hidden>
+        <div class="issues-heading"><h3>闭合诊断</h3><label><input id="closure-visible" type="checkbox" checked> 显示疑点</label></div>
+        <p id="closure-status" class="opening-help" role="status"></p>
+        <p class="opening-help">编号为疑似缺口，灰圈为自由端点（可能是正常墙端）。点击编号定位并预览；自动闭合数不包含手绘区域。</p>
+        <div id="closure-preview" hidden>
+          <h4 id="gap-title"></h4><p id="gap-impact" class="opening-help" role="status"></p>
+          <p class="opening-help">橙色虚线为拟补墙，绿色虚线为补墙后的自动区域。缺口也可能是漏识别的门，请对照底图确认。</p>
+          <button id="gap-confirm" class="button primary full">确认补墙并重算区域</button>
+          <div class="model-actions"><button id="gap-ignore" class="button">忽略此疑点</button><button id="gap-dismiss" class="button">关闭预览</button></div>
+        </div>
+        <div id="closure-list"></div><div id="closure-boundaries"></div>
+        <p class="opening-help">首版检查附近共线、L/T 交接缺口；不保证整体闭合。没有候选时可用“框选漏墙”补入，门窗疑点需先校核类型。</p>
+      </section>
       <section class="room-section">
         <div class="issues-heading"><h3>房间区域</h3><span id="room-count">未分析</span></div>
         <p class="opening-help">以墙体为边界，门洞分隔相邻空间，窗洞补齐外围边界。虚拟分界不改变真实墙体与三维洞口。</p>
