@@ -19,17 +19,17 @@ export function buildModel(doc) {
   const active=(doc.openings||[]).filter(o=>o.review_status!=='rejected'&&['door','window'].includes(o.kind)&&(!o.requires_confirmation||o.review_status==='confirmed'));
   for(const o of active){
     const axis=o.orientation==='horizontal'?0:1,center=(o.start_px[axis]+o.end_px[axis])/2;
-    const width=s.width_mode==='preset'?(o.kind==='door'?s.opening_width_mm:s.window_width_mm)/scale:Math.abs(o.end_px[axis]-o.start_px[axis]);
+    const width=o.dimensions_mm?.width_mm/scale||(s.width_mode==='preset'?(o.kind==='door'?s.opening_width_mm:s.window_width_mm)/scale:Math.abs(o.end_px[axis]-o.start_px[axis]));
     const a=center-width/2,b=center+width/2;
     const hosts=walls.filter(w=>w.orientation===o.orientation&&Math.abs(w.start_px[1-axis]-o.start_px[1-axis])<=Math.min(w.thickness_px,o.thickness_px)/2+1&&Math.max(a,w.start_px[axis])<Math.min(b,w.end_px[axis]));
     if(!hosts.length){warnings.push(`${o.id} 未贴合墙体，未生成三维门窗，请在二维中校核。`);continue;}
     const host=hosts.reduce((best,w)=>w.thickness_px>best.thickness_px?w:best);
-    const bottom=o.kind==='window'?s.sill_height_mm/1000:0;
-    const top=bottom+(o.kind==='window'?s.window_height_mm:s.door_height_mm)/1000;
+    const bottom=o.kind==='window'?(o.dimensions_mm?.sill_height_mm??s.sill_height_mm)/1000:0;
+    const top=bottom+(o.dimensions_mm?.height_mm??(o.kind==='window'?s.window_height_mm:s.door_height_mm))/1000;
     const segments=hosts.map(w=>[Math.max(a,w.start_px[axis]),Math.min(b,w.end_px[axis])]).sort((x,y)=>x[0]-y[0]);
     const spans=[];for(const [start,end] of segments){const last=spans.at(-1);if(last&&start<=last[1]+.01)last[1]=Math.max(last[1],end);else spans.push([start,end]);}
     if(spans.length>1||spans[0][0]>a+.1||spans[0][1]<b-.1)warnings.push(`${o.id} 宽度超出连续墙段，门窗按可用墙段裁切。`);
-    openings.push({id:o.id,kind:o.kind,axis,a,b,bottom,top,hosts:hosts.map(w=>w.id),spans,center:host.start_px[1-axis],thickness:host.thickness_px});
+    openings.push({id:o.id,kind:o.kind,axis,a,b,bottom,top,customWidth:Boolean(o.dimensions_mm?.width_mm),hosts:hosts.map(w=>w.id),spans,center:host.start_px[1-axis],thickness:host.thickness_px});
   }
   for(const wall of walls){
     const axis=wall.orientation==='horizontal'?0:1,a=wall.start_px[axis],b=wall.end_px[axis],center=wall.start_px[1-axis],half=wall.thickness_px/2;
@@ -70,7 +70,7 @@ export function buildModel(doc) {
         // Fit within the actual clipped frame, with a small reveal on both sides.
         const clearWidth=b-a-2*frame,reveal=Math.min(3/scale,clearWidth/20);
         const available=clearWidth-2*reveal;
-        const leaf=s.width_mode==='preset'?Math.min(s.door_width_mm/scale,available):available;
+        const leaf=s.width_mode==='preset'&&!o.customWidth?Math.min(s.door_width_mm/scale,available):available;
         const leafStart=(a+b-leaf)/2;
         add(leafStart,leafStart+leaf,o.bottom+.015,o.top-frameH,35/scale,'#d1ae8b','door');
       }

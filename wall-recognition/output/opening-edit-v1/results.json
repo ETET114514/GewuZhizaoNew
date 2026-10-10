@@ -1,0 +1,21 @@
+{
+  "baseline_project": "20261010-193830-b51a06",
+  "test_project": "20261010-193831-d7af35",
+  "page_errors": [],
+  "checks": [
+    "unscaled guard",
+    "cm preview/apply",
+    "wall constrained drag",
+    "one edit per gesture",
+    "undo",
+    "click without move",
+    "Esc cancel",
+    "floor glass",
+    "3D sync",
+    "save/reopen",
+    "door grounding",
+    "oversize rejection",
+    "network failure",
+    "mobile cm edit and layout"
+  ]
+}

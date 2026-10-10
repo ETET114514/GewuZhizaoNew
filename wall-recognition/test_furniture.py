@@ -47,13 +47,14 @@ class FurnitureGeometryTests(unittest.TestCase):
         self.assertEqual(doc["furniture"][0]["review_status"], "confirmed")
         self.assertEqual(doc["walls"], self.document["walls"])
 
-    def test_wet_area_stays_pending_until_bath_or_shower_confirmed(self):
+    def test_wet_area_is_editable_without_type_confirmation(self):
         doc, _ = apply_furniture_edit(self.document, {"action":"add", "kind":"wet_area", "bbox_px":[20,30,90,95]})
-        self.assertEqual(doc['furniture'][0]['review_status'],'unreviewed')
+        self.assertEqual(doc['furniture'][0]['review_status'],'confirmed')
+        self.assertEqual(doc['furniture'][0]['label'],'洗浴区（淋浴）')
         for kind in ('bathtub','shower','wet_area'):
             doc, _ = apply_furniture_edit(doc, {"action":"update", "furniture_id":"F001", "kind":kind, "rotation_deg":90})
             self.assertIsNone(doc['furniture'][0]['rotation_deg'])
-            self.assertEqual(doc['furniture'][0]['review_status'],'unreviewed' if kind=='wet_area' else 'confirmed')
+            self.assertEqual(doc['furniture'][0]['review_status'],'confirmed')
 
     def test_counter_keeps_embedded_sink_or_hob_but_deduplicates_itself(self):
         counter={'kind':'kitchen_cabinet','bbox_px':[20,20,140,55]}

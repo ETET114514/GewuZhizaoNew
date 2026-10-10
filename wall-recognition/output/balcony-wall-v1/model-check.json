@@ -1,0 +1,15 @@
+{
+  "savedProject": "projects/20261010-182626-464b5f/walls.json",
+  "windows": [
+    "O012",
+    "O013",
+    "O014"
+  ],
+  "glassMeshes": [
+    1,
+    1,
+    1
+  ],
+  "testScaleMmPerPx": 10,
+  "modelWarnings": []
+}

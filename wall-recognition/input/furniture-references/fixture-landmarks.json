@@ -1,7 +1,7 @@
 {
   "source": "../floorplan.png",
   "role": "template_source_calibration_not_independent",
-  "bathroom_instruction": "User requested both bathing areas remain unclassified as bathtub versus shower.",
+  "bathroom_instruction": "2026-10-10: generic wet areas render directly as default showers; bathtub and shower remain distinct editable types.",
   "targets": [
     {
       "kind": "coffee_table",

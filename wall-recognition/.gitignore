@@ -3,3 +3,4 @@ __pycache__/
 .venv/
 feedback/
 projects/
+output/furniture-placement-v1/testdata/

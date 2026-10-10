@@ -12,7 +12,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
 from recognize_walls import bridge_gaps, runs
 
 
-ALGORITHM = "wall-aware-frames-and-pale-swing-arcs-v4"
+ALGORITHM = "wall-aware-frames-and-pale-swing-arcs-v6"
 LIMITATIONS = [
     "门窗为待校核候选；规则分数不是准确率或概率。",
     "支持水平/垂直多线窗框和平开门开启弧；浅色、遮挡和非直角符号可能漏检。",
@@ -102,38 +102,92 @@ def window_candidates(image, gray, walls, lines, scale):
     background=ImageOps.expand(Image.fromarray(np.uint8(gray>245)*255),border=1,fill=255)
     ImageDraw.floodfill(background,(0,0),128)
     exterior=np.asarray(background)[1:-1,1:-1]==128
+    def frame_support(axis,a,b,center):
+        distances = end_support(axis,a,b,center,walls,scale)
+        src = gray if axis == 0 else gray.T
+        reach, radius = max(2,round(3*scale)), max(10,round(15*scale))
+        for i,end in enumerate((a,b)):
+            point = [end,center] if axis == 0 else [center,end]
+            if distances[i] <= 12*scale or wall_distance(point,walls) > 32*scale:
+                continue
+            # A short filled jamb may disappear from coarse wall extraction
+            # after resampling. Require a wide, thick source-image cap; thin
+            # frame strokes and distant furniture cannot supply this support.
+            patch = src[max(0,round(center)-radius):min(src.shape[0],round(center)+radius+1),
+                        max(0,round(end)-reach):min(src.shape[1],round(end)+reach+1)]
+            if patch.size and (patch < 180).mean() > .7:
+                distances[i] = 0.
+        return distances
     for axis in (0, 1):
         strokes = sorted((s for s in lines if s["axis"] == axis), key=lambda s:s["c"])
         for i, first in enumerate(strokes):
             for second in strokes[i+1:]:
                 spacing = second["c"]-first["c"]
-                if spacing > 14*scale:
+                if spacing > 40*scale:
                     break
                 if spacing < 2*scale:
                     continue
                 a, b = max(first["a"], second["a"]), min(first["b"], second["b"])
-                if b-a < 22*scale or (b-a)/min(first["b"]-first["a"], second["b"]-second["a"]) < .7:
+                overlap = (b-a)/min(first["b"]-first["a"], second["b"]-second["a"])
+                if b-a < 16*scale or overlap < (.6 if b-a < 40*scale else .7):
                     continue
                 center = (first["c"]+second["c"])/2
                 geo = geometry(axis, a, b, center, spacing+2*scale, image.size)
                 distances = end_support(axis,a,b,center,walls,scale)
-                if min(distances) > 12*scale or alongside_wall(axis,a,b,center,walls,scale):
+                outside = exterior_side(axis,a,b,center,exterior,scale)
+                wide = spacing > 14*scale
+                if wide:
+                    # Wide glazing symbols can contain an inner sash pair plus
+                    # a separate outer edge. Check exterior at that edge, not
+                    # inside the enclosed white glass band. Require both jambs;
+                    # a nearby cabinet or isolated rectangle cannot bootstrap it.
+                    outside = (exterior_side(axis,a,b,first['c'],exterior,scale) or
+                               exterior_side(axis,a,b,second['c'],exterior,scale))
+                    if outside and min(distances) <= 12*scale:
+                        # Resampling may push a thick jamb outside the coarse
+                        # wall thickness range. The opposite detected jamb plus
+                        # a broad filled source cap can still support this end.
+                        source=gray if axis==0 else gray.T
+                        radius=max(2,round(min(15*scale,spacing/2)))
+                        reach=max(2,round(3*scale))
+                        for end,coordinate in enumerate((a,b)):
+                            if distances[end] <= 12*scale:
+                                continue
+                            for shift in range(round(12*scale)+1):
+                                sample=round(coordinate)+(-shift if end==0 else shift)
+                                cap=source[max(0,round(center)-radius):min(source.shape[0],round(center)+radius+1),
+                                           max(0,sample-reach):min(source.shape[1],sample+reach+1)]
+                                if cap.size and np.mean(cap<180) > .7:
+                                    distances[end]=float(shift)
+                                    break
+                    if not outside or b-a < 80*scale or max(distances) > 12*scale:
+                        continue
+                short_return = b-a < 40*scale and min(distances) <= 12*scale
+                alongside = alongside_wall(axis,a,b,center,walls,scale)
+                if not outside and alongside and not short_return:
+                    continue
+                if min(distances) > 12*scale and not outside:
                     continue
                 # A compact closed rectangle with another long side is more
                 # likely a fixture/cabinet outline than a window opening.
-                if enclosed_rectangle(axis,a,b,center,lines,scale) and not exterior_side(axis,a,b,center,exterior,scale):
+                enclosed = enclosed_rectangle(axis,a,b,center,lines,scale)
+                if enclosed and not outside and not short_return:
                     continue
                 # A filled stripe is a wall edge, not a multi-line frame.
                 src = gray if axis == 0 else gray.T
                 interior = src[int(first["c"])+1:int(second["c"]), a:b]
-                if not interior.size or np.mean(interior < 160) > .48:
+                if not interior.size or np.mean(interior < 160) > (.8 if short_return else .48):
                     continue
                 count = sum(a <= s["b"] and b >= s["a"] and
                             min(b,s["b"])-max(a,s["a"]) >= .65*(b-a) and
                             first["c"] <= s["c"] <= second["c"] for s in strokes)
-                proposals.append({**geo, "kind":"window", "label":"窗框候选",
+                if wide and count < 3:
+                    continue
+                proposals.append({**geo, "kind":"window", "label":"外围玻璃窗候选" if wide else "窗框候选",
                                   "score":round(min(.94, .63+.055*min(count,5)-min(max(distances),20*scale)/(300*scale)),3),
-                                  "evidence":{"parallel_line_count":count, "end_wall_distances_px":distances}})
+                                  "evidence":{"parallel_line_count":count, "end_wall_distances_px":distances,
+                                              "exterior_frame":outside, "wide_frame_band":wide, "possible_frame_return":short_return,
+                                              "return_only":not outside and (enclosed or alongside or b-a < 22*scale or overlap < .7)}})
     # A long pair of frame strokes can continue along a white wall. Split at
     # recovered wall bands before it is ever used to subtract solid geometry.
     trimmed = []
@@ -142,10 +196,26 @@ def window_candidates(image, gray, walls, lines, scale):
         center = proposal["start_px"][1-axis]
         spans = [(proposal["start_px"][axis],proposal["end_px"][axis])]
         for wall in walls:
-            if (wall.get("source") != "automatic_paired_outline"
-                    or wall["orientation"] != proposal["orientation"]
+            if wall['orientation'] != proposal['orientation']:
+                box = wall['bbox_px']
+                if box[1-axis] <= center <= box[3-axis]:
+                    lo,hi = box[axis],box[axis+2]
+                    capped = []
+                    for a,b in spans:
+                        if min(b,hi) > max(a,lo):
+                            if lo-a <= 14*scale:
+                                a = max(a,hi)
+                            elif b-hi <= 14*scale:
+                                b = min(b,lo)
+                        if b > a:
+                            capped.append((a,b))
+                    spans = capped
+                continue
+            if (proposal['evidence']['return_only'] and wall['length_px'] < 60*scale):
+                continue
+            if (wall["orientation"] != proposal["orientation"]
                     or abs(wall["start_px"][1-axis]-center) >
-                    min(wall["thickness_px"],proposal["thickness_px"])/2+1):
+                    (wall["thickness_px"]+proposal["thickness_px"])/2):
                 continue
             lo,hi = wall["start_px"][axis],wall["end_px"][axis]
             next_spans = []
@@ -157,27 +227,52 @@ def window_candidates(image, gray, walls, lines, scale):
                     if hi < b: next_spans.append((hi,b))
             spans = next_spans
         for a,b in spans:
-            if b-a < 22*scale:
+            if b-a < (16 if proposal["evidence"]["exterior_frame"] or proposal["evidence"]["possible_frame_return"] else 22)*scale:
                 continue
-            evidence = dict(proposal["evidence"],end_wall_distances_px=end_support(axis,a,b,center,walls,scale))
+            distances = (proposal['evidence']['end_wall_distances_px'] if proposal['evidence'].get('wide_frame_band')
+                         else frame_support(axis,a,b,center) if proposal['evidence']['exterior_frame']
+                         else end_support(axis,a,b,center,walls,scale))
+            evidence = dict(proposal["evidence"],end_wall_distances_px=distances)
             trimmed.append({**proposal,**geometry(axis,a,b,center,proposal["thickness_px"],image.size),"evidence":evidence})
     proposals = trimmed
     accepted=[]
     for p in proposals:
         distances=p["evidence"]["end_wall_distances_px"]
-        if max(distances)<=12*scale:
+        if max(distances)<=12*scale and p['length_px'] >= 22*scale and not p["evidence"]["return_only"]:
             accepted.append(p)
-            continue
-        axis=0 if p["orientation"]=="horizontal" else 1
-        if not exterior_side(axis,p["start_px"][axis],p["end_px"][axis],p["start_px"][1-axis],exterior,scale):
-            continue
-        free=p["end_px"] if distances[1]>distances[0] else p["start_px"]
-        # L-shaped glazed boundaries can terminate on another frame instead of
-        # a solid wall. Both arms must independently reach a structural jamb.
-        if any(q["orientation"]!=p["orientation"] and min(
-            np.linalg.norm(np.asarray(free)-q[k]) for k in ("start_px","end_px"))<9*scale
-            for q in proposals):
-            p["evidence"]["frame_corner_support"]=True
+    frames = [p for p in proposals if p["evidence"]["exterior_frame"] or p["evidence"]["possible_frame_return"]]
+    links = {}
+    for i,p in enumerate(frames):
+        links[i] = [[j for j,q in enumerate(frames) if q["orientation"] != p["orientation"]
+                     and min(np.linalg.norm(np.asarray(p[k])-q[e]) for e in ("start_px","end_px")) < 9*scale]
+                    for k in ("start_px","end_px")]
+    eligible = {i for i,p in enumerate(frames) if
+                (not p['evidence']['return_only'] or max(p['evidence']['end_wall_distances_px']) > 12*scale)
+                and (p['length_px'] >= 22*scale or any(frames[j]['length_px'] >= 80*scale
+                     for side in links[i] for j in side))
+                and (p["evidence"]["exterior_frame"] or
+                any(frames[j]["evidence"]["exterior_frame"] for side in links[i] for j in side))
+                and all(d <= 12*scale or links[i][end]
+                for end,d in enumerate(p["evidence"]["end_wall_distances_px"]))}
+    anchored = {i for i in eligible if min(frames[i]["evidence"]["end_wall_distances_px"]) <= 12*scale}
+    while True:
+        more = {i for i in eligible-anchored if any(j in anchored for side in links[i] for j in side)}
+        if not more:
+            break
+        anchored |= more
+    # Require support at both ends from this anchored network. A free texture
+    # stroke or an isolated furniture rectangle cannot bootstrap a glass edge.
+    while True:
+        valid = {i for i in anchored if all(d <= 12*scale or any(j in anchored for j in links[i][end])
+                 for end,d in enumerate(frames[i]["evidence"]["end_wall_distances_px"]))}
+        if valid == anchored:
+            break
+        anchored = valid
+    for i in sorted(anchored):
+        p = frames[i]
+        if p not in accepted:
+            p["evidence"]["frame_corner_support"] = True
+            p["label"] = "外围玻璃窗候选"
             accepted.append(p)
     return accepted
 
@@ -208,11 +303,31 @@ def enclosed_rectangle(axis,a,b,c,lines,scale):
 
 def suppress(proposals, scale):
     result = []
-    for candidate in sorted(proposals, key=lambda p:(p["score"],p["length_px"]), reverse=True):
+    # A valid wide exterior assembly owns its enclosed inner sash pair. Keep a
+    # separately detected exterior frame ahead of wide proposals, however, so a
+    # nearby interior line never creates a duplicate window beside that frame.
+    wide_frames=[p for p in proposals if p['kind']=='window' and p['evidence'].get('wide_frame_band')]
+    def inner_sash(p):
+        if p['kind']!='window' or p['evidence'].get('exterior_frame') or p['evidence'].get('wide_frame_band'):
+            return False
+        axis=0 if p['orientation']=='horizontal' else 1
+        return any(q['orientation']==p['orientation'] and
+                   q['bbox_px'][1-axis] <= p['bbox_px'][1-axis] and q['bbox_px'][3-axis] >= p['bbox_px'][3-axis] and
+                   min(q['end_px'][axis],p['end_px'][axis])-max(q['start_px'][axis],p['start_px'][axis]) > .7*min(q['length_px'],p['length_px'])
+                   for q in wide_frames)
+    proposals=[p for p in proposals if not inner_sash(p)]
+    def priority(p):
+        anchored = max(p["evidence"].get("end_wall_distances_px", [float('inf')])) <= 12*scale
+        corner = p["kind"] == "window" and p["evidence"].get("frame_corner_support")
+        wide = p['evidence'].get('wide_frame_band', False)
+        # Preserve strongly supported jamb-to-jamb detections. For new corner
+        # frames prefer the complete span over a denser fragment of that span.
+        return anchored, not wide, p["length_px"] if corner and not anchored else 0, -p['thickness_px'] if wide else 0, p["score"], p["length_px"]
+    for candidate in sorted(proposals, key=priority, reverse=True):
         axis = 0 if candidate["orientation"] == "horizontal" else 1
         a,b = candidate["start_px"][axis],candidate["end_px"][axis]
         if any(other["kind"] == candidate["kind"] and other["orientation"] == candidate["orientation"] and
-               abs(other["start_px"][1-axis]-candidate["start_px"][1-axis]) < 16*scale and
+               abs(other["start_px"][1-axis]-candidate["start_px"][1-axis]) < max(16*scale,(other['thickness_px']+candidate['thickness_px'])/2) and
                max(0,min(b,other["end_px"][axis])-max(a,other["start_px"][axis])) >
                .5*min(b-a,other["length_px"]) for other in result):
             continue

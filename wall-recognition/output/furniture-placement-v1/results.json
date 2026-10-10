@@ -1,0 +1,21 @@
+{
+  "dragFromMaterials": true,
+  "clickPlacement": true,
+  "cmPreview": true,
+  "invalidBoundsRejected": true,
+  "oneEditPerDrag": true,
+  "noopClick": true,
+  "escapeArmedPlacement": true,
+  "dropOutsideNoInsert": true,
+  "undo": true,
+  "saveReopen": true,
+  "sync3D": true,
+  "mobilePlacementAndMovement": true,
+  "mobileOverflow": false,
+  "networkFailureRollback": true,
+  "jsErrorsBeforeFailure": [],
+  "nodeTests": 20,
+  "pythonTests": 10,
+  "existing3DMoveRegression": true,
+  "existingNudgeRegression": true
+}

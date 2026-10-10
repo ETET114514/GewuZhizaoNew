@@ -95,7 +95,8 @@ class RefinementTests(unittest.TestCase):
         payload=(Path(__file__).parent/"input/floorplan.png").read_bytes()
         result=recognize_upload(payload,"sample.png")["document"]
         self.assertEqual(len(result["coarse_walls"]),26)
-        self.assertEqual(len(result["openings"]),10)
+        # Includes three balcony frames, the entry glazing and recovered door.
+        self.assertEqual(len(result["openings"]),15)
         self.assertGreater(result["refinement_summary"]["connection_count"],0)
         for o in result["openings"]:
             axis=0 if o["orientation"]=="horizontal" else 1

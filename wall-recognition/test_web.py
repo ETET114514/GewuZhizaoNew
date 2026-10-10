@@ -45,8 +45,11 @@ class WebWorkflowTests(unittest.TestCase):
             return error.code, json.load(error)
 
     def test_real_recognition_matches_existing_program(self):
-        original = json.loads((ROOT / "output/walls.json").read_text(encoding="utf-8"))
-        self.assertEqual(self.detected["document"]["coarse_walls"], original["walls"])
+        from PIL import Image
+        from recognize_walls import detect_walls, ALGORITHM
+        original = detect_walls(Image.open(ROOT / "input/floorplan.png").convert('RGB'))
+        self.assertEqual(self.detected["document"]["coarse_walls"], original)
+        self.assertEqual(self.detected['document']['algorithm'], ALGORITHM)
         with urlopen(self.origin + self.detected["image_url"]) as response:
             self.assertEqual(hashlib.sha256(response.read()).hexdigest(), self.detected["document"]["image"]["sha256"])
 

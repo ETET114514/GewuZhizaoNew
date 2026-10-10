@@ -1,0 +1,13 @@
+{
+  "move": true,
+  "cancel": true,
+  "oneEditPerDrag": true,
+  "noOp": true,
+  "rotatedBounds": true,
+  "undo": true,
+  "serverFailureRollback": true,
+  "saveReopen": true,
+  "mobileOverflow": false,
+  "errors": [],
+  "savedProject": "20261010-171355-440fb9"
+}

@@ -1,0 +1,17 @@
+{
+  "instantVisualPreview": true,
+  "singleStep": true,
+  "holdRepeat": true,
+  "oneEditPerHold": true,
+  "cancel": true,
+  "keyboard": true,
+  "customStep": true,
+  "invalidStep": true,
+  "cmConversion": true,
+  "preciseLengths": true,
+  "undo": true,
+  "appearancePreserved": true,
+  "saveReopen": true,
+  "mobileOverflow": false,
+  "errors": []
+}

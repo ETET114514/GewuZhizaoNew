@@ -13,7 +13,53 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
-ALGORITHM = "filled-outlined-and-multicolor-walls-v4"
+ALGORITHM = "filled-outlined-and-multicolor-walls-v5"
+
+
+def extend_filled_wall_ends(image, walls, threshold):
+    """Follow an existing band through color changes, without bridging blank gaps.
+
+    Furniture textures also contain dark pixels. Require the observed wall's
+    cross-section profile and a contrasting edge at every new pixel, and cap
+    the search by the host thickness. This does not invent a connecting wall.
+    """
+    gray = np.asarray(image.convert("RGB"), dtype=float) @ np.array([.299, .587, .114])
+    for wall in walls:
+        if wall["source"] not in ("automatic", "automatic_filled_band"):
+            continue
+        axis = 0 if wall["orientation"] == "horizontal" else 1
+        src = gray if axis == 0 else gray.T
+        box = wall["bbox_px"]
+        lo, hi = int(box[1-axis]), int(box[3-axis])
+        a, b = int(box[axis]), int(box[axis+2])
+        if hi-lo < 7 or b-a < 3*(hi-lo):
+            continue
+        original = [a, b]
+        for direction in (-1, 1):
+            seed = src[lo:hi, a:a+5] if direction < 0 else src[lo:hi, b-5:b]
+            profile = np.median(seed, axis=1)
+            position = a-1 if direction < 0 else b
+            limit = min(round(8*(hi-lo)), round(.15*src.shape[1]))
+            for _ in range(limit):
+                if not 0 <= position < src.shape[1]:
+                    break
+                column = src[lo:hi, position]
+                sides = [src[max(0,lo-4):lo,position], src[hi:min(src.shape[0],hi+4),position]]
+                edge_contrast = max((float(s.mean()-column.mean()) for s in sides if s.size), default=0)
+                if ((column <= threshold).mean() < .6
+                        or np.median(np.abs(column-profile)) > 35 or edge_contrast < 18):
+                    break
+                if direction < 0:
+                    a = position
+                else:
+                    b = position+1
+                position += direction
+        if original == [a,b]:
+            continue
+        wall["start_px"][axis], wall["end_px"][axis] = float(a), float(b)
+        wall["bbox_px"][axis], wall["bbox_px"][axis+2] = a, b
+        wall["length_px"] = b-a
+        wall.setdefault("evidence", {})["color_continuation_px"] = [original[0]-a,b-original[1]]
 
 
 def wall_pixel_mask(rgb, threshold=180, max_color_spread=10, wall_colors=(), color_tolerance=8):
@@ -158,6 +204,7 @@ def detect_walls(image: Image.Image, *, threshold: int = 180,
             # often title glyphs, not members of the architectural network.
             candidates = [w for w in candidates if w["length_px"] >= 80*min(image.size)/745 or near_network(w)]
         candidates += outlined
+    extend_filled_wall_ends(image, candidates, threshold)
     candidates.sort(key=lambda wall: (wall["bbox_px"][1], wall["bbox_px"][0]))
     for number, wall in enumerate(candidates, 1):
         wall["id"] = f"W{number:03d}"

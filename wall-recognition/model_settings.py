@@ -38,6 +38,10 @@ def apply_model_settings(document, request):
         raise ValueError('窗台高度与窗洞高度之和不能大于墙高。')
     if settings['door_width_mm'] > settings['opening_width_mm']:
         raise ValueError('预设门扇宽度不能大于门洞宽度。')
+    from opening_editing import validate_opening_settings
+    for opening in document.get('openings', []):
+        if opening.get('dimensions_mm') and opening.get('kind') in ('door', 'window') and opening.get('review_status') != 'rejected':
+            validate_opening_settings(opening, settings)
     result['model_settings'] = settings
     if 'calibration' in request and 'wall_calibration' in request:
         raise ValueError('一次只能选择一种标定方式。')
@@ -71,5 +75,13 @@ def apply_model_settings(document, request):
         scale = number(length/distance, .01, 10000, '比例（mm/px）')
         result['calibration'] = dict(points_px=points, length_mm=length, image_sha256=document['image']['sha256'])
         result['scale_mm_per_px'] = scale
+    if result.get('scale_mm_per_px') != document.get('scale_mm_per_px'):
+        # Source-image aperture geometry stays anchored when recalibrating. Its
+        # displayed physical width changes with the new reference scale too.
+        for opening in result.get('openings', []):
+            if opening.get('dimensions_mm') and opening.get('kind') in ('door', 'window'):
+                axis = 0 if opening['orientation'] == 'horizontal' else 1
+                opening['dimensions_mm']['width_mm'] = abs(opening['end_px'][axis]-opening['start_px'][axis])*result['scale_mm_per_px']
+                validate_opening_settings(opening, settings)
     summary = '已按墙厚估算比例' if 'wall_calibration' in request else '已更新比例标定' if 'calibration' in request else '已更新三维尺寸与外观'
     return result, dict(id='MODEL', type='model_settings', summary=summary)

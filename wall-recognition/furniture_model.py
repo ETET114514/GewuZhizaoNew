@@ -10,7 +10,7 @@ def number(value, low, high, label):
 
 
 def model_options(options):
-    if not isinstance(options, dict) or set(options) - {'height_mm', 'elevation_mm', 'rotation_deg', 'color'}:
+    if not isinstance(options, dict) or set(options) - {'height_mm', 'elevation_mm', 'rotation_deg', 'fit_rotation_deg', 'color'}:
         raise ValueError('家具三维参数格式不正确。')
     result = {}
     for key, low, high, label in [('height_mm', 20, 10000, '家具高度'),
@@ -18,6 +18,11 @@ def model_options(options):
                                    ('rotation_deg', 0, 360, '整体旋转角度')]:
         if key in options:
             result[key] = number(options[key], low, high, label)
+    if 'fit_rotation_deg' in options:
+        fit = number(options['fit_rotation_deg'], 0, 270, '框内旋转角度')
+        if fit not in (0, 90, 180, 270):
+            raise ValueError('框内旋转目前支持 0、90、180、270 度。')
+        result['fit_rotation_deg'] = fit
     if 'color' in options:
         if not isinstance(options['color'], str) or not re.fullmatch(r'#[0-9a-fA-F]{6}', options['color']):
             raise ValueError('请选择有效的家具颜色。')

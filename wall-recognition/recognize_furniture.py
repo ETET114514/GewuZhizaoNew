@@ -17,20 +17,20 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 ROOT = Path(__file__).resolve().parent
-ALGORITHM = "furniture-symbol-match-v6"
+ALGORITHM = "furniture-symbol-match-v7"
 LABELS = {"bed": "床", "sofa": "沙发", "cabinet": "柜子", "table": "桌子", "chair": "椅子", "unclassified": "待定家具",
           "coffee_table": "茶几", "dining_table": "餐桌", "shoe_cabinet": "鞋柜", "tv_console": "电视柜",
           "kitchen_cabinet": "厨房柜台", "kitchen_sink": "水槽", "cooktop": "灶台", "refrigerator": "冰箱",
-          "vanity": "浴室柜", "toilet": "马桶", "wet_area": "洗浴区待确认",
+          "vanity": "浴室柜", "toilet": "马桶", "wet_area": "洗浴区（淋浴）",
           "bathtub": "浴缸", "shower": "淋浴间", "unclassified_area":"区域待确认", "water_feature":"水景 / 水池"}
 DIRECTIONAL_KINDS = {"bed", "sofa"}
-PENDING_KINDS = {"unclassified", "wet_area", "unclassified_area"}
+PENDING_KINDS = {"unclassified", "unclassified_area"}
 COLORS = {"bed": "#a12bba", "sofa": "#19854c", "cabinet": "#b76a12",
           "unclassified_area":"#737080", "water_feature":"#168187",
           "shoe_cabinet": "#b76a12", "tv_console": "#b76a12", "kitchen_cabinet": "#b76a12",
           "coffee_table": "#3264b5", "dining_table": "#3264b5", "wet_area": "#737080"}
 LIMITATIONS = ["家具和设施按收录图例匹配；画法不同、遮挡和低清图片可能漏检或误检。",
-              "洗浴区不自动判断浴缸或淋浴间，需人工确认；鞋柜等用途来自参考图标注，不推断房间功能。",
+              "未分型洗浴区默认生成淋浴，可切换浴缸；此默认值不是自动辨认浴缸与淋浴。鞋柜等用途来自参考图标注。",
               "家具匹配分数不是置信概率；朝向为图例推测，需校核。",
               "家具尺寸为像素，不推断单人/双人、真实尺寸或家具型号。"]
 
@@ -271,7 +271,7 @@ def add_furniture(document, image):
                     furniture_model_status=status,
                     furniture_basis="source_image; independent of wall and opening edits")
     document.setdefault("limitations", []).extend(LIMITATIONS)
-    document['limitations'].append('线稿模型输出家具候选；卫浴补检结合两种图像处理、内部轮廓和邻近马桶校验，仍可能漏检或误检。洗浴区类型待人工确认。')
+    document['limitations'].append('线稿模型输出家具候选；卫浴补检结合两种图像处理、内部轮廓和邻近马桶校验，仍可能漏检或误检。未分型洗浴区直接生成默认淋浴模型。')
     if status != 'ready':
         document['limitations'].append('跨图家具模型未加载：请安装 ONNX Runtime 并运行模型安装脚本；当前仅使用图例匹配。')
     return document
@@ -314,6 +314,12 @@ def apply_furniture_edit(document, request):
             raise ValueError("朝向需为未知或 0、90、180、270 度。")
         if kind not in DIRECTIONAL_KINDS:
             rotation = None
+        # Switching between a tub and enclosure should not retain the other
+        # fixture's edited height. Explicit height in this request wins below.
+        bathing={'wet_area','shower','bathtub'}
+        if (kind in bathing and item['kind'] in bathing and
+                (kind=='bathtub') != (item['kind']=='bathtub')):
+            item.setdefault('model_3d',{})['height_mm']=550 if kind=='bathtub' else 2100
         if 'model_3d' in request:
             if request['model_3d'] is None:
                 item.pop('model_3d', None)

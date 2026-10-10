@@ -133,7 +133,7 @@ def bathroom_candidates(image, raw, alternate):
     for r in alternate:
         if r['label']=='bath_tub' and r['score']>=.55 and near_toilet(r):
             if any(area>.5 and vertices==4 for area,vertices in interior_shapes(image,r['bbox_px'])):
-                found.append((r,'wet_area','model_and_enclosed_zone_near_toilet_type_unconfirmed'))
+                found.append((r,'wet_area','model_and_enclosed_zone_near_toilet_default_shower'))
     return found
 
 

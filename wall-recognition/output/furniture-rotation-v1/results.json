@@ -1,0 +1,19 @@
+{
+  "all17ClassesGeometry": true,
+  "rightAndLeft90": true,
+  "oneEditPerClick": true,
+  "arbitraryAnglePreview": true,
+  "cancelPreview": true,
+  "applyKeepsSelection": true,
+  "undo": true,
+  "boundsRejectedWithoutMutation": true,
+  "saveReopen": true,
+  "sync3D": true,
+  "mobileButton": true,
+  "mobileOverflow": false,
+  "networkFailureRollback": true,
+  "nodeTests": 23,
+  "pythonTests": 10,
+  "existing3DDragRegression": true,
+  "jsErrorsBeforeFailure": []
+}

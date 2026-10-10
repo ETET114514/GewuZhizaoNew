@@ -62,6 +62,10 @@ def validate_document(doc):
                     or item['id'] in ids or not numbers(item.get('bbox_px'), 4)):
                 raise ValueError(f'项目的 {key} 编号或坐标不正确。')
             ids.add(item['id'])
+            if key == 'openings' and 'dimensions_mm' in item and item.get('kind') in ('door', 'window'):
+                from opening_editing import validate_opening_settings
+                from model_settings import DEFAULTS
+                validate_opening_settings(item, {**DEFAULTS, **doc.get('model_settings', {})})
             if key == 'furniture' and 'model_3d' in item:
                 from furniture_model import model_options, validate_footprint
                 model_options(item['model_3d'])
