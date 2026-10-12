@@ -22,7 +22,7 @@
     const doc=state.run?.document,ready=Boolean(doc);
     $('calibrate').disabled=!ready||Boolean(state.busy);
     $('open-model').disabled=!ready||Boolean(state.busy);
-    $('calibration-status').textContent=doc?.scale_mm_per_px?`${doc.calibration?.method==='wall_thickness'?'墙厚估算':'长度标定'} · ${doc.scale_mm_per_px.toFixed(3)} mm/px · 可重新标定`:'识别后，拉出一段已知长度并输入实际尺寸。';
+    $('calibration-status').textContent=doc?.scale_mm_per_px?`${doc.calibration?.method==='door_width'?`门洞估算 · ${doc.calibration.opening_id} / ${doc.calibration.width_mm/10} cm`:doc.calibration?.method==='wall_thickness'?'墙厚估算':'长度标定'} · ${doc.scale_mm_per_px.toFixed(3)} mm/px · 可重新标定`:'可选普通门按 80 cm 估算比例，或拉出已知长度标定。';
     const scaleChoice=$('scale-wall').value;
     $('scale-wall').replaceChildren();for(const w of doc?.walls||[])if(w.review_status!=='rejected'&&(w.solid_parts??[w]).length)$('scale-wall').append(new Option(`${w.id} · 图上厚 ${w.thickness_px.toFixed(1)} px`,w.id));
     if([...$('scale-wall').options].some(o=>o.value===scaleChoice))$('scale-wall').value=scaleChoice;
@@ -38,6 +38,7 @@
     viewer?.setInteractionEnabled(!state.busy&&!pending());
     $('mf-step').disabled=Boolean(state.busy)||pending()||!item();
     for(const id of ['mf-fit-left','mf-fit-right','mf-turn-left','mf-turn-right'])$(id).disabled=Boolean(state.busy)||pending()||!item();
+    $('mf-copy').disabled=Boolean(state.busy)||pending()||!furnitureMoveModule?.canCopyFurniture(item());
     for(const button of document.querySelectorAll('[data-nudge]'))button.disabled=Boolean(state.busy)||modelDirty||furnitureDirty||!item()||doc?.model_settings?.show_furniture===false||(furnitureMoving&&!nudge);
     if(doc!==lastDocument){lastDocument=doc;
       if(dialog.open&&doc?.scale_mm_per_px&&viewer){fillSettings();fillFurniture();renderModel(false);}
@@ -213,6 +214,12 @@
   $('mf-fit-right').addEventListener('click',()=>turn(90,true));
   $('mf-turn-left').addEventListener('click',()=>turn(-90));
   $('mf-turn-right').addEventListener('click',()=>turn(90));
+  $('mf-copy').addEventListener('click',()=>{
+    if(state.busy||pending()||!item())return;
+    const source=item();
+    dialog.close();
+    if(furniture2dUI.armCopy(source))toast('已切到二维 · 点击图上放置复制家具，Esc 取消');
+  });
   furnitureForm.addEventListener('submit',event=>{event.preventDefault();(async()=>{
     if(state.busy||!item())return;
     try{
@@ -224,7 +231,8 @@
   async function openModel(){
     if(state.busy||!state.run)return;
     if(state.formDirty){toast('请先应用或取消当前修改。');return;}
-    if(!state.run.document.scale_mm_per_px){toast('先点击“拉线标定”，输入一段已知实际长度。');return;}
+    if(!state.run.document.scale_mm_per_px){toast('先选普通门按 80 cm 估算比例，或点击“拉线标定”。');return;}
+    if(state.mode==='furniture-copy')setMode('select');
     try{
       const geometry=await import('/model-geometry.mjs');defaults=geometry.DEFAULTS;
       const module=await import('/model-viewer.js');

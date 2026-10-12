@@ -50,6 +50,27 @@ class OpeningEditTests(unittest.TestCase):
         self.assertEqual(o['start_px'], [400,200]);self.assertEqual(o['end_px'], [480,200])
         self.assertEqual(o['dimensions_mm'], dict(width_mm=800,height_mm=2800,sill_height_mm=0))
 
+    def test_ordinary_door_preset_sets_aperture_not_leaf_and_preserves_other_settings(self):
+        for vertical in (False, True):
+            doc, _ = fixture(vertical)
+            door = doc['openings'][0];door['kind'] = 'door'
+            door['dimensions_mm'] = dict(height_mm=2000)
+            door['operation'] = dict(type='hinged',hinge='end',side='positive',angle_deg=90,
+                                     pivot_axis='vertical',pivot_ratio=1,direction_mode='manual')
+            doc['room_partition'] = dict(regions=[dict(id='R001',name='卧室',floor=dict(material='wood'))])
+            before = deepcopy(doc)
+            result, _ = apply_opening_edit(doc, dict(opening_id='O001',preset='ordinary_door_800'))
+            edited = result['openings'][0];axis = 1 if vertical else 0
+            self.assertEqual((edited['end_px'][axis]-edited['start_px'][axis])*doc['scale_mm_per_px'],800)
+            self.assertEqual(edited['dimensions_mm'],dict(width_mm=800,height_mm=2000))
+            self.assertEqual(edited['operation'],door['operation'])
+            self.assertEqual(result['room_partition']['regions'],doc['room_partition']['regions'])
+            self.assertEqual(doc,before)
+        doc, _ = fixture()
+        with self.assertRaises(ValueError):apply_opening_edit(doc,dict(opening_id='O001',preset='ordinary_door_800'))
+        doc['openings'][0]['kind']='door';doc['scale_mm_per_px']=None
+        with self.assertRaisesRegex(ValueError,'标定'):apply_opening_edit(doc,dict(opening_id='O001',preset='ordinary_door_800'))
+
     def test_invalid_edits_do_not_mutate_and_cannot_cross_gap_or_overlap(self):
         doc, _ = fixture();before=deepcopy(doc)
         invalid=[dict(dimensions_mm=dict(width_mm=5000)),dict(dimensions_mm=dict(height_mm=2500)),

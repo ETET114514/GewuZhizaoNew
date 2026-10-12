@@ -121,7 +121,9 @@ export function createViewer(container, onFurnitureSelect=()=>{}, onFurnitureMov
       else if(b.shape==='cylinder')geometry=new THREE.CylinderGeometry(.5,.5,1,24);
       else if(b.shape==='ring'){geometry=new THREE.TorusGeometry(.41,.09,8,32);geometry.rotateX(Math.PI/2);geometry.scale(1,1/.18,1);}
       else geometry=new THREE.BoxGeometry(1,1,1);
-      const mesh=new THREE.Mesh(geometry,material);mesh.scale.set(...b.size);mesh.position.set(...b.center);mesh.rotation.y=b.rotation_y||0;mesh.userData={id:b.id,kind:b.kind};group.add(mesh);
+      const mesh=new THREE.Mesh(geometry,material);mesh.scale.set(...b.size);mesh.position.set(...b.center);
+      if(b.quaternion)mesh.quaternion.fromArray(b.quaternion);else mesh.rotation.y=b.rotation_y||0;
+      mesh.userData={id:b.id,kind:b.kind};group.add(mesh);
     }
     const floor=new THREE.Mesh(new THREE.BoxGeometry(model.width,.08,model.depth),new THREE.MeshStandardMaterial({color:model.settings.floor_color,roughness:1}));floor.position.y=-.045;group.add(floor);
     if(model.settings.show_room_floors!==false)for(const region of buildFloors(doc)){

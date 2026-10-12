@@ -280,10 +280,40 @@ def add_furniture(document, image):
 def apply_furniture_edit(document, request):
     """Copy-on-write keeps invalid edits atomic and shares the existing undo stack."""
     action = request.get("action")
-    if action not in {"add", "update", "reject"}:
-        raise ValueError("请选择补家具、修改或排除。")
+    if action not in {"add", "copy", "update", "reject"}:
+        raise ValueError("请选择补家具、复制、修改或排除。")
     result = deepcopy(document)
     items = result.setdefault("furniture", [])
+    if action == "copy":
+        source = next((f for f in items if f['id'] == request.get('furniture_id')), None)
+        if source is None or source.get('review_status') == 'rejected':
+            raise ValueError('请选择未排除的家具再复制。')
+        if source['kind'] not in LABELS or source['kind'] in PENDING_KINDS | {'water_feature'}:
+            raise ValueError('请先确认家具类别；区域不支持家具复制。')
+        center = request.get('center_px')
+        if (not isinstance(center, list) or len(center) != 2 or
+                not all(type(v) in (int, float) and math.isfinite(v) for v in center)):
+            raise ValueError('请指定有效的复制放置位置。')
+        # Only position is editable during copying. All sizes and angles come
+        # from the saved source, never from a client-supplied replacement.
+        x0, y0, x1, y1 = source['bbox_px']
+        w, h = x1-x0, y1-y0
+        box = [center[0]-w/2, center[1]-h/2, center[0]+w/2, center[1]+h/2]
+        image = result['image']
+        if not (0 <= box[0] < box[2] <= image['width_px'] and
+                0 <= box[1] < box[3] <= image['height_px']):
+            raise ValueError('复制的家具需完整放在底图内。')
+        from furniture_model import validate_footprint
+        validate_footprint(image, box, source.get('model_3d', {}))
+        item = deepcopy(source)
+        number = max((int(f['id'][1:]) for f in items), default=0)+1
+        item.update(id=f'F{number:03d}', bbox_px=box, source='manual',
+                    copied_from_id=source['id'], match_score=None, evidence={}, review_status='confirmed')
+        item.pop('prediction', None)
+        geometry(item)
+        items.append(item)
+        return result, dict(id=item['id'], furniture_id=item['id'], source_furniture_id=source['id'],
+                            type='furniture_edit', summary=f"{source['id']} 已复制为 {item['id']} · {item['label']}")
     if action == "add":
         number = max((int(f["id"][1:]) for f in items), default=0)+1
         item = {"id": f"F{number:03d}", "source": "manual", "match_score": None,

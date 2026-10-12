@@ -1,8 +1,22 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {movePlacement,presetPlacement,placementOf,placementBox,placementFromCm,turnFurniture,fitTurnFurniture,validateFurnitureRotation} from './web/furniture-move.mjs';
+import {movePlacement,presetPlacement,placementOf,placementBox,placementFromCm,turnFurniture,fitTurnFurniture,validateFurnitureRotation,canCopyFurniture,copyFurnitureAt} from './web/furniture-move.mjs';
 const doc={scale_mm_per_px:10,image:{width_px:1000,height_px:800}};
 const item={bbox_px:[100,100,300,200],rotation_deg:90};
+test('copy preview preserves original dimensions and both angles, clamps rotated edges without scale',()=>{
+  const source={...item,id:'F001',kind:'sofa',review_status:'confirmed',model_3d:{rotation_deg:35,fit_rotation_deg:90,height_mm:700,elevation_mm:100,color:'#abcdef'}};
+  const before=structuredClone(source),unscaled={...doc,scale_mm_per_px:null};
+  const copy=copyFurnitureAt(unscaled,source,0,0);
+  assert.equal(copy.id,'待复制');assert.deepEqual(copy.model_3d,source.model_3d);assert.equal(copy.rotation_deg,90);
+  assert.equal(copy.bbox_px[2]-copy.bbox_px[0],200);assert.equal(copy.bbox_px[3]-copy.bbox_px[1],100);
+  validateFurnitureRotation(unscaled,copy.bbox_px,35);
+  copy.model_3d.color='#000000';assert.deepEqual(source,before);
+  assert.equal(copyFurnitureAt(doc,source,-1,20),null);
+  assert.equal(copyFurnitureAt(doc,{...source,bbox_px:[0,0,2000,1500]},100,100),null);
+  assert.equal(canCopyFurniture({...source,review_status:'rejected'}),false);
+  for(const kind of ['unclassified','water_feature','unclassified_area'])assert.equal(canCopyFurniture({...source,kind}),false);
+  assert.equal(canCopyFurniture({...source,kind:'wet_area'}),true);
+});
 test('movement clamps both axes and preserves the footprint and source orientation',()=>{
   assert.deepEqual(movePlacement(doc,item,-500,9000),{center_x_mm:1000,center_y_mm:7500,width_mm:2000,depth_mm:1000});
   assert.deepEqual(item,{bbox_px:[100,100,300,200],rotation_deg:90});

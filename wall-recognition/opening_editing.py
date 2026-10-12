@@ -3,7 +3,91 @@ from copy import deepcopy
 import math
 
 from model_settings import DEFAULTS, number
+from window_preset import apply_window_preset
 from refine_walls import GENERATED, aligned, axis_of, is_active_opening, refresh_refinement, segment
+
+
+def validate_operation(values, kind):
+    if not isinstance(values, dict) or set(values) - {'type', 'hinge', 'side', 'angle_deg', 'pivot_axis', 'pivot_ratio', 'direction_mode', 'interior_room_id', 'axis_mode'}:
+        raise ValueError('门窗开启参数格式不正确。')
+    operation = dict(type='hinged', hinge='start', side='negative', angle_deg=0)
+    operation.update(values)
+    if operation['type'] not in ('fixed', 'hinged') or kind == 'door' and operation['type'] != 'hinged':
+        raise ValueError('门支持单扇平开；窗支持固定玻璃或单扇平开。')
+    pivot_axis = operation.get('pivot_axis', 'vertical')
+    if pivot_axis not in ('vertical', 'horizontal') or kind == 'door' and pivot_axis != 'vertical':
+        raise ValueError('门使用左右竖轴；窗支持侧开竖轴或上下横轴。')
+    hinges = ('start','end') if pivot_axis == 'vertical' else ('top','bottom')
+    if operation['hinge'] not in hinges or operation['side'] not in ('negative', 'positive'):
+        raise ValueError('请选择有效的铰链端和开启侧。')
+    if 'pivot_ratio' in operation:
+        number(operation['pivot_ratio'], 0, 1, '转轴位置比例')
+    if 'axis_mode' in operation and (kind != 'window' or operation['axis_mode'] not in ('width', 'manual')):
+        raise ValueError('窗转轴预设需选择按宽度或手动。')
+    if operation.get('direction_mode', 'manual') not in ('auto', 'manual'):
+        raise ValueError('请选择自动内外判断或手动开启侧。')
+    if 'interior_room_id' in operation and (not isinstance(operation['interior_room_id'], str) or len(operation['interior_room_id']) > 100):
+        raise ValueError('归属房间编号不正确。')
+    number(operation['angle_deg'], 0, 90, '开启角度')
+    if operation['type'] == 'fixed' and operation['angle_deg'] != 0:
+        raise ValueError('固定玻璃的开启角度需为 0。')
+    return operation
+
+
+def open_openings(document, request):
+    from opening_direction import direction_rooms, opening_context, resolve_direction
+    rooms = direction_rooms(document)
+    kind = request.get('target_kind')
+    if kind not in ('door', 'window', 'all'):
+        raise ValueError('请选择打开门、窗或所有门窗。')
+    selected = request.get('opening_id')
+    if 'opening_id' in request and (not isinstance(selected, str) or not selected):
+        raise ValueError('请先选择一扇门或窗。')
+    items = document.get('openings', [])
+    if selected is not None:
+        items = [o for o in items if o['id'] == selected]
+        if not items or items[0]['kind'] not in ('door', 'window') or kind != 'all' and items[0]['kind'] != kind:
+            raise ValueError('所选门窗与打开按钮不匹配，请重新选择。')
+    targets = [o for o in items if o['kind'] in ('door', 'window') and
+               (kind == 'all' or o['kind'] == kind) and is_active_opening(o)]
+    updates, fixed, unknown = {}, 0, 0
+    for opening in targets:
+        operation = validate_operation(opening.get('operation', {}), opening['kind'])
+        if opening['kind'] == 'window' and opening.get('operation', {}).get('type') == 'fixed':
+            fixed += 1
+            continue
+        operation.update(type='hinged', angle_deg=90 if opening['kind']=='door' else 45)
+        if opening['kind'] == 'window' and not any(key in operation for key in ('axis_mode', 'pivot_axis', 'pivot_ratio')):
+            operation['axis_mode'] = 'width'
+        operation = apply_window_preset(document, opening, operation)
+        if 'direction_mode' not in operation:
+            operation['direction_mode'] = 'auto'
+        try:
+            operation = resolve_direction(operation, opening_context(document,opening,rooms), opening['kind'])
+        except ValueError:
+            unknown += 1
+            # Uncertain indoor sides must not prevent the leaf from opening.
+        if opening.get('operation') != operation:
+            updates[opening['id']] = operation
+    doors = sum(o['id'] in updates and o['kind'] == 'door' for o in targets)
+    windows = len(updates) - doors
+    message = f'已打开 {doors} 扇门、{windows} 扇窗' if updates else '没有需要打开的门窗'
+    if fixed:
+        message += f'；跳过 {fixed} 扇固定玻璃窗'
+    if unknown:
+        message += f'；{unknown} 扇沿用当前开启侧'
+    report = dict(changed_count=len(updates), opened_door_count=doors, opened_window_count=windows,
+                  skipped_fixed_count=fixed, skipped_unknown_count=0, fallback_direction_count=unknown, message=message)
+    if not updates:
+        return document, None, report
+    result = deepcopy(document)
+    for opening in result['openings']:
+        if opening['id'] in updates:
+            opening['operation'] = updates[opening['id']]
+    record = dict(id=selected or 'OPENINGS', type='opening_batch', opening_ids=list(updates), summary=message)
+    if selected is not None:
+        record['opening_id'] = selected
+    return result, record, report
 
 
 def opening_host(document, opening):
@@ -28,6 +112,8 @@ def opening_host(document, opening):
 
 
 def validate_opening_settings(opening, settings):
+    if 'operation' in opening:
+        validate_operation(opening['operation'], opening['kind'])
     values = opening.get('dimensions_mm', {})
     if not isinstance(values, dict) or set(values) - {'width_mm', 'height_mm', 'sill_height_mm'}:
         raise ValueError('门窗尺寸格式不正确。')
@@ -46,6 +132,21 @@ def apply_opening_edit(document, request):
     opening = next((o for o in result.get('openings', []) if o['id'] == request.get('opening_id')), None)
     if not opening or opening['kind'] not in ('door', 'window') or not is_active_opening(opening):
         raise ValueError('请选择有效的门或窗；待定边界需先确认为门窗。')
+    if 'operation' in request:
+        if request['operation'] is None:
+            opening.pop('operation', None)
+        else:
+            opening['operation'] = apply_window_preset(result, opening, validate_operation(request['operation'], opening['kind']))
+            if opening['operation'].get('direction_mode') == 'auto' and not any(key in request for key in ('dimensions_mm','center_px','preset')):
+                from opening_direction import opening_context, resolve_direction
+                try:
+                    opening['operation'] = resolve_direction(opening['operation'], opening_context(document, opening), opening['kind'])
+                except ValueError:
+                    if opening['operation'].get('interior_room_id'):
+                        raise
+        if not any(key in request for key in ('dimensions_mm', 'center_px', 'preset')):
+            return result, dict(id=opening['id'], opening_id=opening['id'], type='opening_edit',
+                                summary=f"{opening['id']} 已更新开启方式与方向")
     scale = document.get('scale_mm_per_px')
     if type(scale) not in (int, float) or not math.isfinite(scale) or scale <= 0:
         raise ValueError('请先标定比例，再按厘米编辑门窗。')
@@ -57,9 +158,12 @@ def apply_opening_edit(document, request):
         raise ValueError('门窗尺寸格式不正确。')
     dimensions = {**opening.get('dimensions_mm', {}), **values}
     if request.get('preset') is not None:
-        if request['preset'] != 'floor_glass' or opening['kind'] != 'window':
-            raise ValueError('落地玻璃预设仅适用于窗。')
-        dimensions.update(height_mm=settings['wall_height_mm'], sill_height_mm=0)
+        if request['preset'] == 'ordinary_door_800' and opening['kind'] == 'door':
+            dimensions['width_mm'] = 800
+        elif request['preset'] == 'floor_glass' and opening['kind'] == 'window':
+            dimensions.update(height_mm=settings['wall_height_mm'], sill_height_mm=0)
+        else:
+            raise ValueError('普通门 80 cm 预设仅适用于门；落地玻璃预设仅适用于窗。')
     opening['dimensions_mm'] = dimensions
     validate_opening_settings(opening, settings)
     width = dimensions.get('width_mm', (opening['end_px'][axis]-opening['start_px'][axis])*scale)/scale
@@ -92,5 +196,15 @@ def apply_opening_edit(document, request):
         if opening['start_px'] != original['start_px'] or opening['end_px'] != original['end_px']:
             rooms['opening_geometry_changed'] = True
         result['room_partition'] = rooms
+    updated = next(o for o in result['openings'] if o['id'] == opening['id'])
+    if updated.get('operation'):
+        updated['operation'] = apply_window_preset(result, updated, updated['operation'])
+    if updated.get('operation', {}).get('direction_mode') == 'auto':
+        from opening_direction import opening_context, resolve_direction
+        try:
+            updated['operation'] = resolve_direction(updated['operation'], opening_context(result, updated), updated['kind'])
+        except ValueError:
+            if updated['operation'].get('interior_room_id'):
+                raise
     return result, dict(id=opening['id'], opening_id=opening['id'], type='opening_edit',
-                        summary=f"{opening['id']} 已更新尺寸与沿墙位置")
+                        summary=f"{opening['id']} 已更新尺寸与沿墙位置" + ('及开启设置' if 'operation' in request else ''))

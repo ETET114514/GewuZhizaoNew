@@ -8,6 +8,7 @@ const DIRECTIONS = {up:'向上',down:'向下',left:'向左',right:'向右'};
 TYPES.wall_connection='墙体连接修复';
 TYPES.room_partition='区域分割';
 TYPES.room_edit='区域与地面修改';
+TYPES.opening_batch='门窗快捷开启';
 const state = {file:null,blobUrl:null,token:null,run:null,selected:null,issues:[],mode:'select',width:745,height:761,zoom:1,fitted:true,busy:false,dirty:false,formDirty:false,regionCount:0,drag:null};
 let toastTimer;
 let roomMeasurements=null;
@@ -50,23 +51,28 @@ function refresh() {
   renderRoomList();
   $('furniture-tool').disabled=!ready||Boolean(state.busy);$('furniture-apply').disabled=Boolean(state.busy);
   $('furniture-sample').disabled=Boolean(state.busy);
-  for(const field of $('furniture-form').querySelectorAll('input,select,button'))field.disabled=Boolean(state.busy);
-  for(const id of ['furniture-turn-left','furniture-turn-right'])$(id).disabled=Boolean(state.busy)||!state.furnitureDraft?.id;
+  for(const field of $('furniture-form').querySelectorAll('input,select,button'))field.disabled=Boolean(state.busy)||(state.mode==='furniture-copy'&&field.id!=='furniture-cancel');
+  for(const id of ['furniture-turn-left','furniture-turn-right'])$(id).disabled=Boolean(state.busy)||state.mode==='furniture-copy'||!state.furnitureDraft?.id;
+  $('furniture-copy').disabled=Boolean(state.busy)||state.formDirty||state.mode==='furniture-copy'||!state.furnitureGeometry?.canCopyFurniture(state.furnitureDraft);
   if(state.mode==='furniture')$('canvas-hint').textContent='拖框圈出一件家具，再选择类别并应用；Esc 取消';
   if(state.mode==='furniture-place')$('canvas-hint').textContent='点击图上放置家具 · Esc 取消';
+  if(state.mode==='furniture-copy')$('canvas-hint').textContent=`复制 ${state.furnitureCopy?.item.id||'家具'} · 点击图上放置 · Esc 或 × 取消`;
   if(state.mode==='wall-color')$('canvas-hint').textContent='点击原图中的墙线取色（忽略识别覆盖层）；Esc 取消';
 }
 function setMode(mode) {
   if(state.busy||(['region','furniture'].includes(mode)&&!state.run))return;
   if(state.formDirty) {toast('请先应用当前修改，或点击 × 取消。');return;}
+  const wasCopy=state.mode==='furniture-copy';
   state.mode=mode; state.drag=null; $('draft-layer').replaceChildren();
+  if(mode!=='furniture-copy'){state.furnitureCopy=null;state.furniture2dPreview=null;}
   if(mode!=='calibrate')window.dispatchEvent(new Event('wall-mode-change'));
   $('wall-color-pick').setAttribute('aria-pressed',String(mode==='wall-color'));
-  $('plan').style.cursor=['wall-color','furniture-place'].includes(mode)?'crosshair':'';
-  if(['furniture','furniture-place'].includes(mode))$('furniture-toggle').checked=true;
+  $('plan').style.cursor=['wall-color','furniture-place','furniture-copy'].includes(mode)?'crosshair':'';
+  if(['furniture','furniture-place','furniture-copy'].includes(mode))$('furniture-toggle').checked=true;
   $('stage').classList.toggle('region-mode',['region','furniture'].includes(mode)); $('plan').style.touchAction=['region','furniture'].includes(mode)?'none':'pan-x pan-y';
   for(const [id,name] of [['select-tool','select'],['region-tool','region'],['furniture-tool','furniture']]) {$(id).classList.toggle('active',mode===name);$(id).setAttribute('aria-pressed',String(mode===name));}
   if(['region','furniture'].includes(mode)){$('overlay-toggle').checked=true; renderPlan();}
+  else if(wasCopy&&state.run)renderPlan();
   refresh();
 }
 function fit() {
@@ -77,7 +83,12 @@ function fit() {
 }
 function applyZoom() {$('paper').style.width=`${state.width*state.zoom}px`;$('zoom-label').textContent=`${Math.round(state.zoom*100)}%`;if(state.run)renderPlan();}
 function zoom(factor) {state.fitted=false;state.zoom=Math.max(.15,Math.min(4,state.zoom*factor));applyZoom();}
-function clearSelection() {window.openingEditor?.clear();state.focusedOpening=null;state.focusedFurniture=null;state.furnitureDraft=null;$('furniture-form').hidden=true;state.selected=null;state.formDirty=false;$('issue-form').hidden=true;$('empty-selection').hidden=false;renderPlan();refresh();}
+function clearSelection() {
+  window.openingEditor?.clear();state.focusedOpening=null;state.focusedFurniture=null;state.furnitureDraft=null;
+  $('furniture-form').hidden=true;state.selected=null;state.formDirty=false;$('issue-form').hidden=true;$('empty-selection').hidden=false;
+  if(state.mode==='furniture-copy')setMode('select');
+  renderPlan();refresh();
+}
 function selectItem(item) {
   if(state.busy)return false;
   if(state.formDirty&&state.selected?.id===item.id)return true;
@@ -205,6 +216,7 @@ function renderIssues() {
     const id=document.createElement('strong');id.textContent=issue.id;const type=document.createElement('span');type.textContent=TYPES[issue.type];
     const note=document.createElement('p');note.textContent=issue.summary||issue.note;open.append(id,type,note);
     if(issue.type==='room_edit')open.addEventListener('click',event=>{event.stopImmediatePropagation();const room=state.run.document.room_partition?.regions.find(r=>r.id===issue.room_id);if(room)focusRoom(room);else toast('该区域已变化，可撤销恢复。');});
+    if(issue.type==='opening_batch'&&!issue.opening_id)open.addEventListener('click',event=>{event.stopImmediatePropagation();$('opening-quick-controls').scrollIntoView({block:'nearest'});$('quick-opening-select').focus();});
     if(issue.type==='room_partition')open.addEventListener('click',event=>{event.stopImmediatePropagation();$('room-list').scrollIntoView({block:'nearest'});});
     if(issue.type==='gap_review')open.addEventListener('click',event=>{event.stopImmediatePropagation();$('diagnose-closure').click();});
     if(issue.type==='wall_connection')open.addEventListener('click',event=>{
@@ -284,6 +296,19 @@ function renderOpenings(layer) {
     const [x0,y0,x1,y1]=o.bbox_px,active=state.focusedOpening===o.id;
     g.append(svgElement('rect',{x:x0,y:y0,width:x1-x0,height:y1-y0,fill:color,'fill-opacity':active?.35:.16,stroke:color,'stroke-width':active?3:1}));
     g.append(svgElement('line',{x1:o.start_px[0],y1:o.start_px[1],x2:o.end_px[0],y2:o.end_px[1],stroke:color,'stroke-width':2,'stroke-dasharray':o.review_status==='confirmed'?'none':'5 3'}));
+    const swing=['door','window'].includes(o.kind)&&(!o.requires_confirmation||o.review_status==='confirmed')?state.openingOperation?.openingSymbol(state.run.document,o):null;
+    if(swing){
+      const symbol=svgElement('g',{'data-opening-swing':o.id,'pointer-events':'none'});
+      if(swing.flip){
+        symbol.append(svgElement('polygon',{points:swing.corners.map(p=>p.join(',')).join(' '),fill:color,'fill-opacity':.12,stroke:color,'stroke-width':1.5/state.zoom}));
+        symbol.append(svgElement('line',{x1:swing.hingeStart[0],y1:swing.hingeStart[1],x2:swing.hingeEnd[0],y2:swing.hingeEnd[1],stroke:color,'stroke-width':3/state.zoom}));
+      }else{
+        symbol.append(svgElement('line',{x1:swing.leafStart[0],y1:swing.leafStart[1],x2:swing.leafEnd[0],y2:swing.leafEnd[1],stroke:color,'stroke-width':2/state.zoom}));
+        if(swing.arc)symbol.append(svgElement('path',{d:swing.arc,fill:'none',stroke:color,'stroke-width':1.5/state.zoom,'stroke-dasharray':`${4/state.zoom} ${3/state.zoom}`}));
+        symbol.append(svgElement('circle',{cx:swing.hinge[0],cy:swing.hinge[1],r:3/state.zoom,fill:color}));
+      }
+      g.append(symbol);
+    }
     const x=Math.max(2,Math.min(state.width-38/state.zoom,(x0+x1)/2+7/state.zoom)),y=Math.max(14/state.zoom,Math.min(state.height-3,(y0+y1)/2));
     const label=svgElement('text',{x,y,fill:color,stroke:'white','stroke-width':3/state.zoom,'paint-order':'stroke',style:`font-size:${12/state.zoom}px;font-weight:700`});label.textContent=o.id;g.append(label);
     g.addEventListener('click',e=>{e.stopPropagation();focusOpening(o);});
@@ -340,7 +365,7 @@ function renderFurniture() {
     const [x0,y0,x1,y1]=f.bbox_px,color=FURNITURE_COLORS[f.kind]||'#168187';
     const active=f.id===state.focusedFurniture;
     const group=svgElement('g',{class:'furniture-hit',role:'button',tabindex:0,'data-furniture-id':f.id,'aria-label':`${f.id} ${furnitureDisplayLabel(f)}`});
-    group.append(svgElement('rect',{transform:`rotate(${f.model_3d?.rotation_deg||0} ${(x0+x1)/2} ${(y0+y1)/2})`,x:x0,y:y0,width:x1-x0,height:y1-y0,fill:color,'fill-opacity':active?.16:.05,stroke:color,'stroke-width':(active?3:2)/state.zoom,'stroke-dasharray':f.review_status==='confirmed'?'none':`${5/state.zoom} ${3/state.zoom}`}));
+    group.append(svgElement('rect',{transform:`rotate(${f.model_3d?.rotation_deg||0} ${(x0+x1)/2} ${(y0+y1)/2})`,x:x0,y:y0,width:x1-x0,height:y1-y0,fill:color,'fill-opacity':active||f.id==='待复制'?.16:.05,stroke:color,'stroke-width':(active?3:2)/state.zoom,'stroke-dasharray':f.review_status==='confirmed'&&f.id!=='待复制'?'none':`${5/state.zoom} ${3/state.zoom}`}));
     const text=`${f.id} ${furnitureDisplayLabel(f)}`,fontSize=12/state.zoom;
     const labelWidth=Array.from(text).reduce((n,c)=>n+(c.charCodeAt(0)>255?1:.65),0)*fontSize;
     const lx=Math.max(2,Math.min(state.width-labelWidth-2,x0+3/state.zoom));
@@ -576,9 +601,10 @@ const furniture2dUI=(() => {
   const scaled=()=>Number.isFinite(state.run?.document.scale_mm_per_px)&&state.run.document.scale_mm_per_px>0;
   const paint=()=>{if(state.run){$('furniture-layer').replaceChildren();renderFurniture();}};
   import('/furniture-move.mjs').then(module=>{
-    geometry=module;if(state.furnitureDraft)fill(state.furnitureDraft);
+    geometry=module;state.furnitureGeometry=module;if(state.furnitureDraft)fill(state.furnitureDraft);refresh();
   }).catch(()=>toast('家具摆放工具加载失败，请保存项目后刷新页面。',true));
   function fill(item) {
+    $('furniture-copy').disabled=Boolean(state.busy)||state.formDirty||!geometry?.canCopyFurniture(item);
     $('furniture-angle').value=item.model_3d?.rotation_deg||0;
     for(const id of ['furniture-turn-left','furniture-turn-right','furniture-fit-left','furniture-fit-right'])$(id).disabled=Boolean(state.busy)||!item.id;
     $('furniture-fit-status').textContent=`框内转向 ${item.model_3d?.fit_rotation_deg||0}° · 当前框的位置和横纵占地保持不变`;
@@ -645,6 +671,17 @@ const furniture2dUI=(() => {
     if(!ready(true))return;
     clearSelection();state.insertionKind=kind;state.insertionLabel=label;setMode('furniture-place');
   }
+  function armCopy(item) {
+    if(!ready()||!geometry.canCopyFurniture(item))return false;
+    const source=state.run.document.furniture.find(f=>f.id===item.id);
+    if(!geometry.canCopyFurniture(source))return false;
+    setMode('select');focusFurniture(source,{scroll:false});
+    state.furnitureCopy={runId:state.run.run_id,item:structuredClone(source)};
+    setMode('furniture-copy');
+    $('furniture-position-status').textContent='复制保留尺寸、颜色和朝向 · 点击图上放置，Esc 或 × 取消';
+    return true;
+  }
+  $('furniture-copy').addEventListener('click',()=>armCopy(state.furnitureDraft));
   function point(event) {
     const p=$('plan').createSVGPoint();p.x=event.clientX;p.y=event.clientY;
     const t=p.matrixTransform($('plan').getScreenCTM().inverse());return [t.x,t.y];
@@ -659,7 +696,7 @@ const furniture2dUI=(() => {
     // Capture on the stable stage: preview rendering replaces furniture SVG nodes.
     $('stage').setPointerCapture(event.pointerId);
     state.busy='furniture-drag';state.formDirty=true;refresh();
-    if(options.type==='place')update(event);
+    if(['place','copy'].includes(options.type))update(event);
   }
   function beginInsert(event,kind,label) {
     if(event.button!==0||!ready(true))return;
@@ -681,6 +718,11 @@ const furniture2dUI=(() => {
       g.placement=placement;g.preview={...g.item,bbox_px:[(x-w/2)/scale,(y-d/2)/scale,(x+w/2)/scale,(y+d/2)/scale]};
       state.furnitureDraft=g.preview;fill(g.preview);
       $('furniture-position-status').textContent='拖动中 · 松手应用一次修改，Esc 取消';
+    }else if(g.type==='copy'){
+      g.preview=inside(event,p)?geometry.copyFurnitureAt(state.run.document,g.item,...p):null;
+      g.placement=g.preview?[(g.preview.bbox_px[0]+g.preview.bbox_px[2])/2,(g.preview.bbox_px[1]+g.preview.bbox_px[3])/2]:null;
+      state.furniture2dPreview=g.preview;
+      $('canvas-hint').textContent=g.preview?`复制 ${g.item.id} · 松手放置 · Esc 取消`:'请在能容纳家具的底图内放置 · Esc 取消';
     }else{
       g.placement=inside(event,p)?geometry.presetPlacement(state.run.document,g.kind,...p):null;
       const placement=g.placement;
@@ -702,7 +744,9 @@ const furniture2dUI=(() => {
   }
   function cancel() {
     if(gesture)restore(release());
-    if(state.mode==='furniture-place')setMode('select');
+    if(['furniture-place','furniture-copy'].includes(state.mode))setMode('select');
+    if(state.furnitureDraft)fill(state.furnitureDraft);
+    state.furniture2dPreview=null;paint();refresh();
   }
   async function finish(event) {
     if(!gesture||event.pointerId!==gesture.pointer)return;
@@ -711,7 +755,7 @@ const furniture2dUI=(() => {
     if(g.type==='insert'&&!g.moved){restore(g);arm(g.kind,g.label);return;}
     if(!g.placement||(g.type==='move'&&g.preview.bbox_px.every((v,i)=>Math.abs(v-g.item.bbox_px[i])<1e-7))){restore(g);if(g.type!=='move'&&g.moved)toast('请把家具拖到可容纳预设尺寸的底图内。');return;}
     setMode('select');
-    const input=g.type==='move'?{action:'update',furniture_id:g.item.id,...(scaled()?{placement_mm:g.placement}:{bbox_px:g.preview.bbox_px})}:{action:'add',kind:g.kind,placement_mm:g.placement,rotation_deg:g.preview.rotation_deg};
+    const input=g.type==='copy'?{action:'copy',furniture_id:g.item.id,center_px:g.placement}:g.type==='move'?{action:'update',furniture_id:g.item.id,...(scaled()?{placement_mm:g.placement}:{bbox_px:g.preview.bbox_px})}:{action:'add',kind:g.kind,placement_mm:g.placement,rotation_deg:g.preview.rotation_deg};
     state.busy='furniture-placement';state.formDirty=true;
     if(g.type!=='move')state.furniture2dPreview=g.preview;
     refresh();
@@ -729,13 +773,26 @@ const furniture2dUI=(() => {
   }
   $('plan').addEventListener('pointerdown',event=>{
     if(event.button!==0)return;
+    if(state.mode==='furniture-copy'&&ready()){
+      const copy=state.furnitureCopy;
+      if(copy?.runId===state.run.run_id){start(event,{type:'copy',item:copy.item});return;}
+      cancel();return;
+    }
     if(state.mode==='furniture-place'&&ready(true)){start(event,{type:'place',kind:state.insertionKind,label:state.insertionLabel});return;}
     const id=event.target.closest('[data-furniture-id]')?.dataset.furnitureId;
     const item=state.run?.document.furniture.find(f=>f.id===id&&f.review_status!=='rejected');
     if(state.mode==='select'&&item&&ready()){focusFurniture(item,{scroll:false});start(event,{type:'move',item:structuredClone(item)});}
   },true);
   document.addEventListener('pointermove',event=>{
-    if(!gesture||gesture.pointer!==event.pointerId)return;
+    if(!gesture){
+      if(state.mode==='furniture-copy'&&!state.busy&&state.furnitureCopy){
+        const p=point(event);
+        state.furniture2dPreview=inside(event,p)?geometry.copyFurnitureAt(state.run.document,state.furnitureCopy.item,...p):null;
+        paint();
+      }
+      return;
+    }
+    if(gesture.pointer!==event.pointerId)return;
     event.preventDefault();cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>update(event));
   },{capture:true,passive:false});
   document.addEventListener('pointerup',event=>{if(gesture)handle(finish(event));},true);
@@ -745,11 +802,11 @@ const furniture2dUI=(() => {
     if(performance.now()<suppressClickUntil&&event.target.closest('#stage,#material-grid')){event.preventDefault();event.stopImmediatePropagation();}
   },true);
   document.addEventListener('keydown',event=>{
-    if(event.key==='Escape'&&(gesture||state.mode==='furniture-place')){event.preventDefault();event.stopImmediatePropagation();cancel();}
+    if(event.key==='Escape'&&(gesture||['furniture-place','furniture-copy'].includes(state.mode))){event.preventDefault();event.stopImmediatePropagation();cancel();}
   },true);
-  window.addEventListener('blur',()=>{if(gesture)cancel();});
+  window.addEventListener('blur',()=>{if(gesture||state.mode==='furniture-copy')cancel();});
   window.addEventListener('wall-state-change',()=>{
     $('furniture-placement-hint').textContent=scaled()?'拖入或点选放置 · 预设占地可按厘米修改':'请先识别并在测量中标定比例，再摆放预设家具。';
   });
-  return {beginInsert,arm,fill,input,previewFields};
+  return {beginInsert,arm,armCopy,fill,input,previewFields};
 })();

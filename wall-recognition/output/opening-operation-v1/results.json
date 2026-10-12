@@ -1,0 +1,13 @@
+{
+  "door_preview_cancel": "passed",
+  "door_direction_apply": "passed",
+  "one_step_undo": "passed",
+  "window_sash": "passed",
+  "resize_preserves_direction": "passed",
+  "failure_atomicity": "passed",
+  "fixed_preview_cancel": "passed",
+  "save_reopen": "passed",
+  "unscaled_direction": "passed",
+  "narrow": "passed",
+  "page_errors": []
+}

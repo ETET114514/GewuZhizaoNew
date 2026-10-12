@@ -4,7 +4,7 @@ import math
 import re
 
 DEFAULTS = dict(wall_height_mm=2800, door_height_mm=2100, window_height_mm=1500,
-                sill_height_mm=900, door_width_mm=800, opening_width_mm=900,
+                sill_height_mm=900, door_width_mm=800, opening_width_mm=800,
                 window_width_mm=800, width_mode='detected', wall_color='#e4ddd3',
                 floor_color='#ffffff', show_furniture=True, show_plan=False, show_room_floors=True)
 
@@ -40,11 +40,34 @@ def apply_model_settings(document, request):
         raise ValueError('预设门扇宽度不能大于门洞宽度。')
     from opening_editing import validate_opening_settings
     for opening in document.get('openings', []):
-        if opening.get('dimensions_mm') and opening.get('kind') in ('door', 'window') and opening.get('review_status') != 'rejected':
+        if (opening.get('dimensions_mm') or 'operation' in opening) and opening.get('kind') in ('door', 'window') and opening.get('review_status') != 'rejected':
             validate_opening_settings(opening, settings)
     result['model_settings'] = settings
-    if 'calibration' in request and 'wall_calibration' in request:
+    if sum(key in request for key in ('calibration', 'wall_calibration', 'door_calibration')) > 1:
         raise ValueError('一次只能选择一种标定方式。')
+    if 'door_calibration' in request:
+        calibration = request['door_calibration']
+        if not isinstance(calibration, dict) or set(calibration) - {'opening_id', 'width_mm'}:
+            raise ValueError('门洞比例尺格式不正确。')
+        from refine_walls import is_active_opening
+        opening = next((o for o in document.get('openings', []) if o['id'] == calibration.get('opening_id')
+                        and o.get('kind') == 'door' and is_active_opening(o)), None)
+        if opening is None:
+            raise ValueError('请选择一扇有效的普通门作为比例尺。')
+        actual = number(calibration.get('width_mm', 800), 100, 20000, '实际门洞宽（mm）')
+        axis = 0 if opening['orientation'] == 'horizontal' else 1
+        size = (document['image']['width_px'], document['image']['height_px'])
+        points = [[number(v, 0, size[i], '门洞端点') for i, v in enumerate(p)]
+                  for p in (opening['start_px'], opening['end_px'])]
+        pixels = abs(points[1][axis] - points[0][axis])
+        if pixels < 5:
+            raise ValueError('门洞图上宽度过小，请选至少 5 像素宽的普通门。')
+        result['scale_mm_per_px'] = number(actual/pixels, .01, 10000, '比例（mm/px）')
+        result['calibration'] = dict(method='door_width', opening_id=opening['id'], width_mm=actual,
+                                    width_px=pixels, points_px=points,
+                                    image_sha256=document['image']['sha256'])
+        # Real sizes should follow the calibrated plan rather than nominal global widths.
+        settings['width_mode'] = 'detected'
     if 'wall_calibration' in request:
         calibration = request['wall_calibration']
         if not isinstance(calibration, dict):
@@ -83,5 +106,9 @@ def apply_model_settings(document, request):
                 axis = 0 if opening['orientation'] == 'horizontal' else 1
                 opening['dimensions_mm']['width_mm'] = abs(opening['end_px'][axis]-opening['start_px'][axis])*result['scale_mm_per_px']
                 validate_opening_settings(opening, settings)
-    summary = '已按墙厚估算比例' if 'wall_calibration' in request else '已更新比例标定' if 'calibration' in request else '已更新三维尺寸与外观'
+    summary = (f"已按 {result['calibration']['opening_id']} 门洞 {result['calibration']['width_mm']:g} mm 估算比例"
+               if 'door_calibration' in request else '已按墙厚估算比例' if 'wall_calibration' in request
+               else '已更新比例标定' if 'calibration' in request else '已更新三维尺寸与外观')
+    from window_preset import refresh_window_presets
+    refresh_window_presets(result)
     return result, dict(id='MODEL', type='model_settings', summary=summary)

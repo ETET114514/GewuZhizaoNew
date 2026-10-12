@@ -1,0 +1,14 @@
+{
+  "ambiguous_door_requires_owner": "passed",
+  "room_inward_door": "passed",
+  "outward_window_45": "passed",
+  "default_side_open": "passed",
+  "top_bottom_pivot": "passed",
+  "axis_position": "passed",
+  "manual_override": "passed",
+  "invalid_atomicity": "passed",
+  "save_reopen": "passed",
+  "request_failure": "passed",
+  "narrow": "passed",
+  "page_errors": []
+}

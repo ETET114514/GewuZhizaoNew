@@ -26,7 +26,7 @@ from copy import deepcopy
 from refine_walls import initialize_refinement, refresh_refinement
 from recognize_furniture import add_furniture, apply_furniture_edit, furniture_export
 from model_settings import apply_model_settings
-from opening_editing import apply_opening_edit
+from opening_editing import apply_opening_edit, open_openings
 from connect_walls import connect_walls
 from closure_diagnostics import diagnose_closure, preview_gap, resolve_gap
 from partition_rooms import partition_rooms
@@ -165,8 +165,8 @@ class ReviewHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         route = urlsplit(self.path).path
         pages = {"/": ("index.html", "text/html; charset=utf-8"), "/app.css": ("app.css", "text/css; charset=utf-8"), "/app.js": ("app.js", "text/javascript; charset=utf-8")}
-        for name in ('opening-ui.js', 'opening-edit.mjs', 'closure-ui.js', 'model-ui.js', 'model-viewer.js', 'model-geometry.mjs', 'floor-geometry.mjs', 'room-ui.js', 'wall-lengths.mjs', 'wall-length-ui.js', 'room-areas.mjs', 'toolbar-ui.js', 'furniture-models.mjs', 'furniture-move.mjs',
-                     'vendor/three.module.min.js', 'vendor/three.core.min.js', 'vendor/OrbitControls.js'):
+        for name in ('opening-ui.js', 'opening-edit.mjs', 'opening-operation.mjs', 'closure-ui.js', 'model-ui.js', 'model-viewer.js', 'model-geometry.mjs', 'floor-geometry.mjs', 'room-ui.js', 'wall-lengths.mjs', 'wall-length-ui.js', 'room-areas.mjs', 'toolbar-ui.js', 'furniture-models.mjs', 'furniture-move.mjs',
+                     'opening-quick-ui.js', 'vendor/three.module.min.js', 'vendor/three.core.min.js', 'vendor/OrbitControls.js'):
             pages['/'+name] = (name, 'text/javascript; charset=utf-8')
         if route in pages:
             filename, content_type = pages[route]
@@ -248,7 +248,7 @@ class ReviewHandler(BaseHTTPRequestHandler):
                                          "elapsed_ms": round((perf_counter()-started)*1000), "cache_hit": cache_hit})
                 finally:
                     self.server.detect_lock.release()
-            elif route in ("/api/diagnose-closure", "/api/preview-gap", "/api/resolve-gap", "/api/apply-edit", "/api/undo-edit", "/api/save-project", "/api/review-opening", "/api/edit-opening", "/api/edit-furniture", "/api/model-settings", "/api/connect-walls", "/api/partition-rooms", "/api/edit-room"):
+            elif route in ("/api/opening-context", "/api/diagnose-closure", "/api/preview-gap", "/api/resolve-gap", "/api/apply-edit", "/api/undo-edit", "/api/save-project", "/api/review-opening", "/api/edit-opening", "/api/open-openings", "/api/edit-furniture", "/api/model-settings", "/api/connect-walls", "/api/partition-rooms", "/api/edit-room"):
                 request = json.loads(payload)
                 if not isinstance(request, dict) or not isinstance(request.get("run_id"), str):
                     raise ValueError("操作格式不正确。")
@@ -256,6 +256,12 @@ class ReviewHandler(BaseHTTPRequestHandler):
                     run = self.server.sessions.get(request["run_id"])
                     if run is None:
                         raise ValueError("识别结果已过期，请重新识别。")
+                    if route == '/api/opening-context':
+                        from opening_direction import direction_rooms, opening_context
+                        rooms = direction_rooms(run['document'])
+                        self.send_json(200, dict(contexts={o['id']:opening_context(run['document'],o,rooms)
+                            for o in run['document'].get('openings',[]) if o['kind'] in ('door','window')}))
+                        return
                     if route in ('/api/diagnose-closure', '/api/preview-gap'):
                         response = (diagnose_closure(run['document']) if route == '/api/diagnose-closure'
                                     else preview_gap(run['document'], request, run['next_id']))
@@ -294,6 +300,13 @@ class ReviewHandler(BaseHTTPRequestHandler):
                         run['history'] = run['history'][-50:]
                         run['document'] = document
                         run['changes'].append(record)
+                    elif route == '/api/open-openings':
+                        document, record, opening_report = open_openings(run['document'], request)
+                        if record is not None:
+                            run['history'].append((run['document'], list(run['changes']), run['next_id']))
+                            run['history'] = run['history'][-50:]
+                            run['document'] = document
+                            run['changes'].append(record)
                     elif route == '/api/edit-opening':
                         document, record = apply_opening_edit(run['document'], request)
                         run['history'].append((run['document'], list(run['changes']), run['next_id']))
@@ -319,6 +332,8 @@ class ReviewHandler(BaseHTTPRequestHandler):
                         if previous_wall:
                             document['walls'] = [w for w in document['walls'] if w['id'] != previous_wall]
                         opening.setdefault("predicted_kind",opening["kind"])
+                        if kind in ('door', 'window') and kind != opening['kind']:
+                            opening.pop('operation', None)
                         opening.update(kind=kind, review_status="rejected" if kind=="rejected" else "unreviewed" if kind=="unclassified" else "confirmed")
                         if kind == "unclassified":
                             opening["requires_confirmation"] = True
@@ -372,6 +387,8 @@ class ReviewHandler(BaseHTTPRequestHandler):
                                              "opening_count": run["document"].get("refinement_summary", {}).get("active_opening_count", 0)})
                         return
                     response = {"document": run["document"], "changes": run["changes"], "history_size": len(run["history"])}
+                    if route == '/api/open-openings':
+                        response.update(opening_report)
                 self.send_json(200, response)
             elif route == "/api/save-feedback":
                 request = json.loads(payload)

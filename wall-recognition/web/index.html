@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="在本机识别户型墙体，逐段修改墙体并保存校正反馈。">
-  <title>筑见 · 户型校核</title><link rel="stylesheet" href="/app.css"><script src="/app.js" defer></script><script src="/opening-ui.js" defer></script><script src="/model-ui.js" defer></script><script src="/room-ui.js" defer></script><script src="/wall-length-ui.js" defer></script><script src="/toolbar-ui.js" defer></script><script src="/closure-ui.js" defer></script>
+  <title>筑见 · 户型校核</title><link rel="stylesheet" href="/app.css"><script src="/app.js" defer></script><script src="/opening-ui.js" defer></script><script src="/opening-quick-ui.js" defer></script><script src="/model-ui.js" defer></script><script src="/room-ui.js" defer></script><script src="/wall-length-ui.js" defer></script><script src="/toolbar-ui.js" defer></script><script src="/closure-ui.js" defer></script>
 </head>
 <body>
   <header class="header">
@@ -64,6 +64,7 @@
       <div class="legend"><span><i class="dot blue"></i>候选墙段</span><span><i class="dot orange"></i>已标问题</span><span><i class="dot teal"></i>漏识别区域</span><span class="legend-note">几何为像素 · 标注按比例换算</span></div>
     </section>
     <aside class="review-panel" aria-label="墙体修改">
+      <section id="opening-quick-controls" class="opening-quick-controls" aria-label="快捷打开门窗"></section>
 
       <section id="closure-panel" class="closure-section" hidden>
         <div class="issues-heading"><h3>闭合诊断</h3><label><input id="closure-visible" type="checkbox" checked> 显示疑点</label></div>
@@ -128,6 +129,7 @@
           <p class="opening-help">框内旋转重建长宽，保持当前识别框；自由旋转保持模型尺寸，占地随之转动。按钮立即应用，可撤销；角度输入先预览，再点应用。</p>
           <label class="field" id="furniture-direction-field">床头 / 靠背朝向<select id="furniture-rotation"><option value="">未知</option><option value="0">图上方 ↑</option><option value="90">图右方 →</option><option value="180">图下方 ↓</option><option value="270">图左方 ←</option></select></label>
           <p class="opening-help" id="furniture-direction-help">朝向相对底图；改朝向不会交换框的宽高。</p>
+          <button id="furniture-copy" class="button full" type="button">复制家具 · 点击图上放置</button>
           <button id="furniture-apply" class="button primary full" type="submit">应用家具修改</button>
         </form>
         <div id="furniture-list"></div>
@@ -138,6 +140,21 @@
         <div class="field-row"><label class="field">洞口宽（cm）<input id="opening-width" type="number" min="10" max="2000" step="any" required></label><label class="field">洞口高（cm）<input id="opening-height" type="number" min="10" max="2000" step="any" required></label></div>
         <div class="field-row"><label class="field">离地高度（cm）<input id="opening-sill" type="number" min="0" max="2000" step="any" required></label><label class="field">中心距墙段起点（cm）<input id="opening-position" type="number" min="0" step="any" required></label></div>
         <button id="opening-floor-glass" type="button" class="button full">一键落地玻璃</button>
+        <button id="opening-ordinary-door" type="button" class="button full">普通门 · 门洞宽 80 cm</button>
+        <p id="opening-ordinary-door-help" class="opening-help">预设门洞宽 800 mm，门扇适配门框内宽。先预览，再应用；需标定比例。</p>
+        <button id="opening-door-scale" type="button" class="button full">以此门洞 80 cm 估算全图比例</button>
+        <p id="opening-door-scale-help" class="opening-help">无需拉线：按这扇门洞实际宽 800 mm 换算全图，保留图上几何，可撤销。请选普通单扇门。</p>
+        <label class="field" id="opening-type-field">窗的开启方式<select id="opening-type"><option value="fixed">固定玻璃</option><option value="hinged">单扇平开窗</option></select></label>
+        <div id="opening-swing-fields">
+        <label class="field">内外方向<select id="opening-direction-mode"><option value="auto">门向房内开 / 窗向房外开</option><option value="manual">手动选择开启侧</option></select></label>
+        <label class="field">归属房间 / 室内侧<select id="opening-owner"><option value="">自动判断</option></select></label>
+        <p id="opening-context-status" class="opening-help" role="status"></p>
+        <label class="field" id="opening-axis-mode-field">窗宽预设<select id="opening-axis-mode"><option value="width">自动：≥ 180 cm 向上翻开，较窄侧开</option><option value="manual">手动设置转轴</option></select><span id="opening-width-preset-status" class="opening-help"></span></label>
+        <label class="field" id="opening-axis-field">转动方式<select id="opening-axis"><option value="vertical">侧面转动（竖轴）</option><option value="horizontal">上下转动（横轴）</option></select></label>
+        <div class="field-row"><label class="field">转轴端<select id="opening-hinge"><option value="start">起端</option><option value="end">末端</option></select></label><label class="field">开启侧<select id="opening-side"><option value="negative">负侧</option><option value="positive">正侧</option></select></label></div>
+        <label class="field">转轴位置（%）<input id="opening-pivot" type="number" min="0" max="100" step="any" value="0" required><span id="opening-pivot-help" class="opening-help">0% 起端，100% 末端；可把转轴移入扇内。</span></label>
+        <label class="field">开启角度（°）<input id="opening-angle" type="number" min="0" max="90" step="any" value="0" required></label></div>
+        <p class="opening-help">打开预设：门 90°，窗 45°。窗宽 ≥ 180 cm 向上翻开，较窄侧开；可手动设置转轴。内外不明时沿用当前开启侧。0° 关闭。</p>
         <p id="opening-edit-status" class="opening-help" role="status">可沿墙拖动 · 松手应用 · Esc 取消</p>
         <div class="field-row"><button id="opening-apply" type="submit" class="button primary">应用修改</button><button id="opening-discard" type="button" class="button">取消预览</button></div>
       </form>
@@ -154,6 +171,7 @@
       <section class="model-scene"><div id="model-canvas"></div><div class="model-view-actions"><button id="model-reset" class="button">透视</button><button id="model-top" class="button">俯视</button><button id="model-move" class="button" aria-pressed="false" disabled>移动家具</button><span id="model-move-status" class="model-move-status" role="status">选中家具后可移动</span><label class="button"><input id="model-wall-ghost" type="checkbox">淡化墙体</label></div><p id="model-gesture" class="model-gesture">拖动旋转 · 滚轮缩放 · 右键平移</p></section>
       <aside class="model-controls">
         <p id="model-summary" class="opening-help" role="status"></p>
+        <section id="model-opening-quick-controls" class="opening-quick-controls" aria-label="快捷打开门窗"></section>
         <section class="model-furniture-section">
           <h3>逐件家具编辑</h3>
           <label class="field">选择家具<select id="model-furniture-select"></select></label>
@@ -173,6 +191,7 @@
             <div class="field-row"><label class="field">自由旋转（°）<input id="mf-rotation" type="number" min="0" max="360" step="any" required></label><label class="field">主体颜色<input id="mf-color" type="color"></label></div>
             <p class="opening-help">框内旋转重建长宽，保持当前识别框；自由旋转保持模型尺寸，占地随之转动。按钮立即应用，可撤销。X 向右、Y 向下，尺寸对应底图矩形；重新标定会改变占地实际尺寸。</p>
             <div class="model-actions"><button id="mf-focus" class="button" type="button">定位家具</button><button id="mf-reset" class="button" type="button">默认外观</button></div>
+            <button id="mf-copy" class="button full" type="button">复制家具 · 在二维放置</button>
             <button id="mf-apply" class="button primary full" type="submit">应用家具修改</button>
             <button id="mf-discard" class="button full" type="button">放弃未应用</button>
             <p id="mf-status" class="opening-help" role="status"></p>

@@ -27,7 +27,7 @@ test('doors have headers; windows have sill and header walls, holes remain empty
 });
 test('preset widths and overlapping apertures subtract a union, never refill one another',()=>{
   const doc=fixture();doc.model_settings={width_mode:'preset'};
-  let model=buildModel(doc);assert.equal(model.openings[0].b-model.openings[0].a,90);
+  let model=buildModel(doc);assert.equal(model.openings[0].b-model.openings[0].a,80);
   assert.equal(model.openings[1].b-model.openings[1].a,80);
   doc.openings[1].start_px=[50,100];doc.openings[1].end_px=[150,100];model=buildModel(doc);
   assert.equal(solidAt(model,100,.5),false);assert.equal(solidAt(model,100,2.3),false);assert.equal(solidAt(model,100,2.6),true);

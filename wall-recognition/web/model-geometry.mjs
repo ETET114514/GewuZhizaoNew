@@ -1,7 +1,8 @@
 import {buildFurniture} from './furniture-models.mjs';
+import {applyWindowPreset,swingGeometry,leafPose} from './opening-operation.mjs';
 // Pure geometry: millimetres in settings, metres in the scene, source pixels retained.
 export const DEFAULTS = Object.freeze({wall_height_mm:2800,door_height_mm:2100,window_height_mm:1500,
-  sill_height_mm:900,door_width_mm:800,opening_width_mm:900,window_width_mm:800,width_mode:'detected',
+  sill_height_mm:900,door_width_mm:800,opening_width_mm:800,window_width_mm:800,width_mode:'detected',
   wall_color:'#e4ddd3',floor_color:'#ffffff',show_furniture:true,show_plan:false,show_room_floors:true});
 
 export function buildModel(doc) {
@@ -29,7 +30,7 @@ export function buildModel(doc) {
     const segments=hosts.map(w=>[Math.max(a,w.start_px[axis]),Math.min(b,w.end_px[axis])]).sort((x,y)=>x[0]-y[0]);
     const spans=[];for(const [start,end] of segments){const last=spans.at(-1);if(last&&start<=last[1]+.01)last[1]=Math.max(last[1],end);else spans.push([start,end]);}
     if(spans.length>1||spans[0][0]>a+.1||spans[0][1]<b-.1)warnings.push(`${o.id} 宽度超出连续墙段，门窗按可用墙段裁切。`);
-    openings.push({id:o.id,kind:o.kind,axis,a,b,bottom,top,customWidth:Boolean(o.dimensions_mm?.width_mm),hosts:hosts.map(w=>w.id),spans,center:host.start_px[1-axis],thickness:host.thickness_px});
+    openings.push({id:o.id,kind:o.kind,axis,a,b,bottom,top,operation:o.operation?applyWindowPreset(doc,o):null,customWidth:Boolean(o.dimensions_mm?.width_mm),hosts:hosts.map(w=>w.id),spans,center:host.start_px[1-axis],thickness:host.thickness_px});
   }
   for(const wall of walls){
     const axis=wall.orientation==='horizontal'?0:1,a=wall.start_px[axis],b=wall.end_px[axis],center=wall.start_px[1-axis],half=wall.thickness_px/2;
@@ -57,12 +58,40 @@ export function buildModel(doc) {
     const add=(a,b,bottom,top,depth,color,kind)=>o.axis===0?
       box(o.id,kind,a,o.center-depth/2,b,o.center+depth/2,bottom,top,color):
       box(o.id,kind,o.center-depth/2,a,o.center+depth/2,b,bottom,top,color);
+    const swungPart=(swing,lo,hi,bottom,top,depth,color,kind)=>{
+      const distance=(lo+hi)/2;
+      boxes.push({id:o.id,kind,size:[(hi-lo)*unit,top-bottom,depth*unit],
+        center:[(swing.hinge[0]+swing.dx*distance-W/2)*unit,(bottom+top)/2,(swing.hinge[1]+swing.dy*distance-H/2)*unit],
+        rotation_y:swing.rotation_y,color});
+    };
+    const movingLeaf=(start,end,low,high)=>{
+      if(o.operation.pivot_axis||o.operation.pivot_ratio!==undefined){
+        const origin=o.axis===0?[(start-W/2)*unit,low,(o.center-H/2)*unit]:[(o.center-W/2)*unit,low,(start-H/2)*unit];
+        const pose=leafPose(o.axis,origin,(end-start)*unit,high-low,o.operation);
+        return (lo,hi,bottom,top,depth,color,kind)=>boxes.push({id:o.id,kind,
+          size:[(hi-lo)*unit,top-bottom,depth*unit],center:pose.transform([(lo+hi)/2*unit,(bottom+top)/2-low,0]),quaternion:pose.quaternion,color});
+      }
+      const swing=swingGeometry(o,start,end,o.center,o.operation);
+      return (...args)=>swungPart(swing,...args);
+    };
     for(const [a,b] of o.spans){
       const frame=Math.min(40/scale,(b-a)/8),frameH=Math.min(.04,(o.top-o.bottom)/8),color=o.kind==='door'?'#ad8667':'#657e88';
       add(a,a+frame,o.bottom,o.top,o.thickness,color,'frame');add(b-frame,b,o.bottom,o.top,o.thickness,color,'frame');
       add(a+frame,b-frame,o.top-frameH,o.top,o.thickness,color,'frame');
       if(o.kind==='window'){
         add(a+frame,b-frame,o.bottom,o.bottom+frameH,o.thickness,color,'frame');
+        if(o.operation?.type==='hinged'){
+          const reveal=Math.min(3/scale,(b-a-2*frame)/20),start=a+frame+reveal,end=b-frame-reveal;
+          const length=end-start,edge=Math.min(frame,length/8);
+          const low=o.bottom+frameH+.003,high=o.top-frameH-.003;
+          const part=movingLeaf(start,end,low,high);
+          part(0,edge,low,high,35/scale,color,'frame');
+          part(length-edge,length,low,high,35/scale,color,'frame');
+          part(edge,length-edge,low,low+frameH,35/scale,color,'frame');
+          part(edge,length-edge,high-frameH,high,35/scale,color,'frame');
+          part(edge,length-edge,low+frameH,high-frameH,10/scale,'#a7d8e5','glass');
+          continue;
+        }
         add((a+b)/2-frame/2,(a+b)/2+frame/2,o.bottom,o.top,o.thickness,color,'frame');
         add(a+frame,b-frame,o.bottom+frameH,o.top-frameH,10/scale,'#a7d8e5','glass');
       }else{
@@ -72,7 +101,9 @@ export function buildModel(doc) {
         const available=clearWidth-2*reveal;
         const leaf=s.width_mode==='preset'&&!o.customWidth?Math.min(s.door_width_mm/scale,available):available;
         const leafStart=(a+b-leaf)/2;
-        add(leafStart,leafStart+leaf,o.bottom+.015,o.top-frameH,35/scale,'#d1ae8b','door');
+        if(o.operation){
+          movingLeaf(leafStart,leafStart+leaf,o.bottom+.015,o.top-frameH)(0,leaf,o.bottom+.015,o.top-frameH,35/scale,'#d1ae8b','door');
+        }else add(leafStart,leafStart+leaf,o.bottom+.015,o.top-frameH,35/scale,'#d1ae8b','door');
       }
     }
   }

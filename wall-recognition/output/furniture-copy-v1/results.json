@@ -1,0 +1,13 @@
+{
+  "desktop": "passed",
+  "preview_cancel": "passed",
+  "one_step_undo": "passed",
+  "failure_atomicity": "passed",
+  "outside_release": "passed",
+  "pointer_cancel": "passed",
+  "edge_clamp": "passed",
+  "model_entry": "passed",
+  "save_reopen": "passed",
+  "narrow": "passed",
+  "page_errors": []
+}

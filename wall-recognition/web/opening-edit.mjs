@@ -1,3 +1,4 @@
+import {operationOf,applyWindowPreset} from './opening-operation.mjs';
 const axisOf=o=>o.orientation==='horizontal'?0:1;
 const aligned=(w,o)=>w.orientation===o.orientation&&Math.abs(w.start_px[1-axisOf(o)]-o.start_px[1-axisOf(o)])<=Math.min(w.thickness_px,o.thickness_px)/2+1;
 const active=o=>o.review_status!=='rejected'&&!['rejected','wall'].includes(o.kind)&&(!o.requires_confirmation||o.review_status==='confirmed');
@@ -14,7 +15,7 @@ export function openingHost(doc,o){
 }
 export function openingValues(doc,o){
   const axis=axisOf(o),s=doc.model_settings||{},d=o.dimensions_mm||{};
-  return {width_mm:d.width_mm??(s.width_mode==='preset'?(o.kind==='door'?(s.opening_width_mm??900):(s.window_width_mm??800)):(o.end_px[axis]-o.start_px[axis])*doc.scale_mm_per_px),
+  return {width_mm:d.width_mm??(s.width_mode==='preset'?(o.kind==='door'?(s.opening_width_mm??800):(s.window_width_mm??800)):(o.end_px[axis]-o.start_px[axis])*doc.scale_mm_per_px),
     height_mm:d.height_mm??(o.kind==='window'?(s.window_height_mm??1500):(s.door_height_mm??2100)),
     sill_height_mm:o.kind==='window'?(d.sill_height_mm??s.sill_height_mm??900):0};
 }
@@ -22,9 +23,14 @@ function geometry(axis,a,b,center,thickness){
   return {orientation:axis===0?'horizontal':'vertical',start_px:axis===0?[a,center]:[center,a],end_px:axis===0?[b,center]:[center,b],
     bbox_px:axis===0?[a,center-thickness/2,b,center+thickness/2]:[center-thickness/2,a,center+thickness/2,b],length_px:b-a,thickness_px:thickness};
 }
-export function openingPreview(doc,id,dimensions,centerPx){
+export function openingPreview(doc,id,dimensions,centerPx,operation){
   const o=doc.openings.find(o=>o.id===id);
   if(!o||!['door','window'].includes(o.kind)||!active(o))throw new Error('请选择有效的门或窗；待定边界需先确认为门窗。');
+  if(operation!==undefined&&dimensions===undefined&&centerPx===undefined){
+    const result=structuredClone(doc),edited=result.openings.find(o=>o.id===id);
+    if(operation===null)delete edited.operation;else edited.operation=applyWindowPreset(result,edited,operationOf(o,operation));
+    return result;
+  }
   if(!Number.isFinite(doc.scale_mm_per_px)||doc.scale_mm_per_px<=0)throw new Error('请先标定比例，再按厘米编辑门窗。');
   const values={...openingValues(doc,o),...dimensions},host=openingHost(doc,o),axis=host.axis,width=values.width_mm/doc.scale_mm_per_px;
   for(const [key,value] of Object.entries(values))if(!Number.isFinite(value)||value<(key==='sill_height_mm'?0:100)||value>20000)throw new Error('门窗尺寸超出范围，请检查输入。');
@@ -36,7 +42,9 @@ export function openingPreview(doc,id,dimensions,centerPx){
   const center=Math.max(host.a+width/2,Math.min(host.b-width/2,requested)),a=center-width/2,b=center+width/2;
   if(doc.openings.some(other=>other.id!==id&&active(other)&&aligned(other,o)&&Math.min(b,other.end_px[axis])-Math.max(a,other.start_px[axis])>.01))throw new Error('这个位置与其他门窗重叠，请缩小宽度或沿墙移动。');
   const result=structuredClone(doc),edited=result.openings.find(o=>o.id===id);
+  if(operation!==undefined){if(operation===null)delete edited.operation;else edited.operation=operationOf(o,operation);}
   Object.assign(edited,geometry(axis,a,b,host.center,host.thickness),{dimensions_mm:values,host_wall_id:host.id,review_status:'confirmed'});
+  if(edited.operation)edited.operation=applyWindowPreset(result,edited,edited.operation);
   edited.connection_span=geometry(axis,a,b,host.center,host.thickness);
   const hostIds=new Set(host.walls.map(w=>w.id));
   for(const w of result.walls){

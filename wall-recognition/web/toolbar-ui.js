@@ -100,14 +100,14 @@
   const review=document.querySelector('.review-panel'),viewCard=document.createElement('div');viewCard.className='view-card';
   viewCard.innerHTML=`<div class="view-card-tabs"><span class="active">空间预览</span><span>当前户型</span></div><button class="space-preview" data-command="open-model">${icon('cube')}<span>查看三维空间</span><small>沿用当前户型与材质</small></button>`;
   review.prepend(viewCard);
-  const propertyHeading=document.createElement('div');propertyHeading.className='property-heading';propertyHeading.textContent='对象属性';viewCard.after(propertyHeading);
+  const propertyHeading=document.createElement('div');propertyHeading.className='property-heading';propertyHeading.textContent='对象属性';viewCard.after($('opening-quick-controls'),propertyHeading);
   for(const [className,label,formId] of [['room-section','房间与地面','room-edit-form'],['furniture-section','家具与设施','furniture-form'],['openings-section','门窗与边界',null],['issues-section','修改记录',null]]) {
     const section=review.querySelector(`.${className}`),details=document.createElement('details');details.className='property-group';details.dataset.inspect=className;
     const summary=document.createElement('summary');summary.textContent=label;section.before(details);details.append(summary,section);
     if(formId)new MutationObserver(()=>{syncInspector();if(!$(formId).hidden&&state.busy!=='furniture-drag')$(formId).scrollIntoView({block:'nearest'});}).observe($(formId),{attributes:true,attributeFilter:['hidden']});
   }
   propertyHeading.after(review.querySelector('.review-heading'),$('empty-selection'),$('issue-form'),$('room-edit-form'),$('furniture-form'),$('opening-form'));
-  new MutationObserver(()=>{syncInspector();if(!$('opening-form').hidden&&state.busy!=='opening-drag')$('opening-form').scrollIntoView({block:'nearest'});}).observe($('opening-form'),{attributes:true,attributeFilter:['hidden']});
+  new MutationObserver(()=>{syncInspector();if(!$('opening-form').hidden&&state.busy!=='opening-drag'&&!state.suppressOpeningInspectorScroll)$('opening-form').scrollIntoView({block:'nearest'});}).observe($('opening-form'),{attributes:true,attributeFilter:['hidden']});
   document.querySelector('.review-heading h2').textContent='墙体属性';
   function syncInspector(){
     const kind=!$('opening-form').hidden?'opening':!$('furniture-form').hidden?'furniture':!$('room-edit-form').hidden?'room':'wall';

@@ -151,5 +151,6 @@ body{height:100dvh;min-height:0;overflow:hidden}
 .material-tile {touch-action:none;user-select:none;cursor:grab;}
 .material-tile:active {cursor:grabbing;}
 .furniture-hit {touch-action:none;cursor:move;}
+.opening-quick-controls{padding:14px 16px;border-bottom:1px solid #e3e7ec}.opening-quick-controls h3{font-size:13px;margin:0 0 12px}.opening-quick-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.opening-quick-grid .button{font-size:11px;padding:8px 4px;min-width:0}.opening-quick-grid .full{grid-column:1/-1}.opening-quick-controls .opening-help{margin:9px 0 0}.model-controls>.opening-quick-controls{padding:0 0 16px;margin-bottom:16px}
 
 #opening-form{padding:16px 18px;border-bottom:1px solid var(--line)}#opening-form .form-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}#opening-form .opening-help{margin:10px 0}#opening-form .field{font-size:11px}#opening-form .field-row{margin-bottom:10px}#opening-form .button{font-size:11px;padding:8px;min-height:32px}.opening-hit{touch-action:none;cursor:ew-resize}.review-panel[data-object=opening]>.review-heading,.review-panel[data-object=opening]>.empty-selection{display:none}

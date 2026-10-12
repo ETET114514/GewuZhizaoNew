@@ -24,6 +24,23 @@ export function placementOf(doc,item) {
   const scale=doc.scale_mm_per_px,[x0,y0,x1,y1]=item.bbox_px;
   return {center_x_mm:(x0+x1)/2*scale,center_y_mm:(y0+y1)/2*scale,width_mm:(x1-x0)*scale,depth_mm:(y1-y0)*scale};
 }
+export function canCopyFurniture(item) {
+  return Boolean(item?.id && item.review_status!=='rejected' &&
+    (Object.hasOwn(PLACEMENT_PRESETS,item.kind)||item.kind==='wet_area'));
+}
+// Translate the original box without changing dimensions, even without scale.
+export function copyFurnitureAt(doc,item,x,y) {
+  const b=item.bbox_px,w=b[2]-b[0],d=b[3]-b[1],limitX=doc.image.width_px,limitY=doc.image.height_px;
+  if(!canCopyFurniture(item)||![x,y,...b].every(Number.isFinite)||w<=0||d<=0||x<0||y<0||x>limitX||y>limitY)return null;
+  const a=(item.model_3d?.rotation_deg||0)*Math.PI/180;
+  const rx=Math.max(w/2,(Math.abs(Math.cos(a))*w+Math.abs(Math.sin(a))*d)/2);
+  const ry=Math.max(d/2,(Math.abs(Math.sin(a))*w+Math.abs(Math.cos(a))*d)/2);
+  if(2*rx>limitX+1e-7||2*ry>limitY+1e-7)return null;
+  const cx=Math.max(rx,Math.min(limitX-rx,x)),cy=Math.max(ry,Math.min(limitY-ry,y));
+  const preview={...structuredClone(item),id:'待复制',bbox_px:[cx-w/2,cy-d/2,cx+w/2,cy+d/2]};
+  validateFurnitureRotation(doc,preview.bbox_px,item.model_3d?.rotation_deg||0);
+  return preview;
+}
 export function placementBox(doc,p,rotation=0) {
   const scale=doc.scale_mm_per_px;
   if(!Number.isFinite(scale)||scale<=0)throw new Error('请先标定比例，再使用厘米尺寸。');
