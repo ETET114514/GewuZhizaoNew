@@ -266,13 +266,17 @@ class ReviewHandler(BaseHTTPRequestHandler):
                     if route in ('/api/edit-ceiling', '/api/preview-ceiling'):
                         document, record = apply_ceiling_edit(run['document'], request)
                         if route == '/api/preview-ceiling':
-                            self.send_json(200, dict(document=document))
+                            self.send_json(200, dict(document=document, operation=record))
+                            return
+                        if record.get('changed_count') == 0:
+                            self.send_json(200, dict(document=run['document'], changes=run['changes'],
+                                history_size=len(run['history']), operation=record))
                             return
                         run['history'].append((run['document'], list(run['changes']), run['next_id']))
                         run['history'] = run['history'][-50:]
                         run['document'] = document
                         run['changes'].append(record)
-                        self.send_json(200, dict(document=document, changes=run['changes'], history_size=len(run['history'])))
+                        self.send_json(200, dict(document=document, changes=run['changes'], history_size=len(run['history']), operation=record))
                         return
                     if route == '/api/opening-context':
                         from opening_direction import direction_rooms, opening_context

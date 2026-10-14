@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "components": 5,
+  "checks": [
+    "room/project scopes",
+    "cove and lights",
+    "partial parameters",
+    "preview/cancel",
+    "no-op history and dirty state",
+    "name escaping",
+    "copy membership",
+    "3D preview/undo",
+    "save/reopen",
+    "narrow layout"
+  ],
+  "errors": []
+}

@@ -12,7 +12,7 @@ COMPONENT_DEFAULTS = dict(kind='slab', style='flat', drop_mm=200., thickness_mm=
     inset_mm=0., width_mm=400., levels=2, step_mm=100., color='#f5f2ec',
     light_type='flush', size_mm=300., depth_mm=80., hanging_mm=0., rotation_deg=0.,
     tilt_deg=0., intensity=1., temperature_k=3000., on=True, host_id='',
-    channel_width_mm=120., channel_height_mm=60.)
+    channel_width_mm=120., channel_height_mm=60., light_group='')
 LABELS = dict(slab='吊顶', cove='灯槽', light='灯具')
 
 
@@ -53,6 +53,12 @@ def settings(value, defaults):
             raise ValueError('灯具类型不支持。')
         if not isinstance(result['host_id'], str) or len(result['host_id']) > 32:
             raise ValueError('灯具安装面不正确。')
+        group = result['light_group']
+        if not isinstance(group, str) or len(group) > 40 or any(ord(c) < 32 for c in group):
+            raise ValueError('灯组名称需为不超过 40 字的单行文字。')
+        result['light_group'] = group.strip()
+        if result['kind'] == 'slab' and result['light_group']:
+            raise ValueError('只有灯具与灯槽可以加入灯组。')
     return result
 
 
@@ -217,9 +223,61 @@ def refresh_ceiling_layout(document, strict_id=None):
     return document
 
 
+def apply_lighting_edit(document, request):
+    """Apply a lighting patch atomically; retain invalid/orphaned authorship."""
+    scope = request.get('scope')
+    group = request.get('group_name')  # None: all; empty string: ungrouped.
+    patch = request.get('settings')
+    if scope not in ('room', 'project'):
+        raise ValueError('请选择当前房间或整个项目的灯组范围。')
+    if group is not None and (not isinstance(group, str) or len(group) > 40
+                              or any(ord(c) < 32 for c in group)):
+        raise ValueError('灯组名称不正确。')
+    if group is not None:
+        group = group.strip()
+    if not isinstance(patch, dict) or not patch or set(patch)-{'on', 'intensity', 'temperature_k'}:
+        raise ValueError('灯组仅支持开关、亮度和色温；请至少选择一项。')
+    settings(patch, COMPONENT_DEFAULTS)
+    result = deepcopy(document)
+    validate_design(result)
+    refresh_ceiling_layout(result)
+    room = next((r for r in result.get('room_partition', {}).get('regions', [])
+                 if r['id'] == request.get('room_id') and r.get('review_status') != 'rejected'), None)
+    if scope == 'room' and room is None:
+        raise ValueError('请先选择有效房间。')
+    candidates = [c for c in result.get('ceiling_design', {}).get('components', [])
+                  if c['settings']['kind'] in ('light', 'cove')
+                  and (scope == 'project' or c['room_key'] == room_key(room))
+                  and (group is None or c['settings']['light_group'] == group)]
+    layout = result.get('ceiling_layout', {})
+    active = {l['id'] for l in layout.get('lights', [])}
+    active.update(s['id'] for s in layout.get('surfaces', []) if s['role'] == 'strip')
+    targets = [c for c in candidates if c['id'] in active]
+    if not targets:
+        raise ValueError('所选范围没有可控制的灯具或灯槽；失效组件需先恢复安装面。')
+    changed = 0
+    for component in targets:
+        before = component['settings']
+        after = settings({**before, **patch}, COMPONENT_DEFAULTS)
+        changed += after != before
+        component['settings'] = after
+    if changed:
+        refresh_ceiling_layout(result)
+    else:
+        result = deepcopy(document)
+    skipped = len(candidates)-len(targets)
+    summary = f'已统一调整 {changed} 个灯具/灯槽' if changed else '灯组已是目标状态，无需修改'
+    if skipped:
+        summary += f'；跳过 {skipped} 个失效组件'
+    return result, dict(id='lighting', type='ceiling_edit', summary=summary,
+                        changed_count=changed, target_count=len(targets), skipped_count=skipped)
+
+
 def apply_ceiling_edit(document, request):
     if not document.get('scale_mm_per_px'):
         raise ValueError('请先标定实际比例再设计顶面。')
+    if request.get('action') == 'lighting':
+        return apply_lighting_edit(document, request)
     result = deepcopy(document)
     design = result.setdefault('ceiling_design', dict(rooms={}, components=[], next_id=1))
     action = request.get('action'); ident = request.get('component_id')

@@ -170,3 +170,8 @@ body{height:100dvh;min-height:0;overflow:hidden}
 #ceiling-panel [hidden] { display:none; }
 #model-ceiling-edit { pointer-events:auto; position:relative; z-index:2; }
 #model-ceiling-view { pointer-events:auto; position:relative; z-index:2; }
+.ceiling-panel .lighting-option { display:flex; align-items:center; gap:6px; }
+.ceiling-panel .lighting-option input[type=checkbox] { width:14px; height:14px; margin:0; flex:0 0 14px; }
+#ceiling-lighting-controls { border-top:1px solid #dfe5eb; padding-top:12px; }
+#ceiling-lighting-controls summary { cursor:pointer; font-weight:600; }
+#cl-members { overflow-wrap:anywhere; }
