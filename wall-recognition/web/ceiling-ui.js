@@ -200,7 +200,7 @@
     $('ceiling-build-rooms').disabled=!source||Boolean(state.busy)||state.formDirty;
     $('ceiling-calibrate').hidden=!source||Boolean(source.scale_mm_per_px);
     $('ceiling-calibrate').disabled=!source||Boolean(state.busy)||state.formDirty;
-    $('ceiling-warnings').textContent=(source?.ceiling_layout?.warnings||[]).join('；');render();
+    $('ceiling-warnings').textContent=[...(source?.room_partition?.warnings||[]),...(source?.ceiling_layout?.warnings||[])].join('；');render();
   }
   form.addEventListener('input',()=>{if(!roomDirty)changed();});form.addEventListener('change',groups);
   roomForm.addEventListener('input',()=>{if(!dirty||roomDirty)changed(true);});

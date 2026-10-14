@@ -112,4 +112,7 @@ def apply_model_settings(document, request):
                else '已更新比例标定' if 'calibration' in request else '已更新三维尺寸与外观')
     from window_preset import refresh_window_presets
     refresh_window_presets(result)
+    if 'room_partition' in result and settings['flush_wall_joints'] != document.get('model_settings', {}).get('flush_wall_joints', True):
+        from repartition import refresh_room_partition
+        refresh_room_partition(result)
     return result, dict(id='MODEL', type='model_settings', summary=summary)

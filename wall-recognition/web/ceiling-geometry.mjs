@@ -27,6 +27,9 @@ export function ceilingViewTarget(doc,roomId,componentId){
 // The displayed top of the walls includes repaired corners and opening
 // headers that the original 2D floor partition does not include.
 export function structuralCeilings(doc,knownSurfaces,model=null){
+  // Once partitioned, every top must belong to an editable region. Manual
+  // exclusions/splits and failed closure must never create hidden extra rooms.
+  if(doc.room_partition)return [];
   if(!doc.walls?.length)return [];
   const built=model||buildModel({...doc,model_settings:{...doc.model_settings,show_furniture:false}},{buildMeshes:false});
   const scale=doc.scale_mm_per_px,W=doc.image.width_px*scale,H=doc.image.height_px*scale;

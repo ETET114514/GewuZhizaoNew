@@ -7,6 +7,9 @@ from collections import defaultdict
 
 import cv2
 import numpy as np
+from space_boundaries import structural_additions
+
+ALGORITHM = 'wall-door-regions-v2'
 
 
 def boundary_rings(mask, xs, ys):
@@ -64,11 +67,12 @@ def partition_rooms(document):
                         min(b[cross+2], box[cross+2])-max(b[cross], box[cross]) > .01
                         for b in supports) for end in (box[axis], box[axis+2])]
         if all(attached):
-            boundaries.append(dict(id=opening['id'], kind=opening['kind'], bbox_px=list(box),
+            boundaries.append(dict(id=opening['id'], kind=opening['kind'], orientation=span['orientation'], bbox_px=list(box),
                                    start_px=list(span['start_px']), end_px=list(span['end_px'])))
         else:
             skipped.append(opening['id'])
-    boxes = [p['bbox_px'] for p in solids] + [b['bbox_px'] for b in boundaries]
+    additions = structural_additions(document, boundaries)
+    boxes = [p['bbox_px'] for p in solids] + [b['bbox_px'] for b in boundaries] + additions
     boxes = [[max(0., b[0]), max(0., b[1]), min(float(width), b[2]), min(float(height), b[3])]
              for b in boxes if b[2] > 0 and b[3] > 0 and b[0] < width and b[1] < height]
     xs = np.array(sorted({0., float(width), *(x for b in boxes for x in (b[0], b[2]))}))
@@ -114,7 +118,63 @@ def partition_rooms(document):
     if not regions:
         warnings.append('未找到可用的闭合区域，请先补墙或校核门窗。')
     from room_editing import compose_rooms
-    return compose_rooms(document, dict(algorithm='wall-door-regions-v1', regions=regions, region_count=len(regions),
+    result = compose_rooms(document, dict(algorithm=ALGORITHM, regions=regions, region_count=len(regions),
                 virtual_boundaries=boundaries, skipped_opening_ids=skipped,
                 pending_opening_ids=pending, ignored_small_region_count=small_count,
-                warnings=warnings))
+                structural_additions_px=[list(r) for r in additions], warnings=warnings))
+    # Audit physical connectivity before manual design splits/exclusions.
+    # Sample exact compressed cells, rather than a fixed 1 px step that can
+    # jump over a thin adjacent space. Report outside separately from walls.
+    accepted = {}
+    for region in regions:
+        col = np.searchsorted(xs, region['label_px'][0], side='right')-1
+        row = np.searchsorted(ys, region['label_px'][1], side='right')-1
+        accepted[int(labels[row, col])] = region['id']
+    def side_labels(boundary, sign):
+        axis = 0 if boundary['orientation'] == 'horizontal' else 1
+        cross = 1-axis
+        b = boundary['bbox_px']
+        values = xs if cross == 0 else ys
+        edge = b[cross if sign < 0 else cross+2]
+        index = np.searchsorted(values, edge, side='left')-1 if sign < 0 else np.searchsorted(values, edge, side='right')-1
+        other = ys if cross == 0 else xs
+        hits = set()
+        for j in range(len(other)-1):
+            if other[j+1] <= b[axis] or other[j] >= b[axis+2]:
+                continue
+            x, y = (index, j) if cross == 0 else (j, index)
+            if not (0 <= y < labels.shape[0] and 0 <= x < labels.shape[1]):
+                hits.add('outside'); continue
+            label = int(labels[y, x])
+            if label in accepted:
+                hits.add(accepted[label])
+            elif label and label in exterior:
+                hits.add('outside')
+        return sorted(hits)
+    reports = []
+    for opening in openings:
+        if opening['kind'] != 'door':
+            continue
+        boundary = next((b for b in boundaries if b['id'] == opening['id']), None)
+        sides = [side_labels(boundary, sign) for sign in (-1, 1)] if boundary else [[], []]
+        entry = opening.get('door_model') == 'entry'
+        indoor = [[i for i in side if i != 'outside'] for side in sides]
+        if not boundary:
+            status = 'unsupported'
+        elif entry:
+            status = 'entry' if sorted(map(len, indoor)) == [0, 1] and any('outside' in s for s in sides) else 'entry_ambiguous'
+        elif any(not side for side in indoor):
+            status = 'leak'
+        elif any(len(side) != 1 or 'outside' in side for side in sides):
+            status = 'ambiguous'
+        else:
+            status = 'same_space' if indoor[0] == indoor[1] else 'separate'
+        reports.append(dict(opening_id=opening['id'], entry=entry, sides=sides, status=status,
+                            bbox_px=list(opening['bbox_px'])))
+        messages = dict(unsupported='门洞未连接两端边界，请校核', leak='门的一侧未形成闭合空间，请校核围合墙体',
+            same_space='门两侧仍为同一空间，请校核漏墙或其他绕通路径', ambiguous='门侧边界存在歧义，请校核',
+            entry_ambiguous='入户门的室内外关系不明确，请校核')
+        if status in messages:
+            result['warnings'].append(f"{opening['id']}：{messages[status]}。")
+    result['door_sides'] = reports
+    return result

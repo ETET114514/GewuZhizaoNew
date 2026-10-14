@@ -43,6 +43,15 @@ test('closed displayed wall tops cover unpartitioned rooms while real gaps stay 
   const open={...model,boxes:model.boxes.slice(0,3)};assert.equal(structuralCeilings(d,[],open).length,0);
   const partial={...model,boxes:[...model.boxes.slice(0,3),wall(2,-1.2,.2,1.6),wall(2,1.2,.2,1.6)]};assert.equal(structuralCeilings(d,[],partial).length,0);
 });
+test('partitioned scenes never add uneditable tops, including excluded spaces',()=>{
+  const wall=(x,z,w,h)=>({kind:'wall',center:[x,1.4,z],size:[w,2.8,h]});
+  const model={height:2.8,boxes:[wall(0,-2,4,.2),wall(0,2,4,.2),wall(-2,0,.2,4),wall(2,0,.2,4)]};
+  const doc={image:{width_px:500,height_px:500},scale_mm_per_px:10,walls:[{}],room_partition:{regions:[]}};
+  assert.deepEqual(structuralCeilings(doc,[],model),[]);
+  assert.equal(ceilingLayout(doc,model).supplementalCount,0);
+  assert.equal(ceilingLayout(doc,model).surfaces.length,0);
+  delete doc.room_partition;assert.equal(structuralCeilings(doc,[],model).length,1);
+});
 test('independent slabs warn on penetration while their own tier risers do not',()=>{
   const d=fixture(),s=d.ceiling_layout.surfaces[0];d.ceiling_layout.surfaces.push({...s,id:'C002',bottom_mm:2540});
   assert(checkCollisions(d).pairs.some(p=>p.ids.includes('C001')&&p.ids.includes('C002')));

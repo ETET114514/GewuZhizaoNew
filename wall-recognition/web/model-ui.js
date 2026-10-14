@@ -300,12 +300,18 @@
   window.addEventListener('project-replacing',()=>{ceilingCaption.hidden=true;});
   $('model-person').addEventListener('click',()=>{if(!viewer?.viewPerson(window.ceilingUI?.roomId))message('此区域没有足够的可站立空间，请选择其他房间。',true);else ceilingCaption.hidden=true;});
   const viewActions=document.querySelector('.model-view-actions'),helpButton=document.createElement('button'),cameraStatus=document.createElement('span'),cameraHelp=document.createElement('section');
-  helpButton.id='model-camera-help';helpButton.className='button camera-help-button';helpButton.textContent='? 操作说明';helpButton.setAttribute('aria-expanded','false');helpButton.setAttribute('aria-controls','model-camera-help-panel');
-  cameraStatus.id='model-camera-status';cameraStatus.className='camera-status';viewActions.append(helpButton,cameraStatus);
+  helpButton.id='model-camera-help';helpButton.className='button camera-help-button';helpButton.setAttribute('aria-expanded','false');helpButton.setAttribute('aria-controls','model-camera-help-panel');
+  cameraStatus.id='model-camera-status';cameraStatus.className='camera-status';viewActions.append(cameraStatus);
   cameraHelp.id='model-camera-help-panel';cameraHelp.className='camera-help-panel';cameraHelp.hidden=true;cameraHelp.setAttribute('aria-label','三维按键操作说明');
   cameraHelp.innerHTML='<strong>先点击三维画面，再使用按键</strong><dl><dt>W / S</dt><dd>前进 / 后退</dd><dt>A / D</dt><dd>向左 / 向右移动</dd><dt>Shift / Ctrl</dt><dd>升高 / 降低视角（按住连续调整）</dd><dt>鼠标左键拖动</dt><dd>转头、抬头或低头</dd><dt>鼠标滚轮</dt><dd>扩大 / 缩小视野</dd><dt>人视 170 cm</dt><dd>回到当前房间，恢复 170 cm 眼高和 75° 视野</dd><dt>锁定镜头</dt><dd>暂停行走、转头和高度调整</dd></dl><p>高度受地板和顶面限制；升高不能越过家具或穿墙。透视 / 俯视模式不可行走。编辑输入框时按键不会移动镜头。</p>';
   document.querySelector('.model-scene').append(cameraHelp);
-  helpButton.addEventListener('click',()=>{cameraHelp.hidden=!cameraHelp.hidden;helpButton.setAttribute('aria-expanded',String(!cameraHelp.hidden));});
+  const helpHeader=document.createElement('div');helpHeader.className='camera-help-header';helpHeader.append(cameraHelp.firstElementChild);
+  const helpClose=document.createElement('button');helpClose.id='model-camera-help-close';helpClose.className='button';helpClose.textContent='收起 ↙';helpClose.setAttribute('aria-label','收起操作提示到左下角');helpHeader.append(helpClose);cameraHelp.prepend(helpHeader);
+  let keyHint=null;
+  function dockCameraHelp(){const bar=document.querySelector('.model-bottom-bar');keyHint=bar.querySelector('span:last-child');bar.insertBefore(helpButton,keyHint);keyHint.hidden=cameraHelp.hidden;}
+  if(document.querySelector('.model-bottom-bar'))dockCameraHelp();else document.addEventListener('DOMContentLoaded',dockCameraHelp,{once:true});
+  function showCameraHelp(show){cameraHelp.hidden=!show;if(keyHint)keyHint.hidden=!show;helpButton.setAttribute('aria-expanded',String(show));helpButton.textContent=show?'↙ 收起提示':'? 按键';helpButton.setAttribute('aria-label',show?'收起操作提示到左下角':'展开按键操作说明');}
+  helpButton.addEventListener('click',()=>showCameraHelp(cameraHelp.hidden));helpClose.addEventListener('click',()=>{showCameraHelp(false);helpButton.focus();});showCameraHelp(false);
   window.addEventListener('model-camera-state',e=>{const {height,fov,mode}=e.detail,text=mode==='human'?`眼高 ${height} cm · 视野 ${fov}°`:`全景 · 视野 ${fov}°`;if(cameraStatus.textContent!==text)cameraStatus.textContent=text;});
   window.addEventListener('model-navigation-mode',e=>{const text=e.detail==='human'?'点击画面后 WASD 行走 · Shift 升高 / Ctrl 降低 · 鼠标拖动转头':'全景查看 · 鼠标拖动转头 · 点击人视 170 cm 可行走';$('model-gesture').textContent=text;const hint=document.querySelector('.model-bottom-bar>span:last-child');if(hint)hint.textContent=text;});
   $('model-camera-lock').addEventListener('change',()=>viewer?.setCameraLocked($('model-camera-lock').checked));

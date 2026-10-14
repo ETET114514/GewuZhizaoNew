@@ -303,7 +303,8 @@ class ReviewHandler(BaseHTTPRequestHandler):
                         run['changes'].append(record)
                     elif route == '/api/partition-rooms':
                         document = deepcopy(run['document'])
-                        document['room_partition'] = partition_rooms(document)
+                        from repartition import refresh_room_partition
+                        refresh_room_partition(document)
                         run['history'].append((run['document'], list(run['changes']), run['next_id']))
                         run['history'] = run['history'][-50:]
                         run['document'] = document

@@ -172,6 +172,15 @@ function renderRoomList() {
   $('rooms-toggle').disabled=Boolean(state.busy)||!partition;
   $('room-count').textContent=partition?`${partition.region_count} 个候选`:'未分析';
   $('room-status').textContent=partition?partition.warnings.join(' '):'识别并校核墙体、门窗后，可尝试分割。无需比例标定。';
+  $('room-door-checks').replaceChildren();
+  const checkLabels={same_space:'两侧同区',leak:'一侧未闭合',unsupported:'门洞未接边界',ambiguous:'门侧有歧义',entry_ambiguous:'入户门内外待校核'};
+  for(const check of partition?.door_sides||[]){
+    if(!checkLabels[check.status])continue;
+    const button=document.createElement('button');button.className='button room-choice';button.type='button';
+    button.textContent=`定位 ${check.opening_id} · ${checkLabels[check.status]}`;button.disabled=Boolean(state.busy);
+    button.addEventListener('click',()=>{const opening=doc.openings.find(o=>o.id===check.opening_id);if(opening)focusOpening(opening);});
+    $('room-door-checks').append(button);
+  }
   $('room-list').replaceChildren();
   for(const [index,room] of rooms.entries()){
     const button=document.createElement('button');button.className='button room-choice';button.textContent=`${room.id} · ${room.name&&room.name!==room.id?room.name:'区域待校核'} · ${scaled?roomMeasurements?.formatRoomArea(areas[index])??'—':'未标定'}`;

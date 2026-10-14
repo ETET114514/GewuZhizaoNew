@@ -74,7 +74,8 @@ def compose_rooms(document, partition):
     occupied = unary_union(excluded + footprints)
     solid = unary_union([box(*p['bbox_px']) for w in document['walls']
                          if w.get('review_status') != 'rejected'
-                         for p in w.get('solid_parts', [w])])
+                         for p in w.get('solid_parts', [w])] +
+                        [box(*r) for r in partition.get('structural_additions_px', [])])
     frame = box(0, 0, document['image']['width_px'], document['image']['height_px'])
     output = []
     def append(region, geo, key, source):
