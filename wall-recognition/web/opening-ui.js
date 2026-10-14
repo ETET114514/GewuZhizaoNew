@@ -1,7 +1,7 @@
 'use strict';
 (() => {
   const form=$('opening-form');let geometry=null,current=null,gesture=null,frame=0,suppressUntil=0,valid=true,initial=null;
-  let operationModule=null;
+  let operationModule=null,doorModel='standard';
   let contextDocument=null,contextTicket=0;
   Promise.all([import('./opening-edit.mjs'),import('./opening-operation.mjs')]).then(([module,operations])=>{geometry=module;operationModule=operations;state.openingOperation=operations;if(item())fill(item());renderPlan();sync();}).catch(error=>toast(`门窗编辑加载失败：${error.message}`,true));
   const item=()=>state.run?.document.openings.find(o=>o.id===current);
@@ -27,9 +27,9 @@
     $('opening-sill').disabled=Boolean(state.busy)||!enabled||!scaled||!initial?.hostValid||o?.kind==='door';
     $('opening-floor-glass').hidden=o?.kind!=='window';
     $('opening-floor-glass').disabled=Boolean(state.busy)||!enabled||!scaled||!initial?.hostValid;
-    $('opening-ordinary-door').hidden=o?.kind!=='door';
+    $('opening-door-presets').hidden=o?.kind!=='door';
     $('opening-ordinary-door-help').hidden=o?.kind!=='door';
-    $('opening-ordinary-door').disabled=Boolean(state.busy)||!enabled||!scaled||!initial?.hostValid;
+    for(const button of form.querySelectorAll('[data-door-width]'))button.disabled=Boolean(state.busy)||!enabled||!scaled||!initial?.hostValid;
     $('opening-door-scale').hidden=o?.kind!=='door';
     $('opening-door-scale-help').hidden=o?.kind!=='door';
     $('opening-door-scale').disabled=Boolean(state.busy)||!enabled||state.formDirty;
@@ -44,7 +44,7 @@
   }
   function fill(o){
     if(!geometry)return;
-    valid=true;const scale=state.run.document.scale_mm_per_px;
+    valid=true;doorModel=o.door_model||'standard';const scale=state.run.document.scale_mm_per_px;
     const values=geometry.openingValues(state.run.document,o);
     for(const [key,name] of [['width_mm','width'],['height_mm','height'],['sill_height_mm','sill']])$('opening-'+name).value=scale?Number((values[key]/10).toFixed(4)):'';
     $('opening-position').value='';
@@ -102,7 +102,7 @@
       $('opening-side').value=op.side;el.textContent=`${owner?'以所选房间为室内侧':context?.reason||''} · ${o.kind==='door'?'门向内开':'窗向外开'}`;
     }catch(error){el.textContent=`${error.message}；仍可打开，沿用当前开启侧。`;}
   }
-  function select(o){current=o.id;state.focusedRoom=null;state.openingPreview=null;form.hidden=false;$('empty-selection').hidden=true;$('room-edit-form').hidden=true;$('opening-selected-id').textContent=`${o.id} · ${o.kind==='window'?'窗':o.kind==='door'?'门':'待定边界'}`;fill(o);sync();window.dispatchEvent(new CustomEvent('opening-selected',{detail:o.id}));}
+  function select(o){current=o.id;state.focusedRoom=null;state.openingPreview=null;form.hidden=false;$('empty-selection').hidden=true;$('room-edit-form').hidden=true;$('opening-selected-id').textContent=`${o.id} · ${o.kind==='window'?'窗':o.kind==='door'?(o.door_model==='entry'?'大入户门':'门'):'待定边界'}`;fill(o);sync();window.dispatchEvent(new CustomEvent('opening-selected',{detail:o.id}));}
   function input(){
     if(!form.checkValidity())throw new Error('请检查门窗尺寸与沿墙位置。');
     const o=item(),scale=state.run.document.scale_mm_per_px;
@@ -111,15 +111,15 @@
       ...(o.kind==='window'?{axis_mode:$('opening-axis-mode').value}:{}),
       direction_mode:$('opening-direction-mode').value,interior_room_id:$('opening-owner').value},state.openingContexts?.[current],true);
     const changed=['width','height','sill','position'].some(name=>$('opening-'+name).value!==initial.display[name]);
-    if(!scale||!initial.hostValid||!changed)return {opening_id:current,operation};
+    if(!scale||!initial.hostValid||!changed)return {opening_id:current,operation,...(o.kind==='door'?{door_model:doorModel}:{})};
     const host=geometry.openingHost(state.run.document,o);
     const length=(name,key)=>$('opening-'+name).value===initial?.display[name]?initial.values[key]:Number($('opening-'+name).value)*10;
-    return {opening_id:current,...(o.operation||JSON.stringify(operation)!==JSON.stringify(initial.operation)?{operation}:{}),dimensions_mm:{width_mm:length('width','width_mm'),height_mm:length('height','height_mm'),sill_height_mm:o.kind==='door'?0:length('sill','sill_height_mm')},center_px:$('opening-position').value===initial?.display.position?initial.center:host.a+Number($('opening-position').value)*10/scale};
+    return {opening_id:current,...(o.kind==='door'?{door_model:doorModel}:{}),...(o.operation||JSON.stringify(operation)!==JSON.stringify(initial.operation)?{operation}:{}),dimensions_mm:{width_mm:length('width','width_mm'),height_mm:length('height','height_mm'),sill_height_mm:o.kind==='door'?0:length('sill','sill_height_mm')},center_px:$('opening-position').value===initial?.display.position?initial.center:host.a+Number($('opening-position').value)*10/scale};
   }
   function preview(){
     if(!item()||state.busy)return;
     state.formDirty=true;
-    try{const data=input();state.openingPreview=geometry.openingPreview(state.run.document,current,data.dimensions_mm,data.center_px,data.operation);valid=true;status('预览中 · 应用后可撤销、保存');}
+    try{const data=input();state.openingPreview=geometry.openingPreview(state.run.document,current,data.dimensions_mm,data.center_px,data.operation,data.door_model);valid=true;status('预览中 · 应用后可撤销、保存');}
     catch(error){state.openingPreview=null;valid=false;status(error.message,true);}
     renderPlan();refresh();window.dispatchEvent(new Event('opening-preview-change'));
   }
@@ -149,8 +149,8 @@
   $('opening-floor-glass').addEventListener('click',()=>{
     $('opening-height').value=(state.run.document.model_settings?.wall_height_mm??2800)/10;$('opening-sill').value=0;preview();
   });
-  $('opening-ordinary-door').addEventListener('click',()=>{
-    $('opening-width').value=80;preview();
+  for(const button of form.querySelectorAll('[data-door-width]'))button.addEventListener('click',()=>{
+    $('opening-width').value=button.dataset.doorWidth;doorModel=button.id==='opening-entry-door'?'entry':'standard';if(doorModel==='entry')$('opening-height').value=210;preview();
   });
   $('opening-door-scale').addEventListener('click',()=>handle((async()=>{
     if(state.busy||state.formDirty||item()?.kind!=='door')return;

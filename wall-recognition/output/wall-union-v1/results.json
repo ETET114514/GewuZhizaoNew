@@ -1,0 +1,256 @@
+{
+  "default_enabled": "passed",
+  "unified_wall_mesh": "passed",
+  "wall_mesh_stats": {
+    "id": "walls",
+    "indexed": true,
+    "opacity": 1,
+    "triangles": 7800
+  },
+  "ghost_walls": "passed",
+  "tips": [
+    {
+      "id": "W001",
+      "end": "end",
+      "from": 332,
+      "to": 331.5,
+      "receiver": "W028"
+    },
+    {
+      "id": "W002",
+      "end": "end",
+      "from": 208,
+      "to": 204.5,
+      "receiver": "W027"
+    },
+    {
+      "id": "W004",
+      "end": "start",
+      "from": 181,
+      "to": 187,
+      "receiver": "W007"
+    },
+    {
+      "id": "W005",
+      "end": "start",
+      "from": 259,
+      "to": 264,
+      "receiver": "W006"
+    },
+    {
+      "id": "W005",
+      "end": "end",
+      "from": 332,
+      "to": 331.5,
+      "receiver": "W028"
+    },
+    {
+      "id": "W009",
+      "end": "start",
+      "from": 259,
+      "to": 264,
+      "receiver": "W006"
+    },
+    {
+      "id": "W013",
+      "end": "end",
+      "from": 646,
+      "to": 645.5,
+      "receiver": "W033"
+    },
+    {
+      "id": "W017",
+      "end": "end",
+      "from": 646,
+      "to": 645.5,
+      "receiver": "W033"
+    },
+    {
+      "id": "W020",
+      "end": "end",
+      "from": 623,
+      "to": 621,
+      "receiver": "W022"
+    },
+    {
+      "id": "W022",
+      "end": "end",
+      "from": 649,
+      "to": 646,
+      "receiver": "W037"
+    },
+    {
+      "id": "W025",
+      "end": "end",
+      "from": 451,
+      "to": 439,
+      "receiver": "W019"
+    },
+    {
+      "id": "W026",
+      "end": "end",
+      "from": 120,
+      "to": 119,
+      "receiver": "W040"
+    }
+  ],
+  "window_corner_changes": [
+    {
+      "id": "W008",
+      "host": "W030",
+      "end": "start",
+      "from": 222,
+      "to": 202,
+      "receiver": "W007"
+    },
+    {
+      "id": "W016",
+      "host": "W033",
+      "end": "start",
+      "from": 399,
+      "to": 379,
+      "receiver": "W013"
+    }
+  ],
+  "corner_fills": [
+    {
+      "id": "W001",
+      "wallIds": [
+        "W001",
+        "W027"
+      ],
+      "x0": 189.5,
+      "x1": 191,
+      "z0": 14,
+      "z1": 31,
+      "bottom": 0,
+      "top": 2.8
+    },
+    {
+      "id": "W007",
+      "wallIds": [
+        "W007",
+        "W030"
+      ],
+      "x0": 576,
+      "x1": 576.5,
+      "z0": 187,
+      "z1": 202,
+      "bottom": 0,
+      "top": 2.8
+    },
+    {
+      "id": "W017",
+      "wallIds": [
+        "W017",
+        "W035"
+      ],
+      "x0": 489,
+      "x1": 494,
+      "z0": 464,
+      "z1": 478,
+      "bottom": 0,
+      "top": 2.8
+    },
+    {
+      "id": "W036",
+      "wallIds": [
+        "W036",
+        "W021"
+      ],
+      "x0": 262,
+      "x1": 273,
+      "z0": 465,
+      "z1": 467,
+      "bottom": 0,
+      "top": 2.8
+    },
+    {
+      "id": "W038",
+      "wallIds": [
+        "W038",
+        "W037"
+      ],
+      "x0": 643.25,
+      "x1": 646,
+      "z0": 681.5,
+      "z1": 685,
+      "bottom": 0,
+      "top": 0.9
+    },
+    {
+      "id": "W038",
+      "wallIds": [
+        "W038",
+        "W037"
+      ],
+      "x0": 643.25,
+      "x1": 646,
+      "z0": 681.5,
+      "z1": 685,
+      "bottom": 2.4,
+      "top": 2.8
+    },
+    {
+      "id": "W041",
+      "wallIds": [
+        "W041",
+        "W039"
+      ],
+      "x0": 434.5,
+      "x1": 439,
+      "z0": 740.25,
+      "z1": 743.5,
+      "bottom": 0,
+      "top": 0.9
+    },
+    {
+      "id": "W041",
+      "wallIds": [
+        "W041",
+        "W039"
+      ],
+      "x0": 434.5,
+      "x1": 439,
+      "z0": 740.25,
+      "z1": 743.5,
+      "bottom": 2.4,
+      "top": 2.8
+    },
+    {
+      "id": "W041",
+      "wallIds": [
+        "W041",
+        "W040"
+      ],
+      "x0": 112,
+      "x1": 115.5,
+      "z0": 740.25,
+      "z1": 743.5,
+      "bottom": 0,
+      "top": 0.9
+    },
+    {
+      "id": "W041",
+      "wallIds": [
+        "W041",
+        "W040"
+      ],
+      "x0": 112,
+      "x1": 115.5,
+      "z0": 740.25,
+      "z1": 743.5,
+      "bottom": 2.4,
+      "top": 2.8
+    }
+  ],
+  "four_reported_locations": "passed",
+  "five_corner_fills": "passed",
+  "preview_discard": "passed",
+  "disable": "passed",
+  "undo": "passed",
+  "source_openings_furniture_unchanged": "passed",
+  "save_reopen": "passed",
+  "narrow": "passed",
+  "page_errors": []
+}

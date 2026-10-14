@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="在本机识别户型墙体，逐段修改墙体并保存校正反馈。">
-  <title>筑见 · 户型校核</title><link rel="stylesheet" href="/app.css"><script src="/app.js" defer></script><script src="/opening-ui.js" defer></script><script src="/opening-quick-ui.js" defer></script><script src="/model-ui.js" defer></script><script src="/room-ui.js" defer></script><script src="/wall-length-ui.js" defer></script><script src="/toolbar-ui.js" defer></script><script src="/closure-ui.js" defer></script>
+  <title>筑见 · 户型校核</title><link rel="stylesheet" href="/app.css"><script src="/app.js" defer></script><script src="/opening-ui.js" defer></script><script src="/opening-place-ui.js" defer></script><script src="/opening-quick-ui.js" defer></script><script src="/model-ui.js" defer></script><script src="/room-ui.js" defer></script><script src="/wall-length-ui.js" defer></script><script src="/toolbar-ui.js" defer></script><script src="/closure-ui.js" defer></script><script src="/collision-ui.js" defer></script>
+<script src="/ceiling-ui.js" defer></script>
 </head>
 <body>
   <header class="header">
@@ -35,7 +36,7 @@
 <div id="tools-edit" class="ribbon-panel" role="tabpanel" aria-labelledby="tab-edit" hidden><div class="ribbon-group"><span class="ribbon-caption">墙体与家具</span><div class="ribbon-actions"><button id="select-tool" class="tool active" aria-pressed="true">↖ 选择墙段</button><button id="region-tool" class="tool" disabled aria-pressed="false">▧ 框选漏墙</button><button id="furniture-tool" class="button full" disabled aria-pressed="false">▧ 框选补家具 / 设施 / 区域</button></div></div><div class="ribbon-group"><span class="ribbon-caption">房间区域</span><div class="ribbon-actions"><button id="partition-rooms" class="button full" disabled>分割区域</button><button id="room-add" class="button full" disabled>手绘补区域</button></div></div><p class="ribbon-note">选中图上对象，在右侧修改属性、轮廓与材质。</p></div>
 <div id="tools-measure" class="ribbon-panel" role="tabpanel" aria-labelledby="tab-measure" hidden><div class="ribbon-group"><span class="ribbon-caption">比例</span><button id="calibrate" class="button" disabled>拉线标定</button></div><div class="ribbon-group"><span class="ribbon-caption">墙长标注</span><div class="dimension-tools" aria-label="墙长标注"><label><input id="wall-lengths-toggle" type="checkbox" disabled> 显示墙长</label><label title="开启时在转角及 T/X 形交接处分段；关闭时合并相接的共线墙段。仅影响标注。"><input id="wall-corners-toggle" type="checkbox" checked disabled> 按拐角分段</label><span id="wall-lengths-hint" role="status">识别后可显示墙长。</span></div></div><div class="ribbon-group"><span class="ribbon-caption">房间面积</span><label class="visibility"><input id="room-areas-toggle" type="checkbox" checked disabled> 显示面积</label><span class="ribbon-note">随区域图层显示 · 单位 m²</span></div><section class="model-entry">
 
-        <p id="calibration-status" class="opening-help">识别后，在图上标定一段已知长度。</p>
+        <p id="calibration-status" class="opening-help">识别后默认按普通门洞 80 cm 估算比例；可重新拉线标定。</p>
 
         <details class="thickness-calibration"><summary>备选：按墙厚估算比例</summary>
           <p class="opening-help">选一段厚度可靠的实墙，填写实际墙厚。估算会影响整个模型比例；已知长度时优先拉线标定。</p>
@@ -50,7 +51,7 @@
         </form>
       </section></div>
 <div id="tools-display" class="ribbon-panel" role="tabpanel" aria-labelledby="tab-display" hidden><div class="ribbon-group"><span class="ribbon-caption">二维图层</span><div class="ribbon-actions"><label class="visibility"><input id="overlay-toggle" type="checkbox" checked> 墙段</label><label class="visibility"><input id="openings-toggle" type="checkbox" checked> 门窗</label><label class="visibility"><input id="furniture-toggle" type="checkbox" checked> 家具</label><label class="model-check"><input id="rooms-toggle" type="checkbox" checked> 显示区域与虚拟分界</label></div></div><div class="ribbon-group"><span class="ribbon-caption">空间预览</span><button id="open-model" class="button primary" disabled>查看三维</button></div><p class="ribbon-note">三维沿用当前标定、墙体、区域和材质。</p></div>
-<div id="tools-materials" class="ribbon-panel" role="tabpanel" aria-labelledby="tab-materials" hidden><div class="drawer-section-title">家具与设施</div><p class="ribbon-note">拖入户型图直接摆放；也可点选类别，再点击图上位置。</p><div class="material-search"><input id="material-search" type="search" placeholder="搜索家具，如床、沙发" aria-label="搜索家具类别"></div><div id="material-grid" class="material-grid"></div><p id="material-empty" class="ribbon-note" hidden>没有匹配的家具类别</p><div id="material-actions" class="ribbon-group"></div><p id="furniture-placement-hint" class="ribbon-note" role="status">先识别并标定比例，预设占地可在放下后按厘米修改。</p></div>
+<div id="tools-materials" class="ribbon-panel" role="tabpanel" aria-labelledby="tab-materials" hidden><div class="drawer-section-title">家具与设施</div><p class="ribbon-note">拖入户型图直接摆放；也可点选类别，再点击图上位置。</p><div class="material-search"><input id="material-search" type="search" placeholder="搜索家具，如床、沙发" aria-label="搜索家具类别"></div><div id="material-grid" class="material-grid"></div><p id="material-empty" class="ribbon-note" hidden>没有匹配的家具类别</p><div id="material-actions" class="ribbon-group"></div><label class="visibility"><input id="furniture-snap-toggle" type="checkbox" checked> 家具吸附与对齐</label><p class="ribbon-note">拖动时贴墙 / 对齐家具并显示间距 · Alt 临时关闭吸附 · 二维与三维共用</p><p id="furniture-placement-hint" class="ribbon-note" role="status">先识别并标定比例，预设占地可在放下后按厘米修改。</p></div>
 <div id="tools-detail" class="ribbon-panel" role="tabpanel" aria-labelledby="tab-detail" hidden><div class="drawer-section-title">空间与地面</div><div class="detail-card"><span data-icon="rooms"></span><strong>房间分区</strong><p>划分空间，编辑轮廓并统计参考面积。</p><button class="button" data-command="partition-rooms">自动分区</button><button class="button" data-command="room-add">手绘区域</button></div><div class="detail-card"><span data-icon="tiles"></span><strong>地面铺装</strong><p>选择房间，设置瓷砖、木地板、颜色和铺设方向。</p><button class="button" data-inspect="room-section">查看房间与材质</button></div><div class="detail-card"><span data-icon="cube"></span><strong>三维空间</strong><p>调整墙高、门窗尺寸及家具位置与外观。</p><button class="button" data-command="open-model">进入三维</button></div></div>
 </div><button id="drawer-toggle" class="drawer-toggle" aria-controls="tool-drawer" aria-expanded="true" aria-label="收起工具面板">‹</button>
 </section>
@@ -64,7 +65,7 @@
       <div class="legend"><span><i class="dot blue"></i>候选墙段</span><span><i class="dot orange"></i>已标问题</span><span><i class="dot teal"></i>漏识别区域</span><span class="legend-note">几何为像素 · 标注按比例换算</span></div>
     </section>
     <aside class="review-panel" aria-label="墙体修改">
-      <section id="opening-quick-controls" class="opening-quick-controls" aria-label="快捷打开门窗"></section>
+      <section id="opening-quick-controls" class="opening-quick-controls" aria-label="门窗开合"></section>
 
       <section id="closure-panel" class="closure-section" hidden>
         <div class="issues-heading"><h3>闭合诊断</h3><label><input id="closure-visible" type="checkbox" checked> 显示疑点</label></div>
@@ -140,10 +141,10 @@
         <div class="field-row"><label class="field">洞口宽（cm）<input id="opening-width" type="number" min="10" max="2000" step="any" required></label><label class="field">洞口高（cm）<input id="opening-height" type="number" min="10" max="2000" step="any" required></label></div>
         <div class="field-row"><label class="field">离地高度（cm）<input id="opening-sill" type="number" min="0" max="2000" step="any" required></label><label class="field">中心距墙段起点（cm）<input id="opening-position" type="number" min="0" step="any" required></label></div>
         <button id="opening-floor-glass" type="button" class="button full">一键落地玻璃</button>
-        <button id="opening-ordinary-door" type="button" class="button full">普通门 · 门洞宽 80 cm</button>
-        <p id="opening-ordinary-door-help" class="opening-help">预设门洞宽 800 mm，门扇适配门框内宽。先预览，再应用；需标定比例。</p>
+        <div id="opening-door-presets"><button id="opening-entry-door" data-door-width="120" type="button" class="button full">大入户门 · 120 × 210 cm</button><button id="opening-bedroom-door" data-door-width="90" type="button" class="button full">卧室门 · 门洞宽 90 cm</button><button id="opening-ordinary-door" data-door-width="80" type="button" class="button full">卫生间门 · 门洞宽 80 cm</button></div>
+        <p id="opening-ordinary-door-help" class="opening-help">入户 120 / 卧室 90 / 卫生间 80 cm；左右门套各 5 cm，净宽分别 110 / 80 / 70 cm。先预览，再应用；需标定比例。</p>
         <button id="opening-door-scale" type="button" class="button full">以此门洞 80 cm 估算全图比例</button>
-        <p id="opening-door-scale-help" class="opening-help">无需拉线：按这扇门洞实际宽 800 mm 换算全图，保留图上几何，可撤销。请选普通单扇门。</p>
+        <p id="opening-door-scale-help" class="opening-help">无需拉线：按这扇门洞实际宽 800 mm 换算全图，保留图上几何，可撤销。请选实际门洞宽 80 cm 的卫生间等门；卧室或入户门请按已知长度标定。</p>
         <label class="field" id="opening-type-field">窗的开启方式<select id="opening-type"><option value="fixed">固定玻璃</option><option value="hinged">单扇平开窗</option></select></label>
         <div id="opening-swing-fields">
         <label class="field">内外方向<select id="opening-direction-mode"><option value="auto">门向房内开 / 窗向房外开</option><option value="manual">手动选择开启侧</option></select></label>
@@ -171,7 +172,7 @@
       <section class="model-scene"><div id="model-canvas"></div><div class="model-view-actions"><button id="model-reset" class="button">透视</button><button id="model-top" class="button">俯视</button><button id="model-move" class="button" aria-pressed="false" disabled>移动家具</button><span id="model-move-status" class="model-move-status" role="status">选中家具后可移动</span><label class="button"><input id="model-wall-ghost" type="checkbox">淡化墙体</label></div><p id="model-gesture" class="model-gesture">拖动旋转 · 滚轮缩放 · 右键平移</p></section>
       <aside class="model-controls">
         <p id="model-summary" class="opening-help" role="status"></p>
-        <section id="model-opening-quick-controls" class="opening-quick-controls" aria-label="快捷打开门窗"></section>
+        <section id="model-opening-quick-controls" class="opening-quick-controls" aria-label="门窗开合"></section>
         <section class="model-furniture-section">
           <h3>逐件家具编辑</h3>
           <label class="field">选择家具<select id="model-furniture-select"></select></label>
@@ -201,6 +202,8 @@
         <form id="model-form">
           <h3>墙体与地面</h3>
           <label class="field">墙高（mm）<input data-setting="wall_height_mm" type="number" min="100" max="20000" step="any" required></label>
+          <label class="model-check"><input data-setting="flush_wall_joints" type="checkbox"> 墙体交接齐平（默认）</label>
+          <p class="opening-help">墙体合成连续表面；勾选后收齐墙头、补齐相接外角，整理窗角回折。门窗洞口保留，相接窗仅补窗上、窗下墙角；关闭可对照原墙段形状。</p>
           <div class="field-row"><label class="field">墙体颜色<input data-setting="wall_color" type="color"></label><label class="field">地面颜色<input data-setting="floor_color" type="color"></label></div>
           <h3>门窗预设</h3>
           <label class="field">洞口宽度来源<select data-setting="width_mode"><option value="detected">按图上尺寸与比例换算</option><option value="preset">使用下面的预设宽度</option></select></label>

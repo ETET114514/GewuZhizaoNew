@@ -176,6 +176,25 @@ def apply_room_edit(document, request):
     else:
         raise ValueError('区域操作不支持。')
     result['room_partition'] = partition_rooms(result)
+    if selected and action in ('reshape', 'merge') and result.get('ceiling_design'):
+        # A deliberate room reshape keeps authored ceilings on that room. A
+        # split has ambiguous ownership and is left for explicit reassignment.
+        from ceiling_design import room_key
+        replacement = next((r for r in result['room_partition']['regions'] if r['id'] == identifier), None)
+        if replacement:
+            design = result['ceiling_design']; new_key = room_key(replacement)
+            old_keys = [room_key(selected)]
+            if action == 'merge':
+                old_keys.append(room_key(target))
+            for old_key in old_keys:
+                config = design['rooms'].pop(old_key, None)
+                if config:
+                    design['rooms'].setdefault(new_key, config)
+                for component in design['components']:
+                    if component['room_key'] == old_key:
+                        component['room_key'] = new_key
+                        if component['settings'].get('host_id') == 'room:'+old_key:
+                            component['settings']['host_id'] = 'room:'+new_key
     labels = dict(settings='已应用区域名称与地面材质', add='已补入手绘区域', reshape='已更新区域轮廓',
                   delete='已排除区域', split='已切分区域', merge='已合并区域')
     return result, dict(id='REGION', type='room_edit', room_id=identifier, summary=labels[action])

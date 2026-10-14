@@ -1,0 +1,16 @@
+{
+  "checks": [
+    "oriented boxes",
+    "2D move preview/cancel/commit/undo",
+    "wall collision",
+    "copy collision",
+    "3D numeric preview/cancel",
+    "3D nudge and undo",
+    "3D pointer drag and Esc",
+    "height separation",
+    "shared visibility controls",
+    "save/reopen",
+    "narrow layout"
+  ],
+  "pageErrors": []
+}

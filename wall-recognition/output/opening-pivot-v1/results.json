@@ -1,5 +1,5 @@
 {
-  "ambiguous_door_requires_owner": "passed",
+  "ambiguous_door_can_open": "passed",
   "room_inward_door": "passed",
   "outward_window_45": "passed",
   "default_side_open": "passed",

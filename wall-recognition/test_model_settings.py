@@ -31,6 +31,7 @@ class ModelSettingsTests(unittest.TestCase):
 
     def test_invalid_values_do_not_mutate_document(self):
         invalid=[dict(settings={'wall_height_mm':float('nan')}),dict(settings={'show_plan':1}),
+                 dict(settings={'flush_wall_joints':1}),dict(settings={'flush_wall_joints':'false'}),
                  dict(settings={'wall_color':'red'}),dict(settings={'window_height_mm':2000}),
                  dict(settings={'door_height_mm':2900}),dict(settings={'width_mode':'x'}),
                  dict(settings={'door_width_mm':1000}),
@@ -55,12 +56,14 @@ class ModelSettingsTests(unittest.TestCase):
                 with opener.open(request) as response:return json.load(response)
             try:
                 first=post('/api/model-settings',dict(calibration=dict(points_px=[[0,0],[300,0]],length_mm=6000)))
-                second=post('/api/model-settings',dict(settings={'wall_color':'#336699','show_plan':True}))
+                self.assertTrue(first['document']['model_settings']['flush_wall_joints'])
+                second=post('/api/model-settings',dict(settings={'wall_color':'#336699','show_plan':True,'flush_wall_joints':False}))
                 saved=post('/api/save-project',{})
                 folder=Path(temp)/'projects'/saved['saved_name']
                 stored=json.loads((folder/'walls.json').read_text(encoding='utf-8'))
                 solid=json.loads((folder/'solid-walls.json').read_text(encoding='utf-8'))
                 self.assertEqual(stored,second['document']);self.assertEqual(solid['scale_mm_per_px'],20)
+                self.assertFalse(stored['model_settings']['flush_wall_joints'])
                 restored=post('/api/undo-edit',{})
                 self.assertEqual(restored['document'],first['document'])
                 with self.assertRaises(HTTPError) as error:post('/api/model-settings',dict(settings={'door_height_mm':9000}))

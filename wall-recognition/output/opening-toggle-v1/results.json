@@ -1,0 +1,15 @@
+{
+  "compact_controls": "passed",
+  "single_toggle_and_partial_angle": "passed",
+  "batch_scopes": "passed",
+  "preserve_hinge_side": "passed",
+  "fixed_skip": "passed",
+  "one_step_batch_undo": "passed",
+  "repeat_no_history": "passed",
+  "model_controls": "passed",
+  "open_and_close_save_reopen": "passed",
+  "open_and_close_failure_atomicity": "passed",
+  "draft_guard": "passed",
+  "narrow": "passed",
+  "page_errors": []
+}

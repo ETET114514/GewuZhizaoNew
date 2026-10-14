@@ -1,4 +1,5 @@
 import hashlib
+from copy import deepcopy
 import json
 from pathlib import Path
 import tempfile
@@ -26,6 +27,10 @@ class WebWorkflowTests(unittest.TestCase):
         request = Request(cls.origin + "/api/detect", data=payload, headers={"X-Wall-Token": cls.token, "Content-Type": "image/png", "Origin": cls.origin})
         with urlopen(request) as response:
             cls.detected = json.load(response)
+        cls.initial_run = deepcopy(cls.server.sessions[cls.detected['run_id']])
+
+    def setUp(self):
+        self.server.sessions[self.detected['run_id']] = deepcopy(self.initial_run)
 
     @classmethod
     def tearDownClass(cls):
@@ -144,7 +149,11 @@ class WebWorkflowTests(unittest.TestCase):
         self.assertNotEqual(first['run_id'],second['run_id'])
         self.assertEqual(first['document']['furniture'],second['document']['furniture'])
         self.assertEqual(second['document']['image']['original_filename'],'second.png')
-        self.assertEqual(self.server.sessions[second['run_id']]['history'],[])
+        history=self.server.sessions[second['run_id']]['history']
+        self.assertEqual(len(history),second['history_size'])
+        self.assertEqual(second['history_size'],1)
+        self.assertIsNone(history[0][0]['scale_mm_per_px'])
+        self.assertEqual(history[0][1],[])
 
     def test_save_wall_problem_and_missing_region_with_paired_source(self):
         issues = [
@@ -187,12 +196,12 @@ class WebWorkflowTests(unittest.TestCase):
         status, undone = self.post("/api/undo-edit", {"run_id": run_id})
         self.assertEqual(status, 200)
         self.assertEqual(undone["document"], self.detected["document"])
-        self.assertEqual(undone["history_size"], 0)
+        self.assertEqual(undone["history_size"], self.detected['history_size'])
 
     def test_local_request_protection_and_page_assets(self):
         self.assertEqual(self.post("/api/save-feedback", {}, token=False)[0], 403)
         self.assertEqual(self.post("/api/save-feedback", {}, origin="https://example.com")[0], 403)
-        for path in ["/", "/app.css", "/app.js", "/api/sample-image"]:
+        for path in ["/", "/app.css", "/app.js", "/collision-ui.js", "/collision-boxes.mjs", "/api/sample-image"]:
             with urlopen(self.origin + path) as response:
                 self.assertEqual(response.status, 200)
                 self.assertGreater(int(response.headers["Content-Length"]), 0)
@@ -216,6 +225,8 @@ class WebWorkflowTests(unittest.TestCase):
             self.assertEqual(undone["document"],original)
         for bad in ({"opening_id":"O999","kind":"door"},{"opening_id":opening["id"],"kind":"anything"}):
             self.assertEqual(self.post("/api/review-opening",{"run_id":run_id,**bad})[0],400)
+        status,unscaled=self.post("/api/undo-edit",{"run_id":run_id})
+        self.assertEqual(status,200);self.assertIsNone(unscaled['document']['scale_mm_per_px'])
         self.assertEqual(self.post("/api/undo-edit",{"run_id":run_id})[0],400)
 
     def test_furniture_edit_save_and_shared_undo(self):

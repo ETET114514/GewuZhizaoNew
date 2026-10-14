@@ -50,6 +50,8 @@ finally:
     async function arm(id='F001'){await select(id);await page.locator('#furniture-copy').click();await page.waitForFunction(()=>state.mode==='furniture-copy');}
     async function place(x=250,y=200){const p=await point(x,y);await page.mouse.move(p.x,p.y);await page.mouse.down();await page.mouse.up();await page.waitForFunction(()=>!state.busy);}
     await openSaved(fixture.project);
+    // This regression verifies free placement; snapping has its own gesture checks.
+    await page.locator('#tab-materials').click();await page.locator('#furniture-snap-toggle').uncheck();
     const original=await page.evaluate(()=>structuredClone(state.run.document));
     await arm();const p=await point(250,200);await page.mouse.move(p.x,p.y);
     await page.waitForFunction(()=>state.furniture2dPreview);

@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "checks": [
+    "snap guide and commit",
+    "Alt bypass",
+    "toggle bypass",
+    "single undo",
+    "new door 120/90/80 cm presets",
+    "existing door 120/90/80 cm preview",
+    "entry preset apply/save/undo",
+    "new door preview and Esc",
+    "overlap rejection",
+    "new window dimensions",
+    "network failure recovery",
+    "3D display",
+    "3D movement distances, cancel, commit and undo",
+    "save reopen",
+    "390px screen"
+  ],
+  "errors": []
+}

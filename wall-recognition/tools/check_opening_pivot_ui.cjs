@@ -33,21 +33,23 @@ finally:
     async function model(name){await click('open-model');await page.locator('#model-dialog').waitFor({state:'visible'});await page.locator('#model-wall-ghost').check();await page.screenshot({path:path.join(output,name)});await click('model-quick-edit-pivot');assert.equal(await page.evaluate(()=>$('model-dialog').open),false);}
     await openSaved(fixture.project);const original=await doc();
     await select('O001');assert((await page.locator('#opening-context-status').textContent()).includes('两侧都有房间'));
-    await click('quick-open-door');assert.equal((await doc()).openings[0].operation.angle_deg,90);assert((await page.locator('#opening-quick-controls [role="status"]').textContent()).includes('沿用当前开启侧'));
+    await click('quick-toggle');assert.equal((await doc()).openings[0].operation.angle_deg,90);assert((await page.locator('#opening-quick-controls [role="status"]').textContent()).includes('沿用当前开启侧'));
     await click('undo');assert.deepEqual(await doc(),original);
+    await select('O001');
     const owner=await page.evaluate(()=>state.openingContexts.O001.positive[0].id);
     await page.locator('#opening-owner').selectOption(owner);await page.locator('#opening-hinge').selectOption('end');await page.locator('#opening-pivot').fill('80');await page.locator('#opening-angle').fill('90');await apply();
     let op=(await doc()).openings[0].operation;assert.equal(op.side,'positive');assert.equal(op.pivot_ratio,.8);assert.equal(op.interior_room_id,owner);
     assert.deepEqual((await doc()).walls,original.walls);await page.screenshot({path:path.join(output,'door-room-pivot.png')});await model('door-model.png');
     await click('undo');assert.deepEqual(await doc(),original);
     await select('O002');assert.equal(await page.locator('#opening-axis').inputValue(),'vertical');assert.equal(await page.locator('#opening-type').inputValue(),'hinged');
-    await click('quick-open-window');op=(await doc()).openings[1].operation;assert.equal(op.angle_deg,45);assert.equal(op.side,'negative');await model('window-side.png');
+    await click('quick-toggle');op=(await doc()).openings[1].operation;assert.equal(op.angle_deg,45);assert.equal(op.side,'negative');await model('window-side.png');
     await select('O002');await page.locator('#opening-axis').selectOption('horizontal');await apply();
     op=(await doc()).openings[1].operation;assert.equal(op.hinge,'top');assert.equal(op.pivot_ratio,1);assert.equal(op.pivot_axis,'horizontal');assert.equal(op.side,'negative');
     assert.equal(await page.locator('[data-opening-swing="O002"] polygon').count(),1);await model('window-top.png');
     await page.locator('#opening-hinge').selectOption('bottom');await page.locator('#opening-pivot').fill('20');await apply();
     op=(await doc()).openings[1].operation;assert.equal(op.hinge,'bottom');assert.equal(op.pivot_ratio,.2);await model('window-bottom.png');
     const beforeBad=await doc();await page.locator('#opening-pivot').fill('-1');assert(await page.locator('#opening-apply').isDisabled());assert.deepEqual(await doc(),beforeBad);await page.keyboard.press('Escape');
+    await select('O002');
     await page.locator('#opening-direction-mode').selectOption('manual');await page.locator('#opening-side').selectOption('positive');await apply();assert.equal((await doc()).openings[1].operation.side,'positive');
     await click('save');const saved=(await page.locator('#save-status').textContent()).split(' · ').at(-1),savedDoc=await doc();await openSaved(saved);assert.deepEqual(await doc(),savedDoc);
     await select('O002');await page.locator('#opening-angle').fill('30');await page.route('**/api/edit-opening',route=>route.abort('failed'));await click('opening-apply');assert.deepEqual(await doc(),savedDoc);await page.unroute('**/api/edit-opening');await page.locator('#opening-discard').click();

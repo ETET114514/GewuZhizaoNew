@@ -6,10 +6,10 @@
   const lengths=new Set(['x','y','width','depth','height','elevation']);
   const displayValue=(key,value)=>typeof value==='number'?Math.round(value/(lengths.has(key)?10:1)*1000)/1000:value;
   const item=()=>state.run?.document.furniture?.find(f=>f.id===furnitureId);
-  const pending=()=>modelDirty||furnitureDirty||furnitureMoving;
+  const pending=()=>modelDirty||furnitureDirty||furnitureMoving||Boolean(window.ceilingUI?.dirty);
   function syncWidthControls(){
     const preset=form.querySelector('[data-setting="width_mode"]').value==='preset';
-    for(const key of ['door_width_mm','opening_width_mm','window_width_mm'])form.querySelector(`[data-setting="${key}"]`).disabled=Boolean(state.busy)||furnitureDirty||furnitureMoving||!preset;
+    for(const key of ['door_width_mm','opening_width_mm','window_width_mm'])form.querySelector(`[data-setting="${key}"]`).disabled=Boolean(state.busy)||furnitureDirty||furnitureMoving||window.ceilingUI?.dirty||!preset;
   }
   function message(text,error=false){$('model-message').textContent=text;$('model-message').style.color=error?'#b34735':'';}
   function drawLine(){
@@ -22,14 +22,14 @@
     const doc=state.run?.document,ready=Boolean(doc);
     $('calibrate').disabled=!ready||Boolean(state.busy);
     $('open-model').disabled=!ready||Boolean(state.busy);
-    $('calibration-status').textContent=doc?.scale_mm_per_px?`${doc.calibration?.method==='door_width'?`门洞估算 · ${doc.calibration.opening_id} / ${doc.calibration.width_mm/10} cm`:doc.calibration?.method==='wall_thickness'?'墙厚估算':'长度标定'} · ${doc.scale_mm_per_px.toFixed(3)} mm/px · 可重新标定`:'可选普通门按 80 cm 估算比例，或拉出已知长度标定。';
+    $('calibration-status').textContent=doc?.scale_mm_per_px?`${doc.calibration?.method==='door_width'?`${doc.calibration.automatic?'默认门洞估算':'门洞估算'} · ${doc.calibration.opening_id} / ${doc.calibration.width_mm/10} cm`:doc.calibration?.method==='wall_thickness'?'墙厚估算':'长度标定'} · ${doc.scale_mm_per_px.toFixed(3)} mm/px · 可重新标定`:'默认按合适的普通门洞 80 cm 估算比例；无合适门时可拉线标定。';
     const scaleChoice=$('scale-wall').value;
     $('scale-wall').replaceChildren();for(const w of doc?.walls||[])if(w.review_status!=='rejected'&&(w.solid_parts??[w]).length)$('scale-wall').append(new Option(`${w.id} · 图上厚 ${w.thickness_px.toFixed(1)} px`,w.id));
     if([...$('scale-wall').options].some(o=>o.value===scaleChoice))$('scale-wall').value=scaleChoice;
     for(const el of $('wall-calibration-form').querySelectorAll('input,select,button'))el.disabled=Boolean(state.busy)||!$('scale-wall').options.length;
     for(const el of $('calibration-form').querySelectorAll('input,button'))el.disabled=Boolean(state.busy);
-    for(const el of form.querySelectorAll('input,select,button'))el.disabled=Boolean(state.busy)||furnitureDirty||furnitureMoving;
-    for(const el of furnitureForm.querySelectorAll('input,button'))el.disabled=Boolean(state.busy)||modelDirty||furnitureMoving;
+    for(const el of form.querySelectorAll('input,select,button'))el.disabled=Boolean(state.busy)||furnitureDirty||furnitureMoving||window.ceilingUI?.dirty;
+    for(const el of furnitureForm.querySelectorAll('input,button'))el.disabled=Boolean(state.busy)||modelDirty||furnitureMoving||window.ceilingUI?.dirty;
     $('model-furniture-select').disabled=Boolean(state.busy)||pending();
     $('model-save').disabled=Boolean(state.busy)||pending();$('model-undo').disabled=Boolean(state.busy)||!state.historySize||pending();
     $('close-model').disabled=Boolean(state.busy)||furnitureMoving;
@@ -53,6 +53,8 @@
     }
     if(event.phase==='preview'){
       showPosition(event.placement);
+      const gapText=(event.gaps||[]).map(g=>`${g.target} ${(g.distance*state.run.document.scale_mm_per_px/10).toFixed(1)} cm`).join(' · ');
+      $('model-move-status').textContent+=(event.guides?.length?' · 已吸附':'')+(gapText?` · 间距 ${gapText}`:'');
       return;
     }
     furnitureMoving=false;state.formDirty=false;
@@ -133,13 +135,15 @@
     return result;
   }
   function renderModel(fit=false,draft=false){
-    const source=state.openingPreview||state.run.document;
+    const source=state.ceilingPreview||state.openingPreview||state.run.document;
     let doc=draft?{...source,model_settings:readSettings()}:source;
     if(furnitureDirty){const input=readFurniture();doc=furnitureModule.furniturePreview(doc,furnitureId,input.placement_mm,input.model_3d);}
     const model=viewer.update(doc,state.run.image_url,fit);
-    $('model-summary').textContent=`${model.wallCount} 段墙 · ${model.openings.length} 处门窗 · ${model.furnitureCount} 件家具 · 墙高 ${(model.height*1000).toFixed(0)} mm`;
-    $('model-warning-list').replaceChildren();for(const warning of model.warnings){const li=document.createElement('li');li.textContent=warning;$('model-warning-list').append(li);}
-    $('model-warnings').hidden=!model.warnings.length;
+    $('model-summary').textContent=`${model.wallCount} 段墙 · ${model.openings.length} 处门窗 · ${model.furnitureCount} 件家具 · ${model.ceilingRoomCount} 个房间顶面 · 墙高 ${(model.height*1000).toFixed(0)} mm`;
+    const warnings=[...model.warnings,...(doc.ceiling_layout?.warnings||[])];
+    $('model-warning-list').replaceChildren();for(const warning of warnings){const li=document.createElement('li');li.textContent=warning;$('model-warning-list').append(li);}
+    $('model-warnings').hidden=!warnings.length;
+    viewer.setCeilingVisible(window.ceilingUI?.roofVisible||false);
   }
   async function applySettings(payload){
     if(state.busy)throw new Error('请等待当前操作完成。');
@@ -238,7 +242,8 @@
       const module=await import('/model-viewer.js');
       furnitureModule=await import('/furniture-models.mjs');
       furnitureMoveModule=await import('/furniture-move.mjs');
-      dialog.showModal();if(!viewer)viewer=module.createViewer($('model-canvas'),selectFurniture,moveFurniture);
+      dialog.showModal();if(!viewer)viewer=module.createViewer($('model-canvas'),selectFurniture,moveFurniture,result=>window.collisionUI?.modelReport(result));
+      viewer.setCollisionOptions(window.collisionUI?.options||{});
       furnitureId=state.focusedFurniture||furnitureId;fillFurniture();
       fillSettings();lastDocument=state.run.document;renderModel(true);message('候选模型需校核；修改参数后点击应用。');sync();
     }catch(error){if(dialog.open)dialog.close();toast(`三维预览未能打开：${error.message}`,true);}
@@ -281,7 +286,11 @@
   })());});
   window.addEventListener('wall-mode-change',()=>{points=null;drag=null;$('calibration-form').hidden=true;});
   window.addEventListener('wall-state-change',sync);
+  window.addEventListener('collision-options-change',()=>viewer?.setCollisionOptions(window.collisionUI?.options||{}));
   window.addEventListener('opening-preview-change',()=>{if(dialog.open&&viewer)try{renderModel();}catch(error){message(error.message,true);}});
+  window.addEventListener('ceiling-preview-change',()=>{if(dialog.open&&viewer){renderModel();sync();}});
+  window.addEventListener('ceiling-visibility-change',()=>viewer?.setCeilingVisible(window.ceilingUI?.roofVisible||false));
+  window.addEventListener('ceiling-view',()=>{viewer?.setCeilingVisible(true);viewer?.viewCeiling();});
   $('open-model').addEventListener('click',openModel);
   function close(){if(state.busy)return;if(pending()){message('有未应用的设置，请先应用，或点击“放弃未应用”。',true);return;}dialog.close();}
   $('close-model').addEventListener('click',close);

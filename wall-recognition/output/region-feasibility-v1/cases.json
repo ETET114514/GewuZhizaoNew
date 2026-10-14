@@ -1,0 +1,428 @@
+[
+  {
+    "id": "gray",
+    "image": "input/furniture-references/06.jpg",
+    "regions": [
+      {
+        "name": "kitchen",
+        "label": "厨房",
+        "bbox_px": [
+          548,
+          590,
+          780,
+          768
+        ],
+        "targets": [
+          {
+            "name": "上柜台",
+            "kind": "cabinet",
+            "bbox_px": [
+              647,
+              608,
+              757,
+              650
+            ]
+          },
+          {
+            "name": "右柜台",
+            "kind": "cabinet",
+            "bbox_px": [
+              714,
+              651,
+              757,
+              715
+            ]
+          },
+          {
+            "name": "下柜台",
+            "kind": "cabinet",
+            "bbox_px": [
+              572,
+              717,
+              758,
+              760
+            ]
+          },
+          {
+            "name": "水槽",
+            "kind": "kitchen_sink",
+            "bbox_px": [
+              718,
+              657,
+              754,
+              712
+            ]
+          },
+          {
+            "name": "灶台",
+            "kind": "cooktop",
+            "bbox_px": [
+              632,
+              722,
+              695,
+              758
+            ]
+          },
+          {
+            "name": "冰箱",
+            "kind": "refrigerator",
+            "bbox_px": [
+              579,
+              608,
+              645,
+              651
+            ]
+          }
+        ]
+      },
+      {
+        "name": "dining",
+        "label": "餐厅",
+        "bbox_px": [
+          280,
+          460,
+          557,
+          785
+        ],
+        "targets": [
+          {
+            "name": "餐桌",
+            "kind": "table",
+            "bbox_px": [
+              406,
+              595,
+              471,
+              725
+            ]
+          },
+          {
+            "name": "餐椅1",
+            "kind": "chair",
+            "bbox_px": [
+              377,
+              600,
+              417,
+              637
+            ]
+          },
+          {
+            "name": "餐椅2",
+            "kind": "chair",
+            "bbox_px": [
+              460,
+              600,
+              501,
+              637
+            ]
+          },
+          {
+            "name": "餐椅3",
+            "kind": "chair",
+            "bbox_px": [
+              377,
+              642,
+              417,
+              679
+            ]
+          },
+          {
+            "name": "餐椅4",
+            "kind": "chair",
+            "bbox_px": [
+              460,
+              642,
+              501,
+              679
+            ]
+          },
+          {
+            "name": "餐椅5",
+            "kind": "chair",
+            "bbox_px": [
+              377,
+              682,
+              417,
+              718
+            ]
+          },
+          {
+            "name": "餐椅6",
+            "kind": "chair",
+            "bbox_px": [
+              460,
+              682,
+              501,
+              718
+            ]
+          }
+        ]
+      },
+      {
+        "name": "bedroom",
+        "label": "卧室（含桌子）",
+        "bbox_px": [
+          192,
+          879,
+          575,
+          1200
+        ],
+        "targets": [
+          {
+            "name": "左下衣柜",
+            "kind": "cabinet",
+            "bbox_px": [
+              211,
+              1027,
+              248,
+              1097
+            ]
+          },
+          {
+            "name": "左上柜体",
+            "kind": "cabinet",
+            "bbox_px": [
+              249,
+              900,
+              305,
+              938
+            ]
+          },
+          {
+            "name": "右侧上柜体",
+            "kind": "cabinet",
+            "bbox_px": [
+              516,
+              1006,
+              557,
+              1097
+            ]
+          },
+          {
+            "name": "右侧下柜体",
+            "kind": "cabinet",
+            "bbox_px": [
+              516,
+              1112,
+              557,
+              1184
+            ]
+          },
+          {
+            "name": "右侧书桌",
+            "kind": "table",
+            "bbox_px": [
+              516,
+              899,
+              558,
+              1006
+            ]
+          },
+          {
+            "name": "书桌椅",
+            "kind": "chair",
+            "bbox_px": [
+              487,
+              931,
+              526,
+              969
+            ]
+          },
+          {
+            "name": "左侧梳妆桌",
+            "kind": "table",
+            "bbox_px": [
+              218,
+              936,
+              251,
+              990
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "line",
+    "image": "input/reference-plans/04-furnished.png",
+    "regions": [
+      {
+        "name": "kitchen",
+        "label": "厨房",
+        "bbox_px": [
+          543,
+          143,
+          789,
+          507
+        ],
+        "targets": [
+          {
+            "name": "水槽",
+            "kind": "kitchen_sink",
+            "bbox_px": [
+              589,
+              176,
+              675,
+              235
+            ]
+          },
+          {
+            "name": "灶台",
+            "kind": "cooktop",
+            "bbox_px": [
+              710,
+              275,
+              765,
+              376
+            ]
+          }
+        ]
+      },
+      {
+        "name": "dining",
+        "label": "餐厅",
+        "bbox_px": [
+          200,
+          270,
+          548,
+          610
+        ],
+        "targets": [
+          {
+            "name": "餐桌",
+            "kind": "table",
+            "bbox_px": [
+              229,
+              384,
+              384,
+              474
+            ]
+          },
+          {
+            "name": "餐椅1",
+            "kind": "chair",
+            "bbox_px": [
+              237,
+              347,
+              297,
+              384
+            ]
+          },
+          {
+            "name": "餐椅2",
+            "kind": "chair",
+            "bbox_px": [
+              313,
+              347,
+              374,
+              384
+            ]
+          },
+          {
+            "name": "餐椅3",
+            "kind": "chair",
+            "bbox_px": [
+              237,
+              473,
+              298,
+              509
+            ]
+          },
+          {
+            "name": "餐椅4",
+            "kind": "chair",
+            "bbox_px": [
+              313,
+              473,
+              375,
+              509
+            ]
+          }
+        ]
+      },
+      {
+        "name": "bedroom",
+        "label": "主卧",
+        "bbox_px": [
+          950,
+          568,
+          1324,
+          1027
+        ],
+        "targets": [
+          {
+            "name": "床",
+            "kind": "bed",
+            "bbox_px": [
+              1078,
+              730,
+              1305,
+              938
+            ]
+          },
+          {
+            "name": "衣柜",
+            "kind": "cabinet",
+            "bbox_px": [
+              1120,
+              573,
+              1307,
+              640
+            ]
+          },
+          {
+            "name": "上床头柜",
+            "kind": "cabinet",
+            "bbox_px": [
+              1253,
+              678,
+              1307,
+              730
+            ]
+          },
+          {
+            "name": "下床头柜",
+            "kind": "cabinet",
+            "bbox_px": [
+              1254,
+              938,
+              1307,
+              992
+            ]
+          }
+        ]
+      },
+      {
+        "name": "study",
+        "label": "书房",
+        "bbox_px": [
+          997,
+          318,
+          1316,
+          568
+        ],
+        "targets": [
+          {
+            "name": "书桌",
+            "kind": "table",
+            "bbox_px": [
+              1238,
+              330,
+              1306,
+              493
+            ]
+          },
+          {
+            "name": "书桌椅",
+            "kind": "chair",
+            "bbox_px": [
+              1202,
+              401,
+              1249,
+              455
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

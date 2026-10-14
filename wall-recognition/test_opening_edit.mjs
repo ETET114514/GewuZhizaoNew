@@ -1,11 +1,22 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {openingHost,openingPreview} from './web/opening-edit.mjs';
+import {openingHost,openingPreview,newOpeningPreview} from './web/opening-edit.mjs';
 import {buildModel} from './web/model-geometry.mjs';
 function fixture(vertical=false){
   const g=(a,b)=>({orientation:vertical?'vertical':'horizontal',start_px:vertical?[100,a]:[a,100],end_px:vertical?[100,b]:[b,100],thickness_px:20,length_px:b-a});
   return {image:{width_px:500,height_px:500},scale_mm_per_px:10,walls:[{id:'W1',...g(20,100)},{id:'W2',...g(200,480)},{id:'W3',source:'automatic_opening_connection',...g(100,200)}],openings:[{id:'O1',kind:'window',review_status:'confirmed',...g(100,200)}],furniture:[]};
 }
+test('new aperture preview subtracts wall solids, generates matching 3D opening and rejects overlaps',()=>{
+  for(const vertical of [false,true]){
+    const doc=fixture(vertical),before=structuredClone(doc),axis=vertical?1:0;
+    const result=newOpeningPreview(doc,'W2','door',{width_mm:800,height_mm:2100,sill_height_mm:0},320);
+    assert.deepEqual(doc,before);
+    const o=result.openings.at(-1);assert.equal(o.start_px[axis],280);assert.equal(o.end_px[axis],360);
+    assert(!result.walls.some(w=>w.solid_parts.some(p=>p.start_px[axis]<320&&p.end_px[axis]>320)));
+    const model=buildModel(result);assert(model.openings.some(o=>o.id==='待新增'));
+    assert.throws(()=>newOpeningPreview(doc,'W2','window',{width_mm:800},150),/重叠/);
+  }
+});
 test('preview fills old gap, subtracts new aperture, and keeps source immutable in either orientation',()=>{
   for(const vertical of [false,true]){
     const doc=fixture(vertical),before=JSON.stringify(doc),axis=vertical?1:0;

@@ -4,9 +4,10 @@ import math
 import re
 
 DEFAULTS = dict(wall_height_mm=2800, door_height_mm=2100, window_height_mm=1500,
-                sill_height_mm=900, door_width_mm=800, opening_width_mm=800,
+                sill_height_mm=900, door_width_mm=800, opening_width_mm=900,
                 window_width_mm=800, width_mode='detected', wall_color='#e4ddd3',
-                floor_color='#ffffff', show_furniture=True, show_plan=False, show_room_floors=True)
+                floor_color='#ffffff', show_furniture=True, show_plan=False, show_room_floors=True,
+                flush_wall_joints=True)
 
 
 def number(value, low, high, label):
@@ -28,7 +29,7 @@ def apply_model_settings(document, request):
         elif key.endswith('_color'):
             if not isinstance(settings[key], str) or not re.fullmatch(r'#[0-9a-fA-F]{6}', settings[key]):
                 raise ValueError('颜色需为六位十六进制格式。')
-        elif key.startswith('show_') and not isinstance(settings[key], bool):
+        elif (key.startswith('show_') or key == 'flush_wall_joints') and not isinstance(settings[key], bool):
             raise ValueError('显示设置需为布尔值。')
     if settings['width_mode'] not in ('detected', 'preset'):
         raise ValueError('请选择按图换算或使用预设宽度。')

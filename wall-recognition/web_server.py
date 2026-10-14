@@ -26,11 +26,13 @@ from copy import deepcopy
 from refine_walls import initialize_refinement, refresh_refinement
 from recognize_furniture import add_furniture, apply_furniture_edit, furniture_export
 from model_settings import apply_model_settings
+from default_door_scale import apply_default_door_scale
 from opening_editing import apply_opening_edit, open_openings
 from connect_walls import connect_walls
 from closure_diagnostics import diagnose_closure, preview_gap, resolve_gap
 from partition_rooms import partition_rooms
 from room_editing import apply_room_edit
+from ceiling_design import apply_ceiling_edit, refresh_ceiling_layout
 from project_store import list_projects, load_project
 
 ROOT = Path(__file__).resolve().parent
@@ -166,7 +168,7 @@ class ReviewHandler(BaseHTTPRequestHandler):
         route = urlsplit(self.path).path
         pages = {"/": ("index.html", "text/html; charset=utf-8"), "/app.css": ("app.css", "text/css; charset=utf-8"), "/app.js": ("app.js", "text/javascript; charset=utf-8")}
         for name in ('opening-ui.js', 'opening-edit.mjs', 'opening-operation.mjs', 'closure-ui.js', 'model-ui.js', 'model-viewer.js', 'model-geometry.mjs', 'floor-geometry.mjs', 'room-ui.js', 'wall-lengths.mjs', 'wall-length-ui.js', 'room-areas.mjs', 'toolbar-ui.js', 'furniture-models.mjs', 'furniture-move.mjs',
-                     'opening-quick-ui.js', 'vendor/three.module.min.js', 'vendor/three.core.min.js', 'vendor/OrbitControls.js'):
+                      'ceiling-ui.js', 'ceiling-geometry.mjs', 'opening-quick-ui.js', 'opening-place-ui.js', 'furniture-snap.mjs', 'collision-boxes.mjs', 'collision-ui.js', 'wall-joints.mjs', 'vendor/three.module.min.js', 'vendor/three.core.min.js', 'vendor/OrbitControls.js'):
             pages['/'+name] = (name, 'text/javascript; charset=utf-8')
         if route in pages:
             filename, content_type = pages[route]
@@ -208,13 +210,15 @@ class ReviewHandler(BaseHTTPRequestHandler):
                 if not isinstance(request, dict):
                     raise ValueError('项目请求格式不正确。')
                 run = load_project(self.server.feedback_root.parent / 'projects', request.get('project_id'))
+                default_scale_applied = apply_default_door_scale(run)
                 run_id = uuid.uuid4().hex
                 with self.server.state_lock:
                     if len(self.server.sessions) >= 8:
                         self.server.sessions.pop(next(iter(self.server.sessions)))
                     self.server.sessions[run_id] = run
                 self.send_json(200, dict(run_id=run_id, document=run['document'], changes=run['changes'],
-                    history_size=0, project_id=request['project_id'], image_url=f'/api/runs/{run_id}/image'))
+                    history_size=len(run['history']), default_scale_applied=default_scale_applied,
+                    project_id=request['project_id'], image_url=f'/api/runs/{run_id}/image'))
             elif route == "/api/detect":
                 if not self.server.detect_lock.acquire(blocking=False):
                     self.send_json(409, {"error": "正在处理另一张图片，请稍后重试。"})
@@ -239,16 +243,19 @@ class ReviewHandler(BaseHTTPRequestHandler):
                         self.server.recognition_cache.move_to_end(cache_key)
                         run = deepcopy(cached)
                         run['document']['image']['original_filename'] = filename
+                    default_scale_applied = apply_default_door_scale(run)
                     run_id = uuid.uuid4().hex
                     with self.server.state_lock:
                         if len(self.server.sessions) >= 8:
                             self.server.sessions.pop(next(iter(self.server.sessions)))
                         self.server.sessions[run_id] = run
                     self.send_json(200, {"run_id": run_id, "document": run["document"], "image_url": f"/api/runs/{run_id}/image",
-                                         "elapsed_ms": round((perf_counter()-started)*1000), "cache_hit": cache_hit})
+                                         "elapsed_ms": round((perf_counter()-started)*1000), "cache_hit": cache_hit,
+                                         "changes":run['changes'], "history_size":len(run['history']),
+                                         "default_scale_applied":default_scale_applied})
                 finally:
                     self.server.detect_lock.release()
-            elif route in ("/api/opening-context", "/api/diagnose-closure", "/api/preview-gap", "/api/resolve-gap", "/api/apply-edit", "/api/undo-edit", "/api/save-project", "/api/review-opening", "/api/edit-opening", "/api/open-openings", "/api/edit-furniture", "/api/model-settings", "/api/connect-walls", "/api/partition-rooms", "/api/edit-room"):
+            elif route in ("/api/edit-ceiling", "/api/preview-ceiling", "/api/opening-context", "/api/diagnose-closure", "/api/preview-gap", "/api/resolve-gap", "/api/apply-edit", "/api/undo-edit", "/api/save-project", "/api/review-opening", "/api/edit-opening", "/api/open-openings", "/api/edit-furniture", "/api/model-settings", "/api/connect-walls", "/api/partition-rooms", "/api/edit-room"):
                 request = json.loads(payload)
                 if not isinstance(request, dict) or not isinstance(request.get("run_id"), str):
                     raise ValueError("操作格式不正确。")
@@ -256,6 +263,17 @@ class ReviewHandler(BaseHTTPRequestHandler):
                     run = self.server.sessions.get(request["run_id"])
                     if run is None:
                         raise ValueError("识别结果已过期，请重新识别。")
+                    if route in ('/api/edit-ceiling', '/api/preview-ceiling'):
+                        document, record = apply_ceiling_edit(run['document'], request)
+                        if route == '/api/preview-ceiling':
+                            self.send_json(200, dict(document=document))
+                            return
+                        run['history'].append((run['document'], list(run['changes']), run['next_id']))
+                        run['history'] = run['history'][-50:]
+                        run['document'] = document
+                        run['changes'].append(record)
+                        self.send_json(200, dict(document=document, changes=run['changes'], history_size=len(run['history'])))
+                        return
                     if route == '/api/opening-context':
                         from opening_direction import direction_rooms, opening_context
                         rooms = direction_rooms(run['document'])
@@ -334,6 +352,8 @@ class ReviewHandler(BaseHTTPRequestHandler):
                         opening.setdefault("predicted_kind",opening["kind"])
                         if kind in ('door', 'window') and kind != opening['kind']:
                             opening.pop('operation', None)
+                        if kind != 'door':
+                            opening.pop('door_model', None)
                         opening.update(kind=kind, review_status="rejected" if kind=="rejected" else "unreviewed" if kind=="unclassified" else "confirmed")
                         if kind == "unclassified":
                             opening["requires_confirmation"] = True
@@ -355,6 +375,8 @@ class ReviewHandler(BaseHTTPRequestHandler):
                         run['next_id']=next_id
                         run["changes"].append({"id":opening["id"],"opening_id":opening["id"],"type":"opening_review",
                                                "summary":f"{opening['id']} 已标为{labels[kind]}"})
+                        if kind == 'door':
+                            apply_default_door_scale(run, history=False)
                     elif route == "/api/apply-edit":
                         document, record, next_id = apply_edit(run["document"], request, run["next_id"])
                         run["history"].append((run["document"], list(run["changes"]), run["next_id"]))
@@ -366,6 +388,7 @@ class ReviewHandler(BaseHTTPRequestHandler):
                             raise ValueError("没有可撤销的修改。")
                         run["document"], run["changes"], run["next_id"] = run["history"].pop()
                     else:
+                        refresh_ceiling_layout(run['document'])
                         name = datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:6]
                         destination = self.server.feedback_root.parent / "projects" / name
                         destination.mkdir(parents=True, exist_ok=False)
@@ -386,6 +409,7 @@ class ReviewHandler(BaseHTTPRequestHandler):
                                              "solid_count": len(run["document"].get("solid_wall_segments", [])),
                                              "opening_count": run["document"].get("refinement_summary", {}).get("active_opening_count", 0)})
                         return
+                    refresh_ceiling_layout(run['document'])
                     response = {"document": run["document"], "changes": run["changes"], "history_size": len(run["history"])}
                     if route == '/api/open-openings':
                         response.update(opening_report)

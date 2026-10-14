@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "checks": [
+    "automatic on opening unscaled plan",
+    "automatic reference status",
+    "one-step undo stays unscaled",
+    "save and reopen retains estimated scale",
+    "3D ready without manual calibration",
+    "manual calibration overrides default",
+    "390 px screen"
+  ],
+  "errors": []
+}

@@ -44,6 +44,20 @@ def opening_context(document, opening, rooms=None):
         hits[side] = [dict(id=r['id'], name=r.get('name') or r['id']) for r in (names or physical)]
     interior = 'negative' if closed['negative'] and not closed['positive'] else 'positive' if closed['positive'] and not closed['negative'] else None
     reason = '由闭合墙体边界确定室内侧' if interior else '两侧都有房间，请选择归属房间或手动开启侧' if all(closed.values()) else '未找到可靠的闭合室内边界，请手动选择开启侧'
+    if opening.get('door_model') == 'entry' and not interior:
+        if all(closed.values()):
+            reason = '大入户门通常一侧为室外；此处两侧均有闭合空间，请校核位置或手动选择室内侧'
+        else:
+            walls = [w for w in document['walls'] if w.get('review_status') != 'rejected']
+            if walls:
+                transverse = 1-axis
+                low = min(w['bbox_px'][transverse] for w in walls)
+                high = max(w['bbox_px'][transverse+2] for w in walls)
+                tolerance = opening['thickness_px']/2+2
+                at_low, at_high = abs(cross-low)<=tolerance, abs(cross-high)<=tolerance
+                if at_low != at_high:
+                    interior = 'positive' if at_low else 'negative'
+                    reason = '大入户门位于墙体外轮廓，按朝向户型内部的一侧辅助判断；请核对'
     return dict(**hits, interior_side=interior, reason=reason)
 
 

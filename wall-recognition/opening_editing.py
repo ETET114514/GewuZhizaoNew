@@ -6,6 +6,9 @@ from model_settings import DEFAULTS, number
 from window_preset import apply_window_preset
 from refine_walls import GENERATED, aligned, axis_of, is_active_opening, refresh_refinement, segment
 
+DOOR_WIDTH_PRESETS = {'entry_door_1200': 1200, 'bedroom_door_900': 900,
+                      'bathroom_door_800': 800, 'ordinary_door_800': 800}
+
 
 def validate_operation(values, kind):
     if not isinstance(values, dict) or set(values) - {'type', 'hinge', 'side', 'angle_deg', 'pivot_axis', 'pivot_ratio', 'direction_mode', 'interior_room_id', 'axis_mode'}:
@@ -36,10 +39,15 @@ def validate_operation(values, kind):
 
 def open_openings(document, request):
     from opening_direction import direction_rooms, opening_context, resolve_direction
-    rooms = direction_rooms(document)
+    action = request.get('action', 'open')
+    if action not in ('open', 'close'):
+        raise ValueError('请选择打开或关闭门窗。')
+    closing = action == 'close'
+    verb = '关闭' if closing else '打开'
+    rooms = None if closing else direction_rooms(document)
     kind = request.get('target_kind')
     if kind not in ('door', 'window', 'all'):
-        raise ValueError('请选择打开门、窗或所有门窗。')
+        raise ValueError('请选择门、窗或所有门窗。')
     selected = request.get('opening_id')
     if 'opening_id' in request and (not isinstance(selected, str) or not selected):
         raise ValueError('请先选择一扇门或窗。')
@@ -47,7 +55,7 @@ def open_openings(document, request):
     if selected is not None:
         items = [o for o in items if o['id'] == selected]
         if not items or items[0]['kind'] not in ('door', 'window') or kind != 'all' and items[0]['kind'] != kind:
-            raise ValueError('所选门窗与打开按钮不匹配，请重新选择。')
+            raise ValueError('所选门窗与操作范围不匹配，请重新选择。')
     targets = [o for o in items if o['kind'] in ('door', 'window') and
                (kind == 'all' or o['kind'] == kind) and is_active_opening(o)]
     updates, fixed, unknown = {}, 0, 0
@@ -55,6 +63,10 @@ def open_openings(document, request):
         operation = validate_operation(opening.get('operation', {}), opening['kind'])
         if opening['kind'] == 'window' and opening.get('operation', {}).get('type') == 'fixed':
             fixed += 1
+            continue
+        if closing:
+            if operation['angle_deg'] > 0:
+                updates[opening['id']] = {**opening['operation'], 'angle_deg': 0}
             continue
         operation.update(type='hinged', angle_deg=90 if opening['kind']=='door' else 45)
         if opening['kind'] == 'window' and not any(key in operation for key in ('axis_mode', 'pivot_axis', 'pivot_ratio')):
@@ -71,13 +83,16 @@ def open_openings(document, request):
             updates[opening['id']] = operation
     doors = sum(o['id'] in updates and o['kind'] == 'door' for o in targets)
     windows = len(updates) - doors
-    message = f'已打开 {doors} 扇门、{windows} 扇窗' if updates else '没有需要打开的门窗'
+    message = f'已{verb} {doors} 扇门、{windows} 扇窗' if updates else f'没有需要{verb}的门窗'
     if fixed:
         message += f'；跳过 {fixed} 扇固定玻璃窗'
     if unknown:
         message += f'；{unknown} 扇沿用当前开启侧'
     report = dict(changed_count=len(updates), opened_door_count=doors, opened_window_count=windows,
                   skipped_fixed_count=fixed, skipped_unknown_count=0, fallback_direction_count=unknown, message=message)
+    if closing:
+        report.update(opened_door_count=0, opened_window_count=0,
+                      closed_door_count=doors, closed_window_count=windows)
     if not updates:
         return document, None, report
     result = deepcopy(document)
@@ -112,6 +127,8 @@ def opening_host(document, opening):
 
 
 def validate_opening_settings(opening, settings):
+    if 'door_model' in opening and (opening['kind'] != 'door' or opening['door_model'] not in ('standard','entry')):
+        raise ValueError('门模型需为普通门或大入户门。')
     if 'operation' in opening:
         validate_operation(opening['operation'], opening['kind'])
     values = opening.get('dimensions_mm', {})
@@ -128,10 +145,16 @@ def validate_opening_settings(opening, settings):
 
 
 def apply_opening_edit(document, request):
+    if request.get('action') == 'add':
+        return add_opening(document, request)
     result = deepcopy(document)
     opening = next((o for o in result.get('openings', []) if o['id'] == request.get('opening_id')), None)
     if not opening or opening['kind'] not in ('door', 'window') or not is_active_opening(opening):
         raise ValueError('请选择有效的门或窗；待定边界需先确认为门窗。')
+    if 'door_model' in request:
+        opening['door_model'] = request['door_model']
+        opening['label'] = '大入户门' if opening['door_model'] == 'entry' else '门'
+        validate_opening_settings(opening, {**DEFAULTS, **document.get('model_settings', {})})
     if 'operation' in request:
         if request['operation'] is None:
             opening.pop('operation', None)
@@ -158,12 +181,16 @@ def apply_opening_edit(document, request):
         raise ValueError('门窗尺寸格式不正确。')
     dimensions = {**opening.get('dimensions_mm', {}), **values}
     if request.get('preset') is not None:
-        if request['preset'] == 'ordinary_door_800' and opening['kind'] == 'door':
-            dimensions['width_mm'] = 800
+        if isinstance(request['preset'], str) and request['preset'] in DOOR_WIDTH_PRESETS and opening['kind'] == 'door':
+            dimensions['width_mm'] = DOOR_WIDTH_PRESETS[request['preset']]
+            opening['door_model'] = 'entry' if request['preset'] == 'entry_door_1200' else 'standard'
+            opening['label'] = '大入户门' if opening['door_model'] == 'entry' else '门'
+            if opening['door_model'] == 'entry':
+                dimensions['height_mm'] = 2100
         elif request['preset'] == 'floor_glass' and opening['kind'] == 'window':
             dimensions.update(height_mm=settings['wall_height_mm'], sill_height_mm=0)
         else:
-            raise ValueError('普通门 80 cm 预设仅适用于门；落地玻璃预设仅适用于窗。')
+            raise ValueError('入户/卧室/卫生间门宽预设仅适用于门；落地玻璃预设仅适用于窗。')
     opening['dimensions_mm'] = dimensions
     validate_opening_settings(opening, settings)
     width = dimensions.get('width_mm', (opening['end_px'][axis]-opening['start_px'][axis])*scale)/scale
@@ -208,3 +235,42 @@ def apply_opening_edit(document, request):
                 raise
     return result, dict(id=opening['id'], opening_id=opening['id'], type='opening_edit',
                         summary=f"{opening['id']} 已更新尺寸与沿墙位置" + ('及开启设置' if 'operation' in request else ''))
+
+
+def add_opening(document, request):
+    """Create an aperture on an existing structural axis; refinement owns solids."""
+    kind = request.get('kind')
+    if kind not in ('door', 'window'):
+        raise ValueError('请选择新增门或窗。')
+    wall = next((w for w in document['walls'] if w['id'] == request.get('wall_id')
+                 and w.get('review_status') != 'rejected'), None)
+    if wall is None:
+        raise ValueError('请选择有效的墙段放置门窗。')
+    dimensions = request.get('dimensions_mm')
+    if not isinstance(dimensions, dict) or 'width_mm' not in dimensions:
+        raise ValueError('请填写新增门窗的实际宽度。')
+    seed = deepcopy(document)
+    used = {o['id'] for o in seed.get('openings', [])}
+    index = 1
+    while f'O{index:03d}' in used:
+        index += 1
+    opening_id = f'O{index:03d}'
+    axis = axis_of(wall)
+    opening = dict(segment(axis, wall['start_px'][axis], wall['end_px'][axis],
+                           wall['start_px'][1-axis], wall['thickness_px']),
+                   id=opening_id, kind=kind, label='门' if kind == 'door' else '窗',
+                   predicted_kind=kind, source='manual', confidence=1.0,
+                   review_status='confirmed', requires_confirmation=False, host_wall_id=wall['id'])
+    opening['operation'] = validate_operation(dict(type='hinged', angle_deg=0,
+        direction_mode='auto', **({'axis_mode': 'width'} if kind == 'window' else {})), kind)
+    if 'door_model' in request:
+        opening['door_model'] = request['door_model']
+        opening['label'] = '大入户门' if opening['door_model'] == 'entry' else '门'
+        validate_opening_settings(opening, {**DEFAULTS, **document.get('model_settings', {})})
+    seed.setdefault('openings', []).append(opening)
+    result, _ = apply_opening_edit(seed, dict(opening_id=opening_id,
+        dimensions_mm=dimensions, center_px=request.get('center_px')))
+    if 'room_partition' in result:
+        result['room_partition']['opening_geometry_changed'] = True
+    return result, dict(id=opening_id, opening_id=opening_id, type='opening_add',
+                        summary=f"已新增{opening['label']} {opening_id}，请核对房间边界")

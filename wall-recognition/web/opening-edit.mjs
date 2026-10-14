@@ -15,7 +15,7 @@ export function openingHost(doc,o){
 }
 export function openingValues(doc,o){
   const axis=axisOf(o),s=doc.model_settings||{},d=o.dimensions_mm||{};
-  return {width_mm:d.width_mm??(s.width_mode==='preset'?(o.kind==='door'?(s.opening_width_mm??800):(s.window_width_mm??800)):(o.end_px[axis]-o.start_px[axis])*doc.scale_mm_per_px),
+  return {width_mm:d.width_mm??(s.width_mode==='preset'?(o.kind==='door'?(s.opening_width_mm??900):(s.window_width_mm??800)):(o.end_px[axis]-o.start_px[axis])*doc.scale_mm_per_px),
     height_mm:d.height_mm??(o.kind==='window'?(s.window_height_mm??1500):(s.door_height_mm??2100)),
     sill_height_mm:o.kind==='window'?(d.sill_height_mm??s.sill_height_mm??900):0};
 }
@@ -23,9 +23,20 @@ function geometry(axis,a,b,center,thickness){
   return {orientation:axis===0?'horizontal':'vertical',start_px:axis===0?[a,center]:[center,a],end_px:axis===0?[b,center]:[center,b],
     bbox_px:axis===0?[a,center-thickness/2,b,center+thickness/2]:[center-thickness/2,a,center+thickness/2,b],length_px:b-a,thickness_px:thickness};
 }
-export function openingPreview(doc,id,dimensions,centerPx,operation){
+export function newOpeningPreview(doc,wallId,kind,dimensions,centerPx,doorModel){
+  const wall=doc.walls.find(w=>w.id===wallId&&w.review_status!=='rejected');
+  if(!wall||!['door','window'].includes(kind))throw new Error('请选择有效墙段放置门窗。');
+  const result=structuredClone(doc),axis=axisOf(wall);
+  const o={...geometry(axis,wall.start_px[axis],wall.end_px[axis],wall.start_px[1-axis],wall.thickness_px),
+    id:'待新增',kind,label:kind==='door'?'门':'窗',host_wall_id:wall.id,review_status:'confirmed',operation:{type:'hinged',hinge:'start',side:'negative',angle_deg:0,direction_mode:'auto',...(kind==='window'?{axis_mode:'width'}:{})}};
+  if(kind==='door'&&doorModel){o.door_model=doorModel;o.label=doorModel==='entry'?'大入户门':'门';}
+  result.openings.push(o);
+  return openingPreview(result,o.id,dimensions,centerPx);
+}
+export function openingPreview(doc,id,dimensions,centerPx,operation,doorModel){
   const o=doc.openings.find(o=>o.id===id);
   if(!o||!['door','window'].includes(o.kind)||!active(o))throw new Error('请选择有效的门或窗；待定边界需先确认为门窗。');
+  if(doorModel!==undefined){if(o.kind!=='door'||!['entry','standard'].includes(doorModel))throw new Error('请选择有效门模型。');doc=structuredClone(doc);const changed=doc.openings.find(o=>o.id===id);changed.door_model=doorModel;changed.label=doorModel==='entry'?'大入户门':'门';}
   if(operation!==undefined&&dimensions===undefined&&centerPx===undefined){
     const result=structuredClone(doc),edited=result.openings.find(o=>o.id===id);
     if(operation===null)delete edited.operation;else edited.operation=applyWindowPreset(result,edited,operationOf(o,operation));

@@ -1,0 +1,47 @@
+{
+  "default_enabled": "passed",
+  "tips": [
+    {
+      "id": "W004",
+      "end": "start",
+      "from": 181,
+      "to": 187,
+      "receiver": "W007"
+    },
+    {
+      "id": "W005",
+      "end": "start",
+      "from": 259,
+      "to": 264,
+      "receiver": "W006"
+    },
+    {
+      "id": "W017",
+      "end": "end",
+      "from": 646,
+      "to": 645.5,
+      "receiver": "W033"
+    },
+    {
+      "id": "W020",
+      "end": "end",
+      "from": 623,
+      "to": 621,
+      "receiver": "W022"
+    },
+    {
+      "id": "W026",
+      "end": "end",
+      "from": 120,
+      "to": 119,
+      "receiver": "W040"
+    }
+  ],
+  "preview_discard": "passed",
+  "disable": "passed",
+  "undo": "passed",
+  "source_openings_furniture_unchanged": "passed",
+  "save_reopen": "passed",
+  "narrow": "passed",
+  "page_errors": []
+}

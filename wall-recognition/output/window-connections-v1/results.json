@@ -1,0 +1,96 @@
+{
+  "joins": [
+    {
+      "x0": 640.5,
+      "x1": 646,
+      "z0": 678,
+      "z1": 685,
+      "bottom": 0.9,
+      "top": 2.4,
+      "openingIds": [
+        "O012",
+        "O011"
+      ],
+      "ends": [
+        "end",
+        "end"
+      ],
+      "spans": [
+        [
+          449,
+          643.25
+        ],
+        [
+          621,
+          681.5
+        ]
+      ]
+    },
+    {
+      "x0": 423,
+      "x1": 439,
+      "z0": 737,
+      "z1": 743.5,
+      "bottom": 0.9,
+      "top": 2.4,
+      "openingIds": [
+        "O015",
+        "O013"
+      ],
+      "ends": [
+        "end",
+        "end"
+      ],
+      "spans": [
+        [
+          115.5,
+          434.5
+        ],
+        [
+          697,
+          740.25
+        ]
+      ]
+    },
+    {
+      "x0": 112,
+      "x1": 119,
+      "z0": 737,
+      "z1": 743.5,
+      "bottom": 0.9,
+      "top": 2.4,
+      "openingIds": [
+        "O015",
+        "O014"
+      ],
+      "ends": [
+        "start",
+        "end"
+      ],
+      "spans": [
+        [
+          115.5,
+          434.5
+        ],
+        [
+          718,
+          740.25
+        ]
+      ]
+    }
+  ],
+  "frame_mesh": {
+    "indexed": true,
+    "opacity": 1,
+    "triangles": 1080
+  },
+  "shared_three_corners": "passed",
+  "ghost": "passed",
+  "independent_open_close": "passed",
+  "stationary_frame_and_wall": "passed",
+  "opening_dimensions_and_source": "passed",
+  "undo": "passed",
+  "save_reopen": "passed",
+  "narrow": "passed",
+  "page_errors": []
+}

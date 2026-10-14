@@ -12,10 +12,10 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
 from recognize_walls import bridge_gaps, runs
 
 
-ALGORITHM = "wall-aware-frames-and-pale-swing-arcs-v6"
+ALGORITHM = "wall-aware-frames-closed-entry-and-pale-swing-arcs-v7"
 LIMITATIONS = [
     "门窗为待校核候选；规则分数不是准确率或概率。",
-    "支持水平/垂直多线窗框和平开门开启弧；浅色、遮挡和非直角符号可能漏检。",
+    "支持水平/垂直多线窗框、平开门开启弧及有把手支撑的关闭入户门；浅色、遮挡和非直角符号可能漏检。",
     "窗框候选不细分固定窗/推拉窗/平开窗；门的朝向以图像坐标表示，不推断室内外。",
     "尚不自动分类飘窗、井道、家具、厨卫设备及承重/非承重墙。",
 ]
@@ -525,6 +525,8 @@ def detect_openings(image: Image.Image, walls: list[dict]) -> list[dict]:
                    for old in candidates):
             candidates.append(door)
     candidates += detect_pale_boundaries(image, walls, scale)
+    from recognize_entry_doors import classify_entry_doors
+    classify_entry_doors(image,candidates,scale)
     candidates = suppress(candidates, scale)
     for candidate in candidates:
         axis = 0 if candidate["orientation"] == "horizontal" else 1

@@ -23,6 +23,44 @@ def fixture():
 
 
 class OpeningQuickTests(unittest.TestCase):
+    def test_close_scopes_preserve_everything_except_angle(self):
+        doc=fixture()
+        doc['openings'][0].pop('operation')  # Legacy closed door must remain untouched.
+        doc['openings'][2]['operation']=dict(type='hinged',hinge='top',side='positive',angle_deg=20,
+            pivot_axis='horizontal',pivot_ratio=.7,axis_mode='manual',direction_mode='auto',interior_room_id='stale-room')
+        before=deepcopy(doc)
+        for kind,expected in [('door',['O002']),('window',['O003']),('all',['O002','O003'])]:
+            with self.subTest(kind=kind):
+                result,record,report=open_openings(doc,dict(target_kind=kind,action='close'))
+                self.assertEqual(record['opening_ids'],expected)
+                self.assertEqual(report['changed_count'],len(expected))
+                self.assertEqual(report['opened_door_count'],0)
+                self.assertEqual(report['opened_window_count'],0)
+                self.assertEqual(report['closed_door_count']+report['closed_window_count'],len(expected))
+                restored=deepcopy(result)
+                for old,new in zip(doc['openings'],restored['openings']):
+                    if old['id'] in expected:
+                        self.assertEqual(new['operation'],{**old['operation'],'angle_deg':0})
+                        new['operation']=old['operation']
+                self.assertEqual(restored,before)
+                self.assertEqual(doc,before)
+                same,no_record,no_report=open_openings(result,dict(target_kind=kind,action='close'))
+                self.assertEqual(same,result);self.assertIsNone(no_record)
+                self.assertEqual(no_report['changed_count'],0)
+
+    def test_close_single_fixed_and_invalid_action_are_atomic(self):
+        doc=fixture();before=deepcopy(doc)
+        result,record,report=open_openings(doc,dict(target_kind='door',opening_id='O002',action='close'))
+        self.assertEqual(record['opening_ids'],['O002'])
+        self.assertEqual(result['openings'][1]['operation']['angle_deg'],0)
+        fixed,record,report=open_openings(doc,dict(target_kind='window',opening_id='O004',action='close'))
+        self.assertIsNone(record);self.assertEqual(report['skipped_fixed_count'],1);self.assertEqual(fixed,doc)
+        with self.assertRaises(ValueError):open_openings(doc,dict(target_kind='all',action='toggle'))
+        bad=deepcopy(doc);bad['openings'][2]['operation']['angle_deg']=120
+        bad_before=deepcopy(bad)
+        with self.assertRaises(ValueError):open_openings(bad,dict(target_kind='all',action='close'))
+        self.assertEqual(bad,bad_before);self.assertEqual(doc,before)
+
     def test_all_scopes_preserve_structure_sides_and_explicit_fixed_windows_without_scale(self):
         doc=fixture();before=deepcopy(doc)
         for kind,expected in [('door',['O001','O002']),('window',['O003']),('all',['O001','O002','O003'])]:
@@ -62,6 +100,25 @@ class OpeningQuickWorkflowTests(unittest.TestCase):
     tearDown=test_projects.ProjectWorkflowTests.tearDown
     post=test_projects.ProjectWorkflowTests.post
     save=test_projects.ProjectWorkflowTests.save
+
+    def test_close_batch_one_undo_and_save_reopen(self):
+        base=self.doc['openings'][0]
+        base['operation']=dict(type='hinged',hinge='end',side='positive',angle_deg=35,direction_mode='manual')
+        self.doc['openings'].append(dict(deepcopy(base),id='O002',kind='window'))
+        before=deepcopy(self.doc)
+        status,result=self.post('/api/open-openings',dict(run_id='test',target_kind='all',action='close'))
+        self.assertEqual(status,200,result);self.assertEqual(result['history_size'],1)
+        self.assertEqual(result['changed_count'],2)
+        self.assertEqual(result['closed_door_count'],1);self.assertEqual(result['closed_window_count'],1)
+        status,noop=self.post('/api/open-openings',dict(run_id='test',target_kind='all',action='close'))
+        self.assertEqual(status,200,noop);self.assertEqual(noop['history_size'],1)
+        self.assertEqual(noop['changed_count'],0)
+        name,_=self.save()
+        status,restored=self.post('/api/open-project',dict(project_id=name))
+        self.assertEqual(status,200,restored);self.assertEqual(restored['document'],result['document'])
+        status,undone=self.post('/api/undo-edit',dict(run_id='test'))
+        self.assertEqual(status,200,undone);self.assertEqual(undone['document'],before)
+        self.assertEqual(undone['history_size'],0)
 
     def test_batch_one_undo_save_reopen_and_noop_does_not_record_history(self):
         base=self.doc['openings'][0]
