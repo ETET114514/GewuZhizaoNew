@@ -14,7 +14,7 @@ export function createViewer(container, onFurnitureSelect=()=>{}, onFurnitureMov
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setClearColor('#edf1f3');
   renderer.outputColorSpace=THREE.SRGBColorSpace;container.append(renderer.domElement);
   renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
-  renderer.domElement.tabIndex=0;renderer.domElement.setAttribute('aria-label','三维户型，点击后 WASD 移动，鼠标拖动转头，滚轮调整视野');
+  renderer.domElement.tabIndex=0;renderer.domElement.setAttribute('aria-label','三维户型，点击后 WASD 移动，Shift 升高，Ctrl 降低，鼠标拖动转头，滚轮调整视野');
   const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(40,1,.01,2000);
   const controls=createStableControls(camera,renderer.domElement,render);
   scene.add(new THREE.HemisphereLight(0xffffff,0x86929e,2.3));
@@ -159,7 +159,9 @@ export function createViewer(container, onFurnitureSelect=()=>{}, onFurnitureMov
     const direction=camera.position.clone().sub(controls.target).normalize(),preferred=center.clone().addScaledVector(direction,Math.max(2,size*2));
     const eye=walkingSpace?.find(preferred);if(!eye)return;navigationMode(true);controls.target.copy(center);camera.position.copy(eye);controls.update();render();
   }
-  function render(){renderer.render(scene,camera);}
+  function render(){renderer.render(scene,camera);const canvas=renderer.domElement;
+    canvas.dataset.eyeHeightCm=String(Math.round(camera.position.y*100));canvas.dataset.fov=String(Math.round(camera.fov));
+    window.dispatchEvent(new CustomEvent('model-camera-state',{detail:{height:Math.round(camera.position.y*100),fov:Math.round(camera.fov),mode:canvas.dataset.navigationMode}}));}
   function resize(){const w=container.clientWidth,h=container.clientHeight;if(!w||!h)return;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();render();}
   const observer=new ResizeObserver(resize);observer.observe(container);
   function clear(){group.traverse(o=>{o.geometry?.dispose();if(o.material){o.material.map?.dispose();o.material.dispose();}});scene.remove(group);group=new THREE.Group();scene.add(group);}
@@ -167,7 +169,7 @@ export function createViewer(container, onFurnitureSelect=()=>{}, onFurnitureMov
   function viewCeiling(roomId,componentId){cancelMove();if(!lastModel)return;
     const target=ceilingViewTarget(document,roomId,componentId);if(!target)return;
     const eye=walkingSpace?.find(new THREE.Vector3(target.x+(target.light?.35:0),EYE_HEIGHT,target.z+(target.light?.15:.15)),p=>insideRoom(p,roomId));if(!eye)return false;
-    highlightCeiling(componentId||null);camera.fov=target.light?55:100;camera.up.set(0,1,0);camera.updateProjectionMatrix();controls.target.set(target.x,target.height-.01,target.z);
+    highlightCeiling(componentId||null);camera.fov=target.light?65:100;camera.up.set(0,1,0);camera.updateProjectionMatrix();controls.target.set(target.x,target.height-.01,target.z);
     navigationMode(true);camera.position.copy(eye);controls.update();render();return true;
   }
   function insideRoom(p,roomId){
@@ -180,7 +182,7 @@ export function createViewer(container, onFurnitureSelect=()=>{}, onFurnitureMov
     const p=r?.label_px||[document.image.width_px/2,document.image.height_px/2],s=document.scale_mm_per_px/1000;
     const preferred=new THREE.Vector3((p[0]-document.image.width_px/2)*s,EYE_HEIGHT,(p[1]-document.image.height_px/2)*s);
     const eye=walkingSpace.find(preferred,q=>insideRoom(q,r?.id));if(!eye)return false;
-    navigationMode(true);camera.position.copy(eye);controls.target.copy(eye).add(new THREE.Vector3(0,0,-1));camera.fov=65;camera.up.set(0,1,0);camera.updateProjectionMatrix();controls.update();highlightCeiling(null);render();return true;
+    navigationMode(true);camera.position.copy(eye);controls.target.copy(eye).add(new THREE.Vector3(0,0,-1));camera.fov=75;camera.up.set(0,1,0);camera.updateProjectionMatrix();controls.update();highlightCeiling(null);render();return true;
   }
   function update(doc,imageUrl,fit=false){
     cancelMove();positionPreview=null;document=doc;

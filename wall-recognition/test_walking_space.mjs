@@ -7,10 +7,19 @@ const doc={image:{width_px:1200,height_px:1000},scale_mm_per_px:10};
 const eye=(x,z)=>new Vector3(x,EYE_HEIGHT,z);
 const wall=(x,z,width,depth)=>collisionBox({id:'wall',kind:'wall',center:[x,1.4,z],size:[width,2.8,depth]});
 
-test('standing stays 170 cm above the floor and inside the actual base floor',()=>{
+test('default standing starts at 170 cm and stays inside the actual base floor',()=>{
   const space=createWalkingSpace(doc,[]);assert(space.valid(eye(0,0)));assert(!space.valid(new Vector3(0,-1,0)));
   assert(!space.valid(eye(6,0)));assert(!space.valid(eye(0,5)));
-  const moved=space.move(eye(0,0),new Vector3(0,-100,2));assert.equal(moved.y,1.7);assert(Math.abs(moved.z-2)<1e-8);
+  const moved=space.move(eye(0,0),new Vector3(0,0,2));assert.equal(moved.y,1.7);assert(Math.abs(moved.z-2)<1e-8);
+});
+test('height changes stop above the floor and below ceilings without allowing flight over furniture',()=>{
+  const roof=collisionBox({id:'roof',kind:'ceiling',center:[0,2.65,0],size:[12,.1,10]}),space=createWalkingSpace(doc,[roof]);
+  const raised=space.move(eye(0,0),new Vector3(0,10,0));assert(raised.y>2.4&&raised.y<=2.451);assert(space.valid(raised));
+  const lowered=space.move(raised,new Vector3(0,-10,0));assert.equal(lowered.y,.4);assert(space.valid(lowered));
+  const furniture=collisionBox({id:'cabinet',kind:'furniture',center:[0,.5,0],size:[1,1,1]}),withFurniture=createWalkingSpace(doc,[furniture]);
+  assert(!withFurniture.valid(new Vector3(0,2.8,0)));const high=new Vector3(-2,2.8,0);
+  assert(withFurniture.move(high,new Vector3(4,0,0)).x<-.67); // raising the eye does not step onto or over objects
+  assert(createWalkingSpace(doc,[]).move(eye(0,0),new Vector3(0,10,0)).y<=3);
 });
 test('swept movement cannot jump through a thin wall and slides along it',()=>{
   const space=createWalkingSpace(doc,[wall(0,0,.1,8)]);

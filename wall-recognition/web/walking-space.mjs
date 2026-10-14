@@ -2,7 +2,8 @@ import {Vector3} from './vendor/three.module.min.js';
 import {buildCollisionBoxes,boxCorners} from './collision-boxes.mjs';
 
 export const EYE_HEIGHT=1.7;
-const RADIUS=.18,HEAD_HEIGHT=1.85;
+export const MIN_EYE_HEIGHT=.4,MAX_EYE_HEIGHT=3;
+const RADIUS=.18,HEAD_CLEARANCE=.15;
 function hull(points){
   const sorted=points.sort((a,b)=>a[0]-b[0]||a[1]-b[1]),cross=(a,b,c)=>(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);
   const half=list=>{const result=[];for(const p of list){while(result.length>1&&cross(result.at(-2),result.at(-1),p)<=0)result.pop();result.push(p);}return result.slice(0,-1);};
@@ -21,19 +22,20 @@ function nearPolygon(polygon,x,z,radius){
 export function createWalkingSpace(doc,boxes=buildCollisionBoxes(doc)){
   const width=doc.image.width_px*doc.scale_mm_per_px/1000,depth=doc.image.height_px*doc.scale_mm_per_px/1000;
   // Actual opening-aware walls, current door/window leaves, room ceilings and furniture.
-  // Ceiling triangles retain holes; objects above the head or below the floor are excluded.
-  const obstacles=boxes.filter(b=>b.min[1]<HEAD_HEIGHT-.001&&b.max[1]>.05).map(b=>({
+  // Ceiling triangles retain holes. Body extends from the floor to the adjusted head height.
+  const obstacles=boxes.filter(b=>b.max[1]>.05).map(b=>({
     min:b.min,max:b.max,polygon:b.polygon||hull(boxCorners(b).map(p=>[p[0],p[2]]))}));
-  function valid(p){return p.toArray().every(Number.isFinite)&&Math.abs(p.y-EYE_HEIGHT)<1e-6
+  function valid(p){return p.toArray().every(Number.isFinite)&&p.y>=MIN_EYE_HEIGHT&&p.y<=MAX_EYE_HEIGHT
     &&Math.abs(p.x)<=width/2-RADIUS&&Math.abs(p.z)<=depth/2-RADIUS
-    &&!obstacles.some(b=>p.x>b.min[0]-RADIUS&&p.x<b.max[0]+RADIUS&&p.z>b.min[2]-RADIUS&&p.z<b.max[2]+RADIUS&&nearPolygon(b.polygon,p.x,p.z,RADIUS));}
+    &&!obstacles.some(b=>b.min[1]<p.y+HEAD_CLEARANCE-.001&&p.x>b.min[0]-RADIUS&&p.x<b.max[0]+RADIUS&&p.z>b.min[2]-RADIUS&&p.z<b.max[2]+RADIUS&&nearPolygon(b.polygon,p.x,p.z,RADIUS));}
   function move(start,delta){
-    if(!valid(start))return start.clone();const result=start.clone(),steps=Math.max(1,Math.ceil(Math.hypot(delta.x,delta.z)/.04));
+    if(!valid(start))return start.clone();const result=start.clone(),steps=Math.max(1,Math.ceil(delta.length()/.04));
     for(let i=0;i<steps;i++){
-      const candidate=result.clone().add(new Vector3(delta.x/steps,0,delta.z/steps));
+      const candidate=result.clone().addScaledVector(delta,1/steps);candidate.y=Math.max(MIN_EYE_HEIGHT,Math.min(MAX_EYE_HEIGHT,candidate.y));
       if(valid(candidate)){result.copy(candidate);continue;}
       const x=result.clone();x.x+=delta.x/steps;if(valid(x))result.copy(x);
       const z=result.clone();z.z+=delta.z/steps;if(valid(z))result.copy(z);
+      const y=result.clone();y.y=Math.max(MIN_EYE_HEIGHT,Math.min(MAX_EYE_HEIGHT,y.y+delta.y/steps));if(valid(y))result.copy(y);
     }
     return result;
   }

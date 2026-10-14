@@ -7,9 +7,10 @@ export function lookDirection(yaw,pitch){
 }
 export function walkDelta(keys,yaw,seconds,speed=2){
   let forward=Number(keys.has('w'))-Number(keys.has('s')),right=Number(keys.has('d'))-Number(keys.has('a'));
-  const length=Math.hypot(forward,right);if(!length)return new Vector3();
-  forward/=length;right/=length;const step=Math.max(0,Math.min(.05,seconds))*speed;
-  return new Vector3((Math.sin(yaw)*forward+Math.cos(yaw)*right)*step,0,(-Math.cos(yaw)*forward+Math.sin(yaw)*right)*step);
+  const length=Math.hypot(forward,right);
+  if(length){forward/=length;right/=length;}const step=Math.max(0,Math.min(.05,seconds))*speed;
+  const vertical=(Number(keys.has('shift'))-Number(keys.has('control')))*Math.max(0,Math.min(.05,seconds))*.6;
+  return new Vector3((Math.sin(yaw)*forward+Math.cos(yaw)*right)*step,vertical,(-Math.cos(yaw)*forward+Math.sin(yaw)*right)*step);
 }
 
 // The eye never orbits its target: mouse input changes heading, WASD changes position.
@@ -28,7 +29,7 @@ export function createStableControls(camera,canvas,onChange,environment=window){
   function usable(){return active&&enabled&&!locked;}
   function tick(time){frame=null;if(!usable()||!keys.size){lastTime=null;return;}
     const seconds=lastTime===null?0:(time-lastTime)/1000;lastTime=time;
-    const delta=walkDelta(keys,yaw,seconds,keys.has('shift')?4:2);const next=constrainMove?constrainMove(camera.position,delta):camera.position.clone().add(delta);target.add(next.clone().sub(camera.position));camera.position.copy(next);camera.lookAt(target);onChange();
+    const delta=walkDelta(keys,yaw,seconds);const next=constrainMove?constrainMove(camera.position,delta):camera.position.clone().add(delta);target.add(next.clone().sub(camera.position));camera.position.copy(next);camera.lookAt(target);onChange();
     frame=environment.requestAnimationFrame(tick);}
   listen(canvas,'pointerdown',event=>{if(!active||!enabled||event.button!==0||drag)return;canvas.focus({preventScroll:true});if(locked)return;
     drag={id:event.pointerId,x:event.clientX,y:event.clientY};canvas.setPointerCapture(event.pointerId);});
@@ -41,8 +42,8 @@ export function createStableControls(camera,canvas,onChange,environment=window){
   listen(canvas,'wheel',event=>{if(!active||!enabled)return;event.preventDefault();if(locked)return;
     camera.fov=Math.max(35,Math.min(110,camera.fov*Math.exp(event.deltaY*.001)));camera.updateProjectionMatrix();onChange();},{passive:false});
   listen(environment,'keydown',event=>{const key=event.key.toLowerCase();
-    if(!usable()||!walking||page.activeElement!==canvas||!['w','a','s','d','shift'].includes(key)||event.ctrlKey||event.metaKey||event.altKey)return;
-    event.preventDefault();keys.add(key);if(frame===null)frame=environment.requestAnimationFrame(tick);});
+    if(!usable()||!walking||page.activeElement!==canvas||!['w','a','s','d','shift','control'].includes(key)||event.metaKey||event.altKey)return;
+    event.preventDefault();event.stopImmediatePropagation();keys.add(key);if(frame===null)frame=environment.requestAnimationFrame(tick);},{capture:true});
   listen(environment,'keyup',event=>{keys.delete(event.key.toLowerCase());if(!keys.size)stop();});
   listen(canvas,'blur',stop);listen(environment,'blur',stop);listen(page,'visibilitychange',()=>{if(page.hidden)stop();});
   return {setMovementConstraint:fn=>{constrainMove=fn;},setWalking:value=>{walking=value;stop();},target,update,stop,get enabled(){return enabled;},set enabled(value){enabled=value;if(!value)stop();},

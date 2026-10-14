@@ -7,7 +7,7 @@ class Surface {
   events=new Map();
   addEventListener(name,fn){if(!this.events.has(name))this.events.set(name,new Set());this.events.get(name).add(fn);}
   removeEventListener(name,fn){this.events.get(name)?.delete(fn);}
-  emit(name,data={}){const event={preventDefault(){this.prevented=true;},...data};for(const fn of this.events.get(name)||[])fn(event);return event;}
+  emit(name,data={}){const event={preventDefault(){this.prevented=true;},stopImmediatePropagation(){this.stopped=true;},...data};for(const fn of this.events.get(name)||[])fn(event);return event;}
 }
 function fixture(){
   const env=new Surface(),page=new Surface(),canvas=new Surface(),frames=new Map();let serial=0;
@@ -60,4 +60,14 @@ test('straight up and down targets stay finite; suspension and resuming preserve
   assert(camera.quaternion.toArray().every(Number.isFinite));assert(lookDirection(0,Math.PI/2).y<1);
   const position=camera.position.clone(),quaternion=camera.quaternion.clone();controls.setActive(false);controls.setActive(true);
   assert(camera.position.equals(position));assert(camera.quaternion.equals(quaternion));controls.dispose();
+});
+test('Shift raises, Ctrl lowers and modifier movement retains heading without saving shortcuts',()=>{
+  const {env,camera,controls}=fixture(),eye=camera.position.clone(),quaternion=camera.quaternion.clone();
+  const shift=env.emit('keydown',{key:'Shift'});assert(shift.prevented&&shift.stopped);env.step(0);env.step(50);
+  assert(Math.abs(camera.position.y-eye.y-.03)<1e-9);assert.equal(camera.position.x,eye.x);assert.equal(camera.position.z,eye.z);assert(camera.quaternion.angleTo(quaternion)<1e-7);
+  env.emit('keyup',{key:'Shift'});env.emit('keydown',{key:'Control',ctrlKey:true});const backward=env.emit('keydown',{key:'s',ctrlKey:true});assert(backward.stopped);
+  env.step(100);env.step(150);assert(Math.abs(camera.position.y-eye.y)<1e-9);assert(camera.position.distanceTo(eye)>.09);
+  env.emit('keyup',{key:'Control'});env.emit('keyup',{key:'s'});controls.dispose();
+  assert.equal(walkDelta(new Set(['shift','control']),0,.05).y,0);
+  assert.equal(walkDelta(new Set(['w','shift']),0,.05).z,-.1); // Shift no longer accelerates walking
 });

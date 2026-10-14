@@ -122,7 +122,7 @@
   modelTools.append($('model-wall-ghost').closest('label'));modelHeader.insertBefore(modelTools,$('close-model'));
   document.querySelector('.model-view-actions').className='model-view-actions model-status-overlay';
   const modelBar=document.createElement('div');modelBar.className='model-bottom-bar';
-  modelBar.innerHTML='<button class="view-button" data-command="close-model">2D</button><span class="view-button active">3D</span><span>稳定视角 · 点击画面后 WASD 移动 · 鼠标拖动转头 · 滚轮调整视野</span>';
+  modelBar.innerHTML='<button class="view-button" data-command="close-model">2D</button><span class="view-button active">3D</span><span>点击画面后 WASD 行走 · Shift 升高 / Ctrl 降低 · 鼠标拖动转头</span>';
   document.querySelector('.model-scene').append(modelBar);
 
   const menus=[...document.querySelectorAll('.top-menu')];
