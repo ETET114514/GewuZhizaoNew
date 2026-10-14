@@ -153,6 +153,7 @@ export function createViewer(container, onFurnitureSelect=()=>{}, onFurnitureMov
   function update(doc,imageUrl,fit=false){
     cancelMove();positionPreview=null;document=doc;
     const model=buildModel(doc),ceilings=ceilingLayout(doc,model);model.ceilingRoomCount=ceilings.surfaces.filter(s=>s.role==='ceiling'&&s.id.startsWith('room:')).length;
+    model.ceilingSupplementalCount=ceilings.supplementalCount||0;
     if(ceilings.supplementalCount)model.warnings.push(`${ceilings.supplementalCount} 块未分区的闭合空间已补默认顶面；如需单独编辑，请在二维补充房间区域。`);
     lastModel=model;const ticket=++version;clear();
     if(model.wallMesh.indices.length){

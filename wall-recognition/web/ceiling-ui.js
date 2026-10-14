@@ -4,6 +4,7 @@
   const anchor=document.createElement('div');anchor.id='ceiling-anchor';$('tools-detail').append(anchor,panel);
   panel.innerHTML=`<h3>天花板 · 吊顶 · 灯具</h3>
     <p class="ribbon-note">有效房间默认都有天花板，可逐房间修改。先校核房间并标定比例；长度单位为 cm。</p>
+    <div id="ceiling-setup"><p id="ceiling-setup-reason" class="opening-help" role="status"></p><div class="ribbon-actions"><button id="ceiling-build-rooms" class="button primary" type="button">建立房间分区，启用顶面编辑</button><button id="ceiling-calibrate" class="button" type="button">前往比例标定</button></div></div>
     <label class="field">所属房间<select id="ceiling-room"></select></label>
     <label class="visibility"><input id="ceiling-layer-toggle" type="checkbox" checked> 显示二维天花布置</label>
     <label class="visibility"><input id="ceiling-roof-toggle" type="checkbox"> 显示三维顶面与吊顶</label>
@@ -114,7 +115,7 @@
     hosts();input('host_id').value=values.host_id||'';groups();status('应用后可撤销并随项目保存。灯槽为可编辑槽体与发光带示意。');
   }
   function list(){
-    const oldRoom=roomSelect.value;roomSelect.replaceChildren();for(const r of doc()?.room_partition?.regions||[])roomSelect.append(new Option(`${r.id} · ${r.name||'房间'}`,r.id));
+    const oldRoom=roomSelect.value;roomSelect.replaceChildren();for(const r of doc()?.room_partition?.regions||[])if(r.review_status!=='rejected')roomSelect.append(new Option(`${r.id} · ${r.name||'房间'}`,r.id));
     roomSelect.value=Array.from(roomSelect.options).some(o=>o.value===oldRoom)?oldRoom:roomSelect.options[0]?.value||'';
     componentSelect.replaceChildren(new Option('新增吊顶','new:slab'),new Option('新增灯槽','new:cove'),new Option('新增灯具','new:light'));
     const activeKeys=new Set((doc()?.room_partition?.regions||[]).map(key));
@@ -161,7 +162,21 @@
     $('ceiling-cancel').disabled=Boolean(state.busy)||!dirty||lightingDirty;
     $('ceiling-rebind').hidden=!current()||(source?.room_partition?.regions||[]).some(r=>key(r)===current().room_key);
     $('ceiling-rebind').disabled=!enabled||Boolean(state.busy)||state.formDirty;
-    $('ceiling-warnings').textContent=(source?.ceiling_layout?.warnings||[]).join('；')||(!enabled?'请先标定比例并建立房间分区。':'');render();
+    const hasRooms=roomSelect.options.length>0,blocked=state.formDirty&&!dirty;
+    const reasons=[];
+    if(!source)reasons.push('请先识别户型或打开已保存方案。');
+    else{
+      if(!source.scale_mm_per_px)reasons.push('当前未标定实际比例，请先完成比例标定。');
+      if(!hasRooms)reasons.push('当前没有可编辑的房间分区。三维自动补出的顶面仅供预览；建立房间后即可编辑天花板、吊顶和灯具。');
+      if(blocked)reasons.push('另有尚未应用的修改，请先应用或取消，再编辑顶面。');
+    }
+    $('ceiling-setup').hidden=!reasons.length;
+    $('ceiling-setup-reason').textContent=reasons.join(' ');
+    $('ceiling-build-rooms').hidden=!source||hasRooms;
+    $('ceiling-build-rooms').disabled=!source||Boolean(state.busy)||state.formDirty;
+    $('ceiling-calibrate').hidden=!source||Boolean(source.scale_mm_per_px);
+    $('ceiling-calibrate').disabled=!source||Boolean(state.busy)||state.formDirty;
+    $('ceiling-warnings').textContent=(source?.ceiling_layout?.warnings||[]).join('；');render();
   }
   form.addEventListener('input',()=>{if(!roomDirty)changed();});form.addEventListener('change',groups);
   roomForm.addEventListener('input',()=>{if(!dirty||roomDirty)changed(true);});
@@ -171,6 +186,8 @@
   $('cl-cancel').addEventListener('click',discard);
   form.addEventListener('submit',e=>{e.preventDefault();handle(commit());});roomForm.addEventListener('submit',e=>{e.preventDefault();roomDirty=true;handle(commit());});
   $('ceiling-cancel').addEventListener('click',discard);
+  $('ceiling-build-rooms').addEventListener('click',()=>handle(partitionRooms()));
+  $('ceiling-calibrate').addEventListener('click',()=>{if($('model-dialog').open)$('close-model').click();$('tab-measure').click();});
   componentSelect.addEventListener('change',()=>{if(state.formDirty){componentSelect.value=selected;toast('请先应用或取消当前修改。');return;}selected=componentSelect.value;copying=false;fill();render();});
   roomSelect.addEventListener('change',()=>{selected='new:slab';list();fill();fillLighting();render();});
   $('ceiling-delete').addEventListener('click',()=>handle(commit({action:'delete',component_id:selected})));

@@ -139,7 +139,8 @@
     let doc=draft?{...source,model_settings:readSettings()}:source;
     if(furnitureDirty){const input=readFurniture();doc=furnitureModule.furniturePreview(doc,furnitureId,input.placement_mm,input.model_3d);}
     const model=viewer.update(doc,state.run.image_url,fit);
-    $('model-summary').textContent=`${model.wallCount} 段墙 · ${model.openings.length} 处门窗 · ${model.furnitureCount} 件家具 · ${model.ceilingRoomCount} 个房间顶面 · 墙高 ${(model.height*1000).toFixed(0)} mm`;
+    const ceilingSummary=`${model.ceilingRoomCount-model.ceilingSupplementalCount} 个房间顶面${model.ceilingSupplementalCount?` · ${model.ceilingSupplementalCount} 个默认预览顶面`:''}`;
+    $('model-summary').textContent=`${model.wallCount} 段墙 · ${model.openings.length} 处门窗 · ${model.furnitureCount} 件家具 · ${ceilingSummary} · 墙高 ${(model.height*1000).toFixed(0)} mm`;
     const warnings=[...model.warnings,...(doc.ceiling_layout?.warnings||[])];
     $('model-warning-list').replaceChildren();for(const warning of warnings){const li=document.createElement('li');li.textContent=warning;$('model-warning-list').append(li);}
     $('model-warnings').hidden=!warnings.length;
