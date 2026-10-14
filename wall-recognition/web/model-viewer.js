@@ -1,26 +1,26 @@
 import * as THREE from './vendor/three.module.min.js';
-import {OrbitControls} from './vendor/OrbitControls.js';
+import {createStableControls} from './stable-camera.mjs';
+import {createWalkingSpace,EYE_HEIGHT} from './walking-space.mjs';
 import {buildModel} from './model-geometry.mjs';
 import {buildFloors,floorGeometry,floorTexture} from './floor-geometry.mjs';
 import {movePlacement,placementOf} from './furniture-move.mjs';
 import {snapFurniture} from './furniture-snap.mjs';
 import {buildFurniture} from './furniture-models.mjs';
 import {checkCollisions,boxCorners} from './collision-boxes.mjs';
-import {ceilingLayout,ceilingMeshGeometry,fixtureParts,temperatureColor,ceilingViewTarget} from './ceiling-geometry.mjs';
+import {ceilingLayout,ceilingMeshGeometry,fixtureParts,temperatureColor,ceilingViewTarget,mountingSurfaces} from './ceiling-geometry.mjs';
 
 export function createViewer(container, onFurnitureSelect=()=>{}, onFurnitureMove=()=>true, onCollisions=()=>{}) {
   const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setClearColor('#edf1f3');
   renderer.outputColorSpace=THREE.SRGBColorSpace;container.append(renderer.domElement);
   renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
-  renderer.domElement.setAttribute('aria-label','三维户型，拖动旋转、滚轮缩放、右键平移');
+  renderer.domElement.tabIndex=0;renderer.domElement.setAttribute('aria-label','三维户型，点击后 WASD 移动，鼠标拖动转头，滚轮调整视野');
   const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(40,1,.01,2000);
-  const controls=new OrbitControls(camera,renderer.domElement);controls.maxPolarAngle=Math.PI/2-.02;
-  controls.addEventListener('change',render);
+  const controls=createStableControls(camera,renderer.domElement,render);
   scene.add(new THREE.HemisphereLight(0xffffff,0x86929e,2.3));
   const light=new THREE.DirectionalLight(0xffffff,2.5);light.position.set(-8,15,10);scene.add(light);
   let group=new THREE.Group(),version=0,lastModel,selectedId=null,pointerStart=null,ghostWalls=false;scene.add(group);
-  let ceilingVisible=false;
+  let ceilingVisible=false,walkingSpace=null;
   let ceilingSelectedId=null;
   const ceilingSelection=new THREE.Group();scene.add(ceilingSelection);
   function highlightCeiling(id=ceilingSelectedId){
@@ -35,6 +35,8 @@ export function createViewer(container, onFurnitureSelect=()=>{}, onFurnitureMov
     const geometry=new THREE.BufferGeometry().setFromPoints(points.map(([dx,dz])=>new THREE.Vector3(x+dx*Math.cos(angle)+dz*Math.sin(angle),l.bottom_mm/1000-.014,z-dx*Math.sin(angle)+dz*Math.cos(angle))));
     ceilingSelection.add(new THREE.LineLoop(geometry,new THREE.LineBasicMaterial({color:'#7c3aed'})));render();
   }
+  function navigationMode(walking){controls.setWalking(walking);renderer.domElement.dataset.navigationMode=walking?'human':'overview';
+    window.dispatchEvent(new CustomEvent('model-navigation-mode',{detail:walking?'human':'overview'}));}
   function setCeilingVisible(value){ceilingVisible=value;group.traverse(o=>{if(o.userData.topSurface)o.visible=value&&o.userData.roomVisible!==false;});render();}
   function setWallGhost(value){ghostWalls=value;group.traverse(o=>{if(['wall','frame','door','glass'].includes(o.userData.kind)){o.material.opacity=value?.12:(o.userData.kind==='glass'?.38:1);o.material.transparent=value||o.userData.kind==='glass';o.material.depthWrite=!o.material.transparent;o.material.needsUpdate=true;}});render();}
   const raycaster=new THREE.Raycaster();
@@ -104,7 +106,7 @@ export function createViewer(container, onFurnitureSelect=()=>{}, onFurnitureMov
     cursor();render();onFurnitureMove({phase:cancelled||!changed?'cancel':'end',id:move.id,placement:move.placement});
   }
   function cancelMove(){finishMove(true);}
-  // Capture before OrbitControls: dragging selected furniture must not orbit the camera.
+  // Capture before camera controls: dragging selected furniture must not turn the camera.
   renderer.domElement.addEventListener('pointerdown',event=>{
     if(moving){event.preventDefault();event.stopImmediatePropagation();return;}
     if(event.button!==0||!moveEnabled||!interactionEnabled||!selectedId||!document)return;
@@ -154,26 +156,38 @@ export function createViewer(container, onFurnitureSelect=()=>{}, onFurnitureMov
     const bounds=new THREE.Box3();group.traverse(o=>{if(o.userData.kind==='furniture'&&o.userData.id===id)bounds.expandByObject(o);});
     if(bounds.isEmpty())return;
     const center=bounds.getCenter(new THREE.Vector3()),size=bounds.getSize(new THREE.Vector3()).length();
-    const direction=camera.position.clone().sub(controls.target).normalize();
-    controls.target.copy(center);camera.position.copy(center).addScaledVector(direction,Math.max(2,size*2));controls.update();render();
+    const direction=camera.position.clone().sub(controls.target).normalize(),preferred=center.clone().addScaledVector(direction,Math.max(2,size*2));
+    const eye=walkingSpace?.find(preferred);if(!eye)return;navigationMode(true);controls.target.copy(center);camera.position.copy(eye);controls.update();render();
   }
   function render(){renderer.render(scene,camera);}
   function resize(){const w=container.clientWidth,h=container.clientHeight;if(!w||!h)return;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();render();}
   const observer=new ResizeObserver(resize);observer.observe(container);
   function clear(){group.traverse(o=>{o.geometry?.dispose();if(o.material){o.material.map?.dispose();o.material.dispose();}});scene.remove(group);group=new THREE.Group();scene.add(group);}
-  function reset(top=false){cancelMove();if(!lastModel)return;camera.fov=40;camera.up.set(0,1,0);controls.maxPolarAngle=Math.PI/2-.02;const r=Math.max(lastModel.width,lastModel.depth,lastModel.height)*1.25/Math.min(1,camera.aspect);controls.target.set(0,0,0);camera.position.set(top?0:r,top?r*1.8:r*.95,top?.001:r);camera.far=Math.max(2000,r*10);camera.updateProjectionMatrix();controls.update();render();}
+  function reset(top=false){cancelMove();if(!lastModel)return;navigationMode(false);camera.fov=40;camera.up.set(0,1,0);const r=Math.max(lastModel.width,lastModel.depth,lastModel.height)*1.25/Math.min(1,camera.aspect);controls.target.set(0,0,0);camera.position.set(top?0:r,top?r*1.8:r*.95,top?.001:r);camera.far=Math.max(2000,r*10);camera.updateProjectionMatrix();controls.update();render();}
   function viewCeiling(roomId,componentId){cancelMove();if(!lastModel)return;
     const target=ceilingViewTarget(document,roomId,componentId);if(!target)return;
-    highlightCeiling(componentId||null);
-    controls.maxPolarAngle=Math.PI-.02;camera.fov=target.light?55:110;camera.up.set(0,0,-1);camera.updateProjectionMatrix();
-    controls.target.set(target.x,target.height-.01,target.z);camera.position.set(target.x+(target.light?.35:0),target.eye,target.z+(target.light?.15:.001));controls.update();render();
+    const eye=walkingSpace?.find(new THREE.Vector3(target.x+(target.light?.35:0),EYE_HEIGHT,target.z+(target.light?.15:.15)),p=>insideRoom(p,roomId));if(!eye)return false;
+    highlightCeiling(componentId||null);camera.fov=target.light?55:100;camera.up.set(0,1,0);camera.updateProjectionMatrix();controls.target.set(target.x,target.height-.01,target.z);
+    navigationMode(true);camera.position.copy(eye);controls.update();render();return true;
+  }
+  function insideRoom(p,roomId){
+    const r=document?.room_partition?.regions.find(r=>r.id===roomId);if(!r)return true;
+    const point=[p.x*1000+document.image.width_px*document.scale_mm_per_px/2,p.z*1000+document.image.height_px*document.scale_mm_per_px/2];
+    return mountingSurfaces(document,r.style_key||'id:'+r.id,point).length>0;
+  }
+  function viewPerson(roomId){cancelMove();if(!document||!walkingSpace)return false;
+    const r=document.room_partition?.regions.find(r=>r.id===roomId&&r.review_status!=='rejected')||document.room_partition?.regions.find(r=>r.review_status!=='rejected');
+    const p=r?.label_px||[document.image.width_px/2,document.image.height_px/2],s=document.scale_mm_per_px/1000;
+    const preferred=new THREE.Vector3((p[0]-document.image.width_px/2)*s,EYE_HEIGHT,(p[1]-document.image.height_px/2)*s);
+    const eye=walkingSpace.find(preferred,q=>insideRoom(q,r?.id));if(!eye)return false;
+    navigationMode(true);camera.position.copy(eye);controls.target.copy(eye).add(new THREE.Vector3(0,0,-1));camera.fov=65;camera.up.set(0,1,0);camera.updateProjectionMatrix();controls.update();highlightCeiling(null);render();return true;
   }
   function update(doc,imageUrl,fit=false){
     cancelMove();positionPreview=null;document=doc;
     const model=buildModel(doc),ceilings=ceilingLayout(doc,model);model.ceilingRoomCount=ceilings.surfaces.filter(s=>s.role==='ceiling'&&s.id.startsWith('room:')).length;
     model.ceilingSupplementalCount=ceilings.supplementalCount||0;
     if(ceilings.supplementalCount)model.warnings.push(`${ceilings.supplementalCount} 块未分区的闭合空间已补默认顶面；如需单独编辑，请在二维补充房间区域。`);
-    lastModel=model;const ticket=++version;clear();
+    lastModel=model;walkingSpace=createWalkingSpace(doc);controls.setMovementConstraint(walkingSpace.move);const ticket=++version;clear();
     if(model.wallMesh.indices.length){
       const geometry=new THREE.BufferGeometry();
       geometry.setAttribute('position',new THREE.Float32BufferAttribute(model.wallMesh.positions,3));
@@ -239,5 +253,5 @@ export function createViewer(container, onFurnitureSelect=()=>{}, onFurnitureMov
     });}
     setWallGhost(ghostWalls);selectFurniture(selectedId);highlightCeiling();resize();if(fit)reset();render();return model;
   }
-  return {update,reset,viewCeiling,resize,selectFurniture,focusFurniture,setWallGhost,setCeilingVisible,setMoveEnabled,setInteractionEnabled,setCollisionOptions,cancelMove,previewFurniturePosition,restoreFurniturePosition,previewFurniture,dispose(){cancelMove();highlightCeiling(null);scene.remove(ceilingSelection);positionPreview=null;clearCollisionBoxes();scene.remove(collisionGroup);window.removeEventListener('keydown',escape,true);window.removeEventListener('blur',blur);version++;observer.disconnect();controls.dispose();clear();renderer.dispose();renderer.domElement.remove();}};
+  return {setNavigationActive:value=>controls.setActive(value),setCameraLocked:value=>controls.setLocked(value),viewPerson,update,reset,viewCeiling,resize,selectFurniture,focusFurniture,setWallGhost,setCeilingVisible,setMoveEnabled,setInteractionEnabled,setCollisionOptions,cancelMove,previewFurniturePosition,restoreFurniturePosition,previewFurniture,dispose(){cancelMove();highlightCeiling(null);scene.remove(ceilingSelection);positionPreview=null;clearCollisionBoxes();scene.remove(collisionGroup);window.removeEventListener('keydown',escape,true);window.removeEventListener('blur',blur);version++;observer.disconnect();controls.dispose();clear();renderer.dispose();renderer.domElement.remove();}};
 }

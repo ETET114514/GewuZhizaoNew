@@ -167,7 +167,7 @@ class ReviewHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         route = urlsplit(self.path).path
         pages = {"/": ("index.html", "text/html; charset=utf-8"), "/app.css": ("app.css", "text/css; charset=utf-8"), "/app.js": ("app.js", "text/javascript; charset=utf-8")}
-        for name in ('opening-ui.js', 'opening-edit.mjs', 'opening-operation.mjs', 'closure-ui.js', 'model-ui.js', 'model-viewer.js', 'model-geometry.mjs', 'floor-geometry.mjs', 'room-ui.js', 'wall-lengths.mjs', 'wall-length-ui.js', 'room-areas.mjs', 'toolbar-ui.js', 'furniture-models.mjs', 'furniture-move.mjs',
+        for name in ('opening-ui.js', 'opening-edit.mjs', 'opening-operation.mjs', 'closure-ui.js', 'model-ui.js', 'model-viewer.js', 'stable-camera.mjs', 'walking-space.mjs', 'model-geometry.mjs', 'floor-geometry.mjs', 'room-ui.js', 'wall-lengths.mjs', 'wall-length-ui.js', 'room-areas.mjs', 'toolbar-ui.js', 'furniture-models.mjs', 'furniture-move.mjs',
                       'ceiling-ui.js', 'ceiling-geometry.mjs', 'opening-quick-ui.js', 'opening-place-ui.js', 'furniture-snap.mjs', 'collision-boxes.mjs', 'collision-ui.js', 'wall-joints.mjs', 'vendor/three.module.min.js', 'vendor/three.core.min.js', 'vendor/OrbitControls.js'):
             pages['/'+name] = (name, 'text/javascript; charset=utf-8')
         if route in pages:

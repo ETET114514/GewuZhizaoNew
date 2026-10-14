@@ -116,13 +116,13 @@
   new MutationObserver(()=>{if(!$('room-draw-tools').hidden)review.querySelector('[data-inspect="room-section"]').open=true;}).observe($('room-draw-tools'),{attributes:true,attributeFilter:['hidden']});
 
   const modelHeader=document.querySelector('.model-header'),modelTools=document.createElement('div');modelTools.className='model-top-tools';
-  for(const [id,name,label] of [['model-save','save','保存'],['model-undo','undo','撤销'],['model-move','move','移动家具'],['model-reset','cube','透视'],['model-top','top','俯视']]) {
+  for(const [id,name,label] of [['model-save','save','保存'],['model-undo','undo','撤销'],['model-move','move','移动家具'],['model-reset','cube','透视'],['model-top','top','俯视'],['model-person','cube','人视 170 cm']]) {
     const button=$(id);button.className='top-command';button.textContent=label;button.insertAdjacentHTML('afterbegin',icon(name));modelTools.append(button);
   }
   modelTools.append($('model-wall-ghost').closest('label'));modelHeader.insertBefore(modelTools,$('close-model'));
   document.querySelector('.model-view-actions').className='model-view-actions model-status-overlay';
   const modelBar=document.createElement('div');modelBar.className='model-bottom-bar';
-  modelBar.innerHTML='<button class="view-button" data-command="close-model">2D</button><span class="view-button active">3D</span><span>拖动旋转 · 滚轮缩放 · 右键平移</span>';
+  modelBar.innerHTML='<button class="view-button" data-command="close-model">2D</button><span class="view-button active">3D</span><span>稳定视角 · 点击画面后 WASD 移动 · 鼠标拖动转头 · 滚轮调整视野</span>';
   document.querySelector('.model-scene').append(modelBar);
 
   const menus=[...document.querySelectorAll('.top-menu')];

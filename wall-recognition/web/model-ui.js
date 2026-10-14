@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  let points=null,drag=null,viewer=null,defaults=null,lastDocument=null,modelDirty=false;
+  let points=null,drag=null,viewer=null,defaults=null,lastDocument=null,modelDirty=false,lastViewRunId=null;
   const dialog=$('model-dialog'),form=$('model-form'),furnitureForm=$('model-furniture-form');
   let furnitureModule=null,furnitureMoveModule=null,furnitureId=null,furnitureDirty=false,furnitureMoving=false,nudge=null,furnitureValues=null;
   const lengths=new Set(['x','y','width','depth','height','elevation']);
@@ -117,7 +117,7 @@
   $('model-move').addEventListener('click',()=>{
     const enabled=$('model-move').getAttribute('aria-pressed')!=='true';
     $('model-move').setAttribute('aria-pressed',String(enabled));viewer?.setMoveEnabled(enabled);
-    $('model-gesture').textContent=enabled?'拖动选中家具移动 · 松手应用 · Esc 取消 · 空白处拖动旋转':'拖动旋转 · 滚轮缩放 · 右键平移';
+    $('model-gesture').textContent=enabled?'拖动选中家具移动 · 松手应用 · Esc 取消 · 空白处拖动转头':'点击画面后 WASD 移动 · 鼠标拖动转头 · 滚轮调整视野';
     $('model-move-status').textContent=enabled?'拖动高亮家具，或先俯视 / 淡化墙体':'浏览模式';
   });
   function fillSettings(){
@@ -243,10 +243,12 @@
       const module=await import('/model-viewer.js');
       furnitureModule=await import('/furniture-models.mjs');
       furnitureMoveModule=await import('/furniture-move.mjs');
+      const fit=!viewer||lastViewRunId!==state.run.run_id;
       dialog.showModal();if(!viewer)viewer=module.createViewer($('model-canvas'),selectFurniture,moveFurniture,result=>window.collisionUI?.modelReport(result));
       viewer.setCollisionOptions(window.collisionUI?.options||{});
       furnitureId=state.focusedFurniture||furnitureId;fillFurniture();
-      fillSettings();lastDocument=state.run.document;renderModel(true);message('候选模型需校核；修改参数后点击应用。');sync();
+      viewer.setNavigationActive(true);viewer.setCameraLocked($('model-camera-lock').checked);
+      fillSettings();lastDocument=state.run.document;renderModel(fit);if(fit)viewer.viewPerson(window.ceilingUI?.roomId);lastViewRunId=state.run.run_id;message('候选模型需校核；修改参数后点击应用。');sync();
     }catch(error){if(dialog.open)dialog.close();toast(`三维预览未能打开：${error.message}`,true);}
   }
   $('calibrate').addEventListener('click',()=>{
@@ -293,9 +295,13 @@
   window.addEventListener('ceiling-visibility-change',()=>viewer?.setCeilingVisible(window.ceilingUI?.roofVisible||false));
   const ceilingCaption=document.createElement('div');ceilingCaption.className='ceiling-view-caption';ceilingCaption.hidden=true;document.querySelector('.model-scene').append(ceilingCaption);
   window.addEventListener('ceiling-view',e=>{if(!dialog.open||!viewer)return;const roomId=e.detail?.room_id||window.ceilingUI?.roomId,id=e.detail?.component_id;
-    viewer.setCeilingVisible(true);viewer.viewCeiling(roomId,id);ceilingCaption.hidden=false;ceilingCaption.textContent=id?`${roomId} · ${id} · 灯下仰视，紫色圈为所选灯具`:`${roomId} · 房间内仰视`;});
+    viewer.setCeilingVisible(true);if(viewer.viewCeiling(roomId,id)===false){message('此区域没有足够的可站立空间，请选择其他房间。',true);return;}ceilingCaption.hidden=false;ceilingCaption.textContent=id?`${roomId} · ${id} · 灯下仰视，紫色圈为所选灯具`:`${roomId} · 房间内仰视`;});
   for(const id of ['model-reset','model-top'])$(id).addEventListener('click',()=>{ceilingCaption.hidden=true;});
   window.addEventListener('project-replacing',()=>{ceilingCaption.hidden=true;});
+  $('model-person').addEventListener('click',()=>{if(!viewer?.viewPerson(window.ceilingUI?.roomId))message('此区域没有足够的可站立空间，请选择其他房间。',true);else ceilingCaption.hidden=true;});
+  window.addEventListener('model-navigation-mode',e=>{const text=e.detail==='human'?'人视 170 cm · 点击画面后 WASD 行走 · 鼠标拖动转头 · 滚轮调整视野':'全景查看 · 鼠标拖动转头 · 点击人视 170 cm 可行走';$('model-gesture').textContent=text;const hint=document.querySelector('.model-bottom-bar>span:last-child');if(hint)hint.textContent=text;});
+  $('model-camera-lock').addEventListener('change',()=>viewer?.setCameraLocked($('model-camera-lock').checked));
+  dialog.addEventListener('close',()=>viewer?.setNavigationActive(false));
   $('open-model').addEventListener('click',openModel);
   function close(){if(state.busy)return;if(pending()){message('有未应用的设置，请先应用，或点击“放弃未应用”。',true);return;}dialog.close();}
   $('close-model').addEventListener('click',close);

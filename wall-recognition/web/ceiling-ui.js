@@ -212,10 +212,10 @@
   $('ceiling-cancel').addEventListener('click',discard);
   $('ceiling-build-rooms').addEventListener('click',()=>handle(partitionRooms()));
   $('ceiling-calibrate').addEventListener('click',()=>{if($('model-dialog').open)$('close-model').click();$('tab-measure').click();});
-  componentSelect.addEventListener('change',()=>{if(state.formDirty){componentSelect.value=selected;toast('请先应用或取消当前修改。');return;}selected=componentSelect.value;copying=false;fill();render();if($('model-dialog').open&&current()?.settings.kind==='light')view(selected);});
-  function chooseRoom(id){if(state.busy||state.formDirty){toast('请先应用或取消当前修改。');return;}roomSelect.value=id;selected='new:slab';list();fill();fillLighting();render();if($('model-dialog').open)view();}
+  componentSelect.addEventListener('change',()=>{if(state.formDirty){componentSelect.value=selected;toast('请先应用或取消当前修改。');return;}selected=componentSelect.value;copying=false;fill();render();});
+  function chooseRoom(id){if(state.busy||state.formDirty){toast('请先应用或取消当前修改。');return;}roomSelect.value=id;selected='new:slab';list();fill();fillLighting();render();}
   roomSelect.addEventListener('change',()=>chooseRoom(roomSelect.value));
-  $('ceiling-new-light').addEventListener('click',()=>{if(state.formDirty)return;selected='new:light';copying=false;list();fill();render();if($('model-dialog').open)view();});
+  $('ceiling-new-light').addEventListener('click',()=>{if(state.formDirty)return;selected='new:light';copying=false;list();fill();render();});
   $('ceiling-room-view').addEventListener('click',()=>view());
   $('ceiling-light-view').addEventListener('click',()=>view(selected));
   $('ceiling-room-plan').addEventListener('click',()=>{if(state.formDirty){toast('请先应用或取消当前修改。');return;}if($('model-dialog').open)$('close-model').click();$('tab-detail').click();focusRoom(room());panel.scrollIntoView({block:'nearest'});});
@@ -262,7 +262,7 @@
     for(const l of source.ceiling_layout?.lights||[]){const [x,y]=l.center_mm.map(v=>v/source.scale_mm_per_px),g=svgElement('g',{role:'button',tabindex:0,'aria-label':`${l.id} ${lightNames[l.settings.light_type]||'灯具'}`});
       g.append(svgElement('circle',{cx:x,cy:y,r:l.id===selected?14:10,fill:'#facc15',stroke:l.id===selected?'#6d28d9':'#854d0e','stroke-width':4}));
       const label=svgElement('text',{x:x+19,y:y+11,fill:'#854d0e','font-size':28,stroke:'white','stroke-width':4,'paint-order':'stroke'});label.textContent=l.id;g.append(label);
-      g.addEventListener('click',()=>{select(l.id);if($('model-dialog').open)view(l.id);});g.addEventListener('keydown',e=>{if(e.key==='Enter'){select(l.id);if($('model-dialog').open)view(l.id);}});map.append(g);
+      g.addEventListener('click',()=>{select(l.id);});g.addEventListener('keydown',e=>{if(e.key==='Enter'){select(l.id);}});map.append(g);
     }
   }
   function select(id){if(state.formDirty){toast('请先应用或取消当前修改。');return;}const c=doc()?.ceiling_design?.components.find(c=>c.id===id.split(':')[0]);if(!c)return;
