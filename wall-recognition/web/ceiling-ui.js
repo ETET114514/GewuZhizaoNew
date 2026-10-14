@@ -6,12 +6,18 @@
     <p class="ribbon-note">有效房间默认都有天花板，可逐房间修改。先校核房间并标定比例；长度单位为 cm。</p>
     <div id="ceiling-setup"><p id="ceiling-setup-reason" class="opening-help" role="status"></p><div class="ribbon-actions"><button id="ceiling-build-rooms" class="button primary" type="button">建立房间分区，启用顶面编辑</button><button id="ceiling-calibrate" class="button" type="button">前往比例标定</button></div></div>
     <label class="field">所属房间<select id="ceiling-room"></select></label>
+    <p id="ceiling-room-location" class="opening-help" role="status"></p>
+    <svg id="ceiling-room-map" class="ceiling-room-map" aria-label="房间定位图，紫色为所选区域，黄色为灯具" role="group"></svg>
+    <p class="ribbon-note">紫色为所选区域，黄色圆点为灯具。点击区域切换；R 编号是自动分区编号，可在二维房间设置中命名。</p>
+    <div class="ribbon-actions"><button id="ceiling-room-plan" class="button" type="button">在二维定位此房间</button><button id="ceiling-room-view" class="button" type="button">进入此房间仰视</button><button id="ceiling-new-light" class="button primary" type="button">＋ 添加灯具</button></div>
     <label class="visibility"><input id="ceiling-layer-toggle" type="checkbox" checked> 显示二维天花布置</label>
     <label class="visibility"><input id="ceiling-roof-toggle" type="checkbox"> 显示三维顶面与吊顶</label>
     <form id="ceiling-room-form"><div class="field-row"><label class="field">顶面底标高（cm）<input id="cr-height" type="number" min="30" max="2000" step="any" value="280" required></label><label class="field">顶板厚度（cm）<input id="cr-thickness" type="number" min="1" max="200" step="any" value="10" required></label></div>
     <div class="field-row"><label class="field">顶面颜色<input id="cr-color" type="color" value="#f5f2ec"></label><label class="visibility"><input id="cr-visible" type="checkbox" checked> 此房间顶面可见</label></div>
     <button class="button full" id="ceiling-room-apply" type="submit">建立 / 更新房间天花板</button></form>
     <label class="field">顶面组件<select id="ceiling-component"></select></label>
+    <button id="ceiling-light-view" class="button full" type="button">查看此灯具</button>
+    <div id="ceiling-obstruction" hidden><p id="ceiling-obstruction-text" class="opening-help error" role="status"></p><button id="ceiling-fix-host" class="button" type="button">改装到下方吊顶（预览）</button></div>
     <form id="ceiling-component-form">
       <label class="field" data-ceiling-group="slab">吊顶样式<select data-ceiling-setting="style"><option value="flat">整房平吊顶</option><option value="local">手绘局部吊顶</option><option value="border">四周边吊</option><option value="stepped">多级跌级边吊</option></select></label>
       <label class="field" data-ceiling-group="light">灯具类型<select data-ceiling-setting="light_type"><option value="flush">吸顶灯</option><option value="downlight">筒灯</option><option value="pendant">吊灯</option><option value="spot">射灯</option><option value="track">轨道灯</option><option value="linear">线性灯</option></select></label>
@@ -46,7 +52,24 @@
     labelEl.innerHTML=`${label}<input data-ceiling-setting="${key}" type="number" min="${min}" max="${max}" step="${key==='levels'?'1':'any'}" value="${value}" required>`;$('ceiling-fields').append(labelEl);}
   const form=$('ceiling-component-form'),roomForm=$('ceiling-room-form'),lightingForm=$('ceiling-lighting-form'),roomSelect=$('ceiling-room'),componentSelect=$('ceiling-component');
   let lastDoc=null,selected='new:slab',copying=false,dirty=false,roomDirty=false,lightingDirty=false,timer=null,ticket=0,drawPoints=null,points=null,placing=false;
+  let navigation=null;
+  import('/ceiling-geometry.mjs').then(module=>{navigation=module;if(!dirty)fill();render();}).catch(()=>status('定位工具加载失败，请刷新页面。',true));
+  const lightNames={flush:'吸顶灯',downlight:'筒灯',pendant:'吊灯',spot:'射灯',track:'轨道灯',linear:'线性灯'};
   const key=r=>r.style_key||'id:'+r.id;
+  function location(r){const p=r.label_px||[0,0],image=doc()?.image||{};
+    return (p[1]<image.height_px/3?'上方':p[1]>image.height_px*2/3?'下方':'中部')+(p[0]<image.width_px/3?'偏左':p[0]>image.width_px*2/3?'偏右':'居中');}
+  async function view(componentId){if(!$('model-dialog').open){await window.modelUI?.open();if(!$('model-dialog').open)return;moveToModel();}
+    $('ceiling-roof-toggle').checked=true;window.dispatchEvent(new CustomEvent('ceiling-view',{detail:{room_id:roomSelect.value,component_id:componentId}}));}
+  function obstruction(){const source=state.ceilingPreview||doc(),light=source?.ceiling_layout?.lights?.find(l=>l.id===selected);
+    return light&&navigation?.lightObstruction(source,light);}
+  function navigationInfo(){const r=room(),area=r&&roomMeasurements?.roomAreaM2(r,doc()?.scale_mm_per_px);
+    $('ceiling-room-location').textContent=r?`${r.id} · 图上${location(r)} · ${roomMeasurements?.formatRoomArea(area)||'—'} · 下图紫色区域`:'';
+    $('ceiling-light-view').hidden=kind()!=='light'||!current();
+    const blocked=obstruction();$('ceiling-obstruction').hidden=!blocked;
+    const light=(state.ceilingPreview||doc())?.ceiling_layout?.lights?.find(l=>l.id===selected);
+    $('ceiling-obstruction-text').textContent=blocked?`${selected} 当前装在 ${(light.mount_mm/10).toFixed(0)} cm 安装面；下方 ${blocked.id}（${(blocked.bottom_mm/10).toFixed(0)} cm）遮住了灯具。可更换安装面后点击“应用组件”。`:'';
+    $('ceiling-fix-host').disabled=Boolean(state.busy)||dirty;
+  }
   const doc=()=>state.run?.document;
   const room=()=>doc()?.room_partition?.regions.find(r=>r.id===roomSelect.value);
   const current=()=>doc()?.ceiling_design?.components.find(c=>c.id===selected);
@@ -92,8 +115,8 @@
       group_name:choice==='all'?null:choice==='ungrouped'?'':choice.slice(5),settings:values};
   }
   function hosts(){
-    const choice=input('host_id'),old=choice.value;choice.replaceChildren(new Option('房间天花板',''));
-    for(const surface of doc()?.ceiling_layout?.surfaces||[])if(surface.role==='ceiling'&&surface.room_key===key(room()||{id:''})&&!surface.id.startsWith('room:'))choice.append(new Option(`${surface.id} · 底标高 ${(surface.bottom_mm/10).toFixed(1)} cm`,surface.id));
+    const choice=input('host_id'),old=choice.value;choice.replaceChildren(new Option(`原天花板 · ${$('cr-height').value} cm`,''));
+    for(const surface of doc()?.ceiling_layout?.surfaces||[])if(surface.role==='ceiling'&&surface.room_key===key(room()||{id:''})&&!surface.id.startsWith('room:'))choice.append(new Option(`${surface.id} 吊顶底面 · 底标高 ${(surface.bottom_mm/10).toFixed(1)} cm`,surface.id));
     if(old&&!Array.from(choice.options).some(o=>o.value===old))choice.append(new Option(`${old} · 安装面失效，请更换`,old));choice.value=old;
   }
   function groups(){const k=kind(),style=input('style').value;
@@ -112,14 +135,15 @@
     for(const [k] of fields)if(mm(k))input(k).value=Number(input(k).value)/10;
     input('style').value=values.style||'flat';input('light_type').value=values.light_type||'flush';input('color').value=values.color||(kind()==='light'?'#dedede':'#f5f2ec');input('on').checked=values.on!==false;
     input('light_group').value=values.light_group||'';
-    hosts();input('host_id').value=values.host_id||'';groups();status('应用后可撤销并随项目保存。灯槽为可编辑槽体与发光带示意。');
+    hosts();const suggested=!c&&kind()==='light'?navigation?.mountingSurfaces(doc(),key(r),center.map(v=>v*doc().scale_mm_per_px))[0]:null;
+    input('host_id').value=values.host_id||(suggested&&!suggested.id.startsWith('room:')?suggested.id:'');groups();navigationInfo();status('应用后可撤销并随项目保存。灯槽为可编辑槽体与发光带示意。');
   }
   function list(){
-    const oldRoom=roomSelect.value;roomSelect.replaceChildren();for(const r of doc()?.room_partition?.regions||[])if(r.review_status!=='rejected')roomSelect.append(new Option(`${r.id} · ${r.name||'房间'}`,r.id));
+    const oldRoom=roomSelect.value;roomSelect.replaceChildren();for(const r of doc()?.room_partition?.regions||[])if(r.review_status!=='rejected')roomSelect.append(new Option(`${r.id} · ${r.name&&r.name!==r.id?r.name:location(r)}`,r.id));
     roomSelect.value=Array.from(roomSelect.options).some(o=>o.value===oldRoom)?oldRoom:roomSelect.options[0]?.value||'';
     componentSelect.replaceChildren(new Option('新增吊顶','new:slab'),new Option('新增灯槽','new:cove'),new Option('新增灯具','new:light'));
     const activeKeys=new Set((doc()?.room_partition?.regions||[]).map(key));
-    for(const c of doc()?.ceiling_design?.components||[])if(c.room_key===key(room()||{id:''})||!activeKeys.has(c.room_key))componentSelect.append(new Option(`${c.id} · ${{slab:'吊顶',cove:'灯槽',light:'灯具'}[c.settings.kind]}${!activeKeys.has(c.room_key)?' · 原房间失效':''}`,c.id));
+    for(const c of doc()?.ceiling_design?.components||[])if(c.room_key===key(room()||{id:''})||!activeKeys.has(c.room_key))componentSelect.append(new Option(`${c.id} · ${{slab:'吊顶',cove:'灯槽',light:lightNames[c.settings.light_type]||'灯具'}[c.settings.kind]}${!activeKeys.has(c.room_key)?' · 原房间失效':''}`,c.id));
     if(!Array.from(componentSelect.options).some(o=>o.value===selected))selected='new:slab';componentSelect.value=selected;
   }
   function read(){
@@ -188,8 +212,14 @@
   $('ceiling-cancel').addEventListener('click',discard);
   $('ceiling-build-rooms').addEventListener('click',()=>handle(partitionRooms()));
   $('ceiling-calibrate').addEventListener('click',()=>{if($('model-dialog').open)$('close-model').click();$('tab-measure').click();});
-  componentSelect.addEventListener('change',()=>{if(state.formDirty){componentSelect.value=selected;toast('请先应用或取消当前修改。');return;}selected=componentSelect.value;copying=false;fill();render();});
-  roomSelect.addEventListener('change',()=>{selected='new:slab';list();fill();fillLighting();render();});
+  componentSelect.addEventListener('change',()=>{if(state.formDirty){componentSelect.value=selected;toast('请先应用或取消当前修改。');return;}selected=componentSelect.value;copying=false;fill();render();if($('model-dialog').open&&current()?.settings.kind==='light')view(selected);});
+  function chooseRoom(id){if(state.busy||state.formDirty){toast('请先应用或取消当前修改。');return;}roomSelect.value=id;selected='new:slab';list();fill();fillLighting();render();if($('model-dialog').open)view();}
+  roomSelect.addEventListener('change',()=>chooseRoom(roomSelect.value));
+  $('ceiling-new-light').addEventListener('click',()=>{if(state.formDirty)return;selected='new:light';copying=false;list();fill();render();if($('model-dialog').open)view();});
+  $('ceiling-room-view').addEventListener('click',()=>view());
+  $('ceiling-light-view').addEventListener('click',()=>view(selected));
+  $('ceiling-room-plan').addEventListener('click',()=>{if(state.formDirty){toast('请先应用或取消当前修改。');return;}if($('model-dialog').open)$('close-model').click();$('tab-detail').click();focusRoom(room());panel.scrollIntoView({block:'nearest'});});
+  $('ceiling-fix-host').addEventListener('click',()=>{const blocked=obstruction();if(!blocked||state.formDirty)return;input('host_id').value=blocked.id;changed();});
   $('ceiling-delete').addEventListener('click',()=>handle(commit({action:'delete',component_id:selected})));
   $('ceiling-rebind').addEventListener('click',()=>handle(commit({action:'rebind',component_id:selected,room_id:roomSelect.value})));
   $('ceiling-copy').addEventListener('click',()=>{copying=true;if(kind()==='light')input('center_x').value=Number(input('center_x').value)+30;changed();});
@@ -205,7 +235,7 @@
   window.addEventListener('keydown',e=>{if(e.key==='Escape'&&dirty){e.preventDefault();discard();}},true);
   window.addEventListener('blur',()=>{if(drawPoints||placing)discard();});
   function render(){let layer=$('ceiling-layer');if(!layer){layer=svgElement('g',{id:'ceiling-layer'});$('plan').append(layer);}layer.replaceChildren();
-    const source=state.ceilingPreview||doc();if(!source||!$('ceiling-layer-toggle').checked)return;
+    const source=state.ceilingPreview||doc();renderMap(source);navigationInfo();if(!source||!$('ceiling-layer-toggle').checked)return;
     const scale=source.scale_mm_per_px,path=polygons=>polygons.map(rings=>rings.map(r=>'M'+r.map(([x,y])=>`${x/scale},${y/scale}`).join('L')+'Z').join('')).join('');
     for(const s of source.ceiling_layout?.surfaces||[]){if(s.role==='strip'||s.id.startsWith('room:'))continue;
       const p=svgElement('path',{d:path(s.polygons_mm),fill:s.role==='cove'?'#dfa744':'#7775c2','fill-opacity':.08,stroke:s.role==='cove'?'#b87918':'#7775c2','stroke-width':(s.id.split(':')[0]===selected?3:1)/state.zoom,'fill-rule':'evenodd','data-ceiling-id':s.id});
@@ -219,6 +249,22 @@
       g.addEventListener('click',e=>{e.stopPropagation();select(light.id);});g.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();select(light.id);}});layer.append(g);}
     if(drawPoints?.length)layer.append(svgElement('polyline',{points:drawPoints.map(p=>p.join(',')).join(' '),fill:'none',stroke:'#a951ae','stroke-width':3/state.zoom,'pointer-events':'none'}));
   }
+  function renderMap(source){const map=$('ceiling-room-map');map.replaceChildren();if(!source?.image)return;
+    map.setAttribute('viewBox',`0 0 ${source.image.width_px} ${source.image.height_px}`);
+    map.append(svgElement('image',{href:state.run.image_url,width:source.image.width_px,height:source.image.height_px,opacity:.45}));
+    for(const r of source.room_partition?.regions||[]){if(r.review_status==='rejected')continue;
+      const active=r.id===roomSelect.value,g=svgElement('g',{role:'button',tabindex:0,'aria-label':`${r.id} ${r.name&&r.name!==r.id?r.name:location(r)}`,'aria-pressed':String(active)});
+      const d=(r.polygons_px||(r.rings_px?[r.rings_px]:[])).map(rings=>rings.map(ring=>'M'+ring.map(p=>p.join(',')).join('L')+'Z').join('')).join('');
+      g.append(svgElement('path',{d,fill:active?'#8b5cf6':'#cbd5e1','fill-opacity':active?.35:.18,stroke:active?'#6d28d9':'#64748b','stroke-width':active?5:2,'fill-rule':'evenodd'}));
+      if(r.label_px){const [x,y]=r.label_px,label=svgElement('text',{x,y:y-22,'text-anchor':'middle',fill:active?'#5b21b6':'#334155','font-size':34,'font-weight':700,stroke:'#ffffff','stroke-width':5,'paint-order':'stroke'});label.textContent=r.id;g.append(label);}
+      g.addEventListener('click',()=>chooseRoom(r.id));g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();chooseRoom(r.id);}});map.append(g);
+    }
+    for(const l of source.ceiling_layout?.lights||[]){const [x,y]=l.center_mm.map(v=>v/source.scale_mm_per_px),g=svgElement('g',{role:'button',tabindex:0,'aria-label':`${l.id} ${lightNames[l.settings.light_type]||'灯具'}`});
+      g.append(svgElement('circle',{cx:x,cy:y,r:l.id===selected?14:10,fill:'#facc15',stroke:l.id===selected?'#6d28d9':'#854d0e','stroke-width':4}));
+      const label=svgElement('text',{x:x+19,y:y+11,fill:'#854d0e','font-size':28,stroke:'white','stroke-width':4,'paint-order':'stroke'});label.textContent=l.id;g.append(label);
+      g.addEventListener('click',()=>{select(l.id);if($('model-dialog').open)view(l.id);});g.addEventListener('keydown',e=>{if(e.key==='Enter'){select(l.id);if($('model-dialog').open)view(l.id);}});map.append(g);
+    }
+  }
   function select(id){if(state.formDirty){toast('请先应用或取消当前修改。');return;}const c=doc()?.ceiling_design?.components.find(c=>c.id===id.split(':')[0]);if(!c)return;
     const r=doc().room_partition.regions.find(r=>key(r)===c.room_key);if(r)roomSelect.value=r.id;selected=c.id;list();fill();fillLighting();render();
     if($('model-dialog').open)moveToModel();else $('tab-detail').click();panel.scrollIntoView({block:'nearest'});}
@@ -226,11 +272,11 @@
   const modelButton=document.createElement('button');modelButton.id='model-ceiling-edit';modelButton.className='button';modelButton.textContent='编辑顶面与灯具';document.querySelector('.model-view-actions').append(modelButton);
   modelButton.addEventListener('click',()=>{if(state.formDirty&&!dirty){toast('请先应用或取消当前修改。');return;}moveToModel();});
   const ceilingView=document.createElement('button');ceilingView.id='model-ceiling-view';ceilingView.className='button';ceilingView.textContent='仰视顶面';modelButton.after(ceilingView);
-  ceilingView.addEventListener('click',()=>{$('ceiling-roof-toggle').checked=true;window.dispatchEvent(new Event('ceiling-view'));});
+  ceilingView.addEventListener('click',()=>{$('ceiling-roof-toggle').checked=true;view(current()?.settings.kind==='light'?selected:undefined);});
   $('model-dialog').addEventListener('close',()=>anchor.after(panel));
   $('ceiling-layer-toggle').addEventListener('change',render);
   $('ceiling-roof-toggle').addEventListener('change',()=>window.dispatchEvent(new Event('ceiling-visibility-change')));
   window.addEventListener('ceiling-select',e=>select(e.detail));window.addEventListener('wall-plan-rendered',render);window.addEventListener('wall-state-change',sync);
   window.addEventListener('project-replacing',()=>{discard();lastDoc=null;selected='new:slab';});
-  window.ceilingUI={get dirty(){return dirty;},get roofVisible(){return $('ceiling-roof-toggle').checked;},select,discard};sync();
+  window.ceilingUI={get dirty(){return dirty;},get roomId(){return roomSelect.value;},get roofVisible(){return $('ceiling-roof-toggle').checked;},select,discard};sync();
 })();

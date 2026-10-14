@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {ceilingLayout,structuralCeilings,ceilingMeshGeometry,ceilingCollisionParts,fixtureParts,temperatureColor} from './web/ceiling-geometry.mjs';
+import {ceilingLayout,structuralCeilings,ceilingMeshGeometry,ceilingCollisionParts,fixtureParts,temperatureColor,mountingSurfaces,lightObstruction,ceilingViewTarget} from './web/ceiling-geometry.mjs';
 import {checkCollisions} from './web/collision-boxes.mjs';
 
 function fixture(){return {image:{width_px:400,height_px:300},scale_mm_per_px:20,walls:[],openings:[],furniture:[],
@@ -47,4 +47,27 @@ test('independent slabs warn on penetration while their own tier risers do not',
   const d=fixture(),s=d.ceiling_layout.surfaces[0];d.ceiling_layout.surfaces.push({...s,id:'C002',bottom_mm:2540});
   assert(checkCollisions(d).pairs.some(p=>p.ids.includes('C001')&&p.ids.includes('C002')));
   const own=fixture();own.ceiling_layout.surfaces.push({...s,id:'C001:2',bottom_mm:2540});assert.equal(checkCollisions(own).pairs.length,0);
+});
+
+
+test('lamp mounting suggestions use room, holes and the lowest covering surface',()=>{
+  const d=fixture(),s=d.ceiling_layout.surfaces[0];s.room_key='r1';
+  d.ceiling_layout.surfaces.push({...s,id:'room:r1',bottom_mm:2800},{...s,id:'other',room_key:'r2',bottom_mm:2000});
+  assert.deepEqual(mountingSurfaces(d,'r1',[2000,1200]).map(s=>s.id),['C001','room:r1']);
+  assert.deepEqual(mountingSurfaces(d,'r1',[3500,2500]),[]); // hole
+  assert.deepEqual(mountingSurfaces(d,'r1',[100,100]),[]); // outside
+  const light={id:'L1',room_key:'r1',host_id:'room:r1',center_mm:[2000,1200],bottom_mm:2720};
+  assert.equal(lightObstruction(d,light).id,'C001');
+  assert.equal(lightObstruction(d,{...light,host_id:'C001',bottom_mm:2420}),null);
+  assert.equal(lightObstruction(d,{...light,center_mm:[3500,2500]}),null);
+});
+test('ceiling camera targets the chosen room and lamp, below any covering slab',()=>{
+  const d=fixture(),s=d.ceiling_layout.surfaces[0];s.room_key='r1';
+  d.room_partition={regions:[{id:'R1',style_key:'r1',label_px:[100,60]},{id:'R2',label_px:[250,100]}]};
+  d.ceiling_layout.lights=[{id:'L1',room_key:'r1',host_id:'room:r1',center_mm:[2200,1400],bottom_mm:2720}];
+  const before=JSON.stringify(d),room=ceilingViewTarget(d,'R1'),lamp=ceilingViewTarget(d,'R1','L1');
+  assert.equal(room.x,-2);assert.equal(room.z,-1.8);assert.equal(room.height,2.5);
+  assert.equal(lamp.x,-1.8);assert.equal(lamp.z,-1.6);assert(lamp.light);assert(lamp.eye<lamp.height);
+  assert.equal(ceilingViewTarget(d,'R2','L1').light,false); // never jump to another room's lamp
+  assert.equal(ceilingViewTarget(d,'missing'),null);assert.equal(JSON.stringify(d),before);
 });

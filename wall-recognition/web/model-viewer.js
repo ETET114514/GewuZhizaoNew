@@ -6,12 +6,13 @@ import {movePlacement,placementOf} from './furniture-move.mjs';
 import {snapFurniture} from './furniture-snap.mjs';
 import {buildFurniture} from './furniture-models.mjs';
 import {checkCollisions,boxCorners} from './collision-boxes.mjs';
-import {ceilingLayout,ceilingMeshGeometry,fixtureParts,temperatureColor} from './ceiling-geometry.mjs';
+import {ceilingLayout,ceilingMeshGeometry,fixtureParts,temperatureColor,ceilingViewTarget} from './ceiling-geometry.mjs';
 
 export function createViewer(container, onFurnitureSelect=()=>{}, onFurnitureMove=()=>true, onCollisions=()=>{}) {
   const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setClearColor('#edf1f3');
   renderer.outputColorSpace=THREE.SRGBColorSpace;container.append(renderer.domElement);
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
   renderer.domElement.setAttribute('aria-label','三维户型，拖动旋转、滚轮缩放、右键平移');
   const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(40,1,.01,2000);
   const controls=new OrbitControls(camera,renderer.domElement);controls.maxPolarAngle=Math.PI/2-.02;
@@ -20,6 +21,20 @@ export function createViewer(container, onFurnitureSelect=()=>{}, onFurnitureMov
   const light=new THREE.DirectionalLight(0xffffff,2.5);light.position.set(-8,15,10);scene.add(light);
   let group=new THREE.Group(),version=0,lastModel,selectedId=null,pointerStart=null,ghostWalls=false;scene.add(group);
   let ceilingVisible=false;
+  let ceilingSelectedId=null;
+  const ceilingSelection=new THREE.Group();scene.add(ceilingSelection);
+  function highlightCeiling(id=ceilingSelectedId){
+    ceilingSelectedId=id;
+    for(const line of [...ceilingSelection.children]){line.geometry.dispose();line.material.dispose();ceilingSelection.remove(line);}
+    const l=document?.ceiling_layout?.lights?.find(l=>l.id===id);if(!l)return;
+    const x=(l.center_mm[0]-document.image.width_px*document.scale_mm_per_px/2)/1000,
+      z=(l.center_mm[1]-document.image.height_px*document.scale_mm_per_px/2)/1000,size=l.settings.size_mm/1000;
+    const long=['linear','track'].includes(l.settings.light_type),w=size*.58,h=long?Math.min(size,.08)*.7:w;
+    const points=long?[[-w,-h],[w,-h],[w,h],[-w,h]]:Array.from({length:48},(_,i)=>[Math.cos(i*Math.PI/24)*w,Math.sin(i*Math.PI/24)*w]);
+    const angle=-l.settings.rotation_deg*Math.PI/180;
+    const geometry=new THREE.BufferGeometry().setFromPoints(points.map(([dx,dz])=>new THREE.Vector3(x+dx*Math.cos(angle)+dz*Math.sin(angle),l.bottom_mm/1000-.014,z-dx*Math.sin(angle)+dz*Math.cos(angle))));
+    ceilingSelection.add(new THREE.LineLoop(geometry,new THREE.LineBasicMaterial({color:'#7c3aed'})));render();
+  }
   function setCeilingVisible(value){ceilingVisible=value;group.traverse(o=>{if(o.userData.topSurface)o.visible=value&&o.userData.roomVisible!==false;});render();}
   function setWallGhost(value){ghostWalls=value;group.traverse(o=>{if(['wall','frame','door','glass'].includes(o.userData.kind)){o.material.opacity=value?.12:(o.userData.kind==='glass'?.38:1);o.material.transparent=value||o.userData.kind==='glass';o.material.depthWrite=!o.material.transparent;o.material.needsUpdate=true;}});render();}
   const raycaster=new THREE.Raycaster();
@@ -147,9 +162,12 @@ export function createViewer(container, onFurnitureSelect=()=>{}, onFurnitureMov
   const observer=new ResizeObserver(resize);observer.observe(container);
   function clear(){group.traverse(o=>{o.geometry?.dispose();if(o.material){o.material.map?.dispose();o.material.dispose();}});scene.remove(group);group=new THREE.Group();scene.add(group);}
   function reset(top=false){cancelMove();if(!lastModel)return;camera.fov=40;camera.up.set(0,1,0);controls.maxPolarAngle=Math.PI/2-.02;const r=Math.max(lastModel.width,lastModel.depth,lastModel.height)*1.25/Math.min(1,camera.aspect);controls.target.set(0,0,0);camera.position.set(top?0:r,top?r*1.8:r*.95,top?.001:r);camera.far=Math.max(2000,r*10);camera.updateProjectionMatrix();controls.update();render();}
-  function viewCeiling(){cancelMove();if(!lastModel)return;controls.maxPolarAngle=Math.PI-.02;
-    camera.fov=110;camera.up.set(0,0,-1);camera.updateProjectionMatrix();
-    controls.target.set(0,lastModel.height-.1,0);camera.position.set(0,.3,.001);controls.update();render();}
+  function viewCeiling(roomId,componentId){cancelMove();if(!lastModel)return;
+    const target=ceilingViewTarget(document,roomId,componentId);if(!target)return;
+    highlightCeiling(componentId||null);
+    controls.maxPolarAngle=Math.PI-.02;camera.fov=target.light?55:110;camera.up.set(0,0,-1);camera.updateProjectionMatrix();
+    controls.target.set(target.x,target.height-.01,target.z);camera.position.set(target.x+(target.light?.35:0),target.eye,target.z+(target.light?.15:.001));controls.update();render();
+  }
   function update(doc,imageUrl,fit=false){
     cancelMove();positionPreview=null;document=doc;
     const model=buildModel(doc),ceilings=ceilingLayout(doc,model);model.ceilingRoomCount=ceilings.surfaces.filter(s=>s.role==='ceiling'&&s.id.startsWith('room:')).length;
@@ -219,7 +237,7 @@ export function createViewer(container, onFurnitureSelect=()=>{}, onFurnitureMov
       const plane=new THREE.Mesh(new THREE.PlaneGeometry(model.width,model.depth),new THREE.MeshBasicMaterial({map:texture,transparent:true,opacity:.85}));
       plane.rotation.x=-Math.PI/2;plane.position.y=.012;group.add(plane);render();
     });}
-    setWallGhost(ghostWalls);selectFurniture(selectedId);resize();if(fit)reset();render();return model;
+    setWallGhost(ghostWalls);selectFurniture(selectedId);highlightCeiling();resize();if(fit)reset();render();return model;
   }
-  return {update,reset,viewCeiling,resize,selectFurniture,focusFurniture,setWallGhost,setCeilingVisible,setMoveEnabled,setInteractionEnabled,setCollisionOptions,cancelMove,previewFurniturePosition,restoreFurniturePosition,previewFurniture,dispose(){cancelMove();positionPreview=null;clearCollisionBoxes();scene.remove(collisionGroup);window.removeEventListener('keydown',escape,true);window.removeEventListener('blur',blur);version++;observer.disconnect();controls.dispose();clear();renderer.dispose();renderer.domElement.remove();}};
+  return {update,reset,viewCeiling,resize,selectFurniture,focusFurniture,setWallGhost,setCeilingVisible,setMoveEnabled,setInteractionEnabled,setCollisionOptions,cancelMove,previewFurniturePosition,restoreFurniturePosition,previewFurniture,dispose(){cancelMove();highlightCeiling(null);scene.remove(ceilingSelection);positionPreview=null;clearCollisionBoxes();scene.remove(collisionGroup);window.removeEventListener('keydown',escape,true);window.removeEventListener('blur',blur);version++;observer.disconnect();controls.dispose();clear();renderer.dispose();renderer.domElement.remove();}};
 }

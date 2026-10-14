@@ -291,7 +291,11 @@
   window.addEventListener('opening-preview-change',()=>{if(dialog.open&&viewer)try{renderModel();}catch(error){message(error.message,true);}});
   window.addEventListener('ceiling-preview-change',()=>{if(dialog.open&&viewer){renderModel();sync();}});
   window.addEventListener('ceiling-visibility-change',()=>viewer?.setCeilingVisible(window.ceilingUI?.roofVisible||false));
-  window.addEventListener('ceiling-view',()=>{viewer?.setCeilingVisible(true);viewer?.viewCeiling();});
+  const ceilingCaption=document.createElement('div');ceilingCaption.className='ceiling-view-caption';ceilingCaption.hidden=true;document.querySelector('.model-scene').append(ceilingCaption);
+  window.addEventListener('ceiling-view',e=>{if(!dialog.open||!viewer)return;const roomId=e.detail?.room_id||window.ceilingUI?.roomId,id=e.detail?.component_id;
+    viewer.setCeilingVisible(true);viewer.viewCeiling(roomId,id);ceilingCaption.hidden=false;ceilingCaption.textContent=id?`${roomId} · ${id} · 灯下仰视，紫色圈为所选灯具`:`${roomId} · 房间内仰视`;});
+  for(const id of ['model-reset','model-top'])$(id).addEventListener('click',()=>{ceilingCaption.hidden=true;});
+  window.addEventListener('project-replacing',()=>{ceilingCaption.hidden=true;});
   $('open-model').addEventListener('click',openModel);
   function close(){if(state.busy)return;if(pending()){message('有未应用的设置，请先应用，或点击“放弃未应用”。',true);return;}dialog.close();}
   $('close-model').addEventListener('click',close);
@@ -306,5 +310,6 @@
   discard.addEventListener('click',()=>{fillSettings();state.formDirty=false;renderModel();sync();message('已恢复上次应用的参数。');});form.append(discard);
   $('model-save').addEventListener('click',async()=>{try{if(pending())throw new Error('请先应用或放弃修改，再保存项目。');const result=await saveProject();message(`已保存：${result.saved_name}`);}catch(error){message(error.message,true);}});
   $('model-undo').addEventListener('click',async()=>{try{await undoEdit();message('已撤销上一步。');}catch(error){message(error.message,true);}});
+  window.modelUI={open:openModel};
   sync();
 })();

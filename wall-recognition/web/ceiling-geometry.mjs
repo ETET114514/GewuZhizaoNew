@@ -4,6 +4,26 @@ import {buildModel} from './model-geometry.mjs';
 function containsRing(ring,x,y){let inside=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){
   const a=ring[i],b=ring[j];if((a[1]>y)!==(b[1]>y)&&x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])inside=!inside;}return inside;}
 
+// Use the actual footprint, including holes, rather than the room bounding box.
+export function mountingSurfaces(doc,roomKey,pointMm){
+  if(!pointMm?.every(Number.isFinite))return [];
+  return (doc.ceiling_layout?.surfaces||[]).filter(s=>s.role==='ceiling'&&s.room_key===roomKey
+    &&s.polygons_mm.some(rings=>containsRing(rings[0],...pointMm)&&!rings.slice(1).some(r=>containsRing(r,...pointMm))))
+    .sort((a,b)=>a.bottom_mm-b.bottom_mm);
+}
+export function lightObstruction(doc,light){
+  return mountingSurfaces(doc,light.room_key,light.center_mm).find(s=>s.id!==light.host_id&&s.bottom_mm<light.bottom_mm-.1)||null;
+}
+export function ceilingViewTarget(doc,roomId,componentId){
+  const room=doc.room_partition?.regions.find(r=>r.id===roomId&&r.review_status!=='rejected');if(!room)return null;
+  const roomKey=room.style_key||'id:'+room.id,light=doc.ceiling_layout?.lights?.find(l=>l.id===componentId&&l.room_key===roomKey);
+  const point=light?.center_mm||room.label_px?.map(v=>v*doc.scale_mm_per_px);if(!point?.every(Number.isFinite))return null;
+  const opts=doc.ceiling_design?.rooms?.[roomKey];
+  const height=Math.min(light?.bottom_mm??Infinity,mountingSurfaces(doc,roomKey,point)[0]?.bottom_mm??opts?.height_mm??doc.model_settings?.wall_height_mm??2800)/1000;
+  return {x:(point[0]-doc.image.width_px*doc.scale_mm_per_px/2)/1000,
+    z:(point[1]-doc.image.height_px*doc.scale_mm_per_px/2)/1000,height,eye:Math.max(.05,Math.min(1.1,height-.6)),light:!!light};
+}
+
 // The displayed top of the walls includes repaired corners and opening
 // headers that the original 2D floor partition does not include.
 export function structuralCeilings(doc,knownSurfaces,model=null){
